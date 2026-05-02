@@ -3,7 +3,7 @@ import path from 'node:path';
 import mammoth from 'mammoth';
 import officeParser from 'officeparser';
 import { PDFParse } from 'pdf-parse';
-import { fetchTranscript } from 'youtube-transcript';
+import { fetchTranscript, YoutubeTranscript } from 'youtube-transcript';
 
 const DOCUMENT_EXTENSIONS = new Set(['.pdf', '.docx', '.pptx']);
 
@@ -68,10 +68,31 @@ export async function extractFromPptx(filePath) {
 }
 
 export async function extractFromYoutube(input) {
-  const videoId = extractYoutubeId(input);
-  const transcript = await fetchTranscript(videoId);
-  const text = transcript.map((chunk) => chunk.text).join(' ');
-  return normalizeText(text);
+  return extractYouTubeText(input);
+}
+
+/**
+ * Extracts the transcript from a YouTube URL and converts it to a clean string.
+ * @param {string} videoUrl - The full YouTube URL or video id
+ * @returns {Promise<string>} - The combined text transcript
+ */
+export async function extractYouTubeText(videoUrl) {
+  try {
+    console.log(`Starting extraction for: ${videoUrl}`);
+
+    // Fetch the transcript array
+    const transcriptArray = await YoutubeTranscript.fetchTranscript(videoUrl);
+
+    // The package returns an array of objects: { text: "hello", duration: 1.5, offset: 0 }
+    // We map through it to grab just the text and join it with spaces.
+    const cleanText = transcriptArray.map((item) => item.text).join(' ');
+
+    console.log('Extraction successful!');
+    return normalizeText(cleanText);
+  } catch (error) {
+    console.error('Error extracting YouTube transcript:', error?.message || error);
+    throw new Error('Failed to extract video transcript. Make sure the video has captions enabled.');
+  }
 }
 
 export async function extractContent(source) {

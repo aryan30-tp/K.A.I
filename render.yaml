@@ -1,0 +1,37 @@
+# Render manifest for deploying both backend (Node) and frontend (static site).
+# Update `branch`, `envVars` and region/plan as needed in the Render dashboard.
+services:
+  - type: web
+    name: kai-backend
+    env: node
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    autoDeploy: true
+    envVars:
+      - key: GOOGLE_API_KEY
+        # Set this secret value in Render's dashboard (do NOT commit real keys to git)
+        value: ""
+      - key: CORS_ORIGIN
+        value: ""
+
+  - type: static
+    name: kai-frontend
+    env: static
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: cd client && npm install && npm run build
+    publishPath: client/dist
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_URL
+        # Set to your backend URL once deployed (e.g. https://kai-backend.onrender.com)
+        value: ""
+
+# Notes:
+# - After you push this file, create the services in Render and add the secret values
+#   (GOOGLE_API_KEY, CORS_ORIGIN, VITE_API_URL) in the Render dashboard for each service.
+# - For private repos or special build steps, adjust `buildCommand`/`startCommand` accordingly.

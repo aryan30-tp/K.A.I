@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 function App() {
   const [url, setUrl] = useState('');
   const [file, setFile] = useState(null);
+  const [syllabusText, setSyllabusText] = useState('');
+  const [notesText, setNotesText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
@@ -70,6 +72,32 @@ function App() {
     }
   }
 
+  async function handleMapSyllabus(e) {
+    e.preventDefault();
+    if (!syllabusText.trim() || !notesText.trim()) {
+      setError('Please provide both syllabus and notes text.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setResult('');
+    try {
+      const res = await fetch(`${apiBase}/api/map-syllabus`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ syllabusText, notesText }),
+      });
+
+      const text = await parseResponse(res);
+      setResult(text);
+    } catch (err) {
+      setError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div style={{ padding: 20, fontFamily: 'Arial, sans-serif' }}>
       <h1>K.A.I. — Extractor Test</h1>
@@ -94,6 +122,28 @@ function App() {
         />
         <button type="submit" disabled={loading || !file} style={{ padding: '8px 12px' }}>
           {loading ? 'Uploading…' : 'Upload & Extract'}
+        </button>
+      </form>
+
+      <form onSubmit={handleMapSyllabus} style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
+          <textarea
+            placeholder="Paste syllabus text here"
+            value={syllabusText}
+            onChange={(e) => setSyllabusText(e.target.value)}
+            rows={6}
+            style={{ flex: 1, padding: 8 }}
+          />
+          <textarea
+            placeholder="Paste extracted notes text here"
+            value={notesText}
+            onChange={(e) => setNotesText(e.target.value)}
+            rows={6}
+            style={{ flex: 1, padding: 8 }}
+          />
+        </div>
+        <button type="submit" disabled={loading} style={{ padding: '8px 12px' }}>
+          {loading ? 'Mapping…' : 'Map Syllabus'}
         </button>
       </form>
 

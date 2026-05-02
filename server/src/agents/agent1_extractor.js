@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import mammoth from 'mammoth';
-import pdfParse from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 import { YoutubeTranscript } from 'youtube-transcript';
 
 const DOCUMENT_EXTENSIONS = new Set(['.pdf', '.docx']);
@@ -36,7 +36,9 @@ async function extractPdfText(filePath) {
   try {
     console.log(`Extracting PDF: ${filePath}`);
     const dataBuffer = await fs.readFile(filePath);
-    const data = await pdfParse(dataBuffer);
+    const parser = new PDFParse({ data: dataBuffer });
+    const data = await parser.getText();
+    await parser.destroy();
     return normalizeText((data.text || '').replace(/\n+/g, ' '));
   } catch (error) {
     console.error('Error extracting PDF:', error?.message || error);

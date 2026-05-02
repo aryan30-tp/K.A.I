@@ -1,7 +1,7 @@
 // agent4_generator.js
 // Uses LangChain templating + structured output parsing to generate flashcards, mock tests, and study plans.
 
-import { PromptTemplate } from '@langchain/core';
+import { PromptTemplate } from '@langchain/core/prompts';
 
 export async function generateResources(mappedSections, options = {}) {
   // Build a PromptTemplate and use LangChain OutputParsers to enforce JSON output.

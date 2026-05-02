@@ -76,6 +76,7 @@ export async function mapSyllabusToNotes(syllabusText, extractedNotesText) {
     return result;
   } catch (error) {
     console.error('Error in Agent 2:', error);
-    throw new Error('Failed to map syllabus to notes.');
+    const message = error?.message || String(error);
+    throw new Error(`Failed to map syllabus to notes: ${message}`);
   }
 }

@@ -1,0 +1,64 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Render (set env vars and trigger deploys)
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_BACKEND_SERVICE_ID: ${{ secrets.RENDER_BACKEND_SERVICE_ID }}
+          RENDER_FRONTEND_SERVICE_ID: ${{ secrets.RENDER_FRONTEND_SERVICE_ID }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$RENDER_API_KEY" ] || [ -z "$RENDER_BACKEND_SERVICE_ID" ] || [ -z "$RENDER_FRONTEND_SERVICE_ID" ]; then
+            echo "Missing required Render secrets. Add RENDER_API_KEY, RENDER_BACKEND_SERVICE_ID and RENDER_FRONTEND_SERVICE_ID to repository secrets." >&2
+            exit 1
+          fi
+
+          echo "Uploading environment variables to backend service..."
+          # Add/replace secure env var for GOOGLE_API_KEY
+          curl -fsS -X POST "https://api.render.com/v1/services/$RENDER_BACKEND_SERVICE_ID/env-vars" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"key":"GOOGLE_API_KEY","value":"'"$GOOGLE_API_KEY"'" ,"secure":true}' || true
+
+          # Add/replace CORS_ORIGIN (non-secure)
+          if [ -n "$CORS_ORIGIN" ]; then
+            curl -fsS -X POST "https://api.render.com/v1/services/$RENDER_BACKEND_SERVICE_ID/env-vars" \
+              -H "Authorization: Bearer $RENDER_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"key":"CORS_ORIGIN","value":"'"$CORS_ORIGIN"'" ,"secure":false}' || true
+          fi
+
+          echo "Triggering backend deploy..."
+          curl -fsS -X POST "https://api.render.com/v1/services/$RENDER_BACKEND_SERVICE_ID/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}' || true
+
+          echo "Triggering frontend deploy..."
+          # Add frontend VITE_API_URL if provided
+          if [ -n "$VITE_API_URL" ]; then
+            curl -fsS -X POST "https://api.render.com/v1/services/$RENDER_FRONTEND_SERVICE_ID/env-vars" \
+              -H "Authorization: Bearer $RENDER_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"key":"VITE_API_URL","value":"'"$VITE_API_URL"'" ,"secure":false}' || true
+          fi
+
+          curl -fsS -X POST "https://api.render.com/v1/services/$RENDER_FRONTEND_SERVICE_ID/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}' || true
+
+          echo "Render deploy triggered. Check your Render dashboard for build logs."

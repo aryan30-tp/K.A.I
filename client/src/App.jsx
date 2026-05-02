@@ -2,11 +2,25 @@ import React, { useState } from 'react';
 
 function App() {
   const [url, setUrl] = useState('');
+  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
+
+  async function parseResponse(res) {
+    const raw = await res.text();
+    let data;
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch (parseErr) {
+      throw new Error(`Non-JSON response from server: ${raw.slice(0, 1000)}`);
+    }
+
+    if (!res.ok) throw new Error(data?.error || 'Request failed');
+    return data?.text || raw || JSON.stringify(data);
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -19,20 +33,36 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source: url }),
       });
+      const text = await parseResponse(res);
+      setResult(text);
+    } catch (err) {
+      setError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
 
-      // Read raw text first (avoids double-reading the body), then try to parse JSON.
-      const raw = await res.text();
-      let data;
-      try {
-        data = raw ? JSON.parse(raw) : {};
-      } catch (parseErr) {
-        // If server returned non-JSON (HTML/error page), include a snippet in the error.
-        throw new Error(`Non-JSON response from server: ${raw.slice(0, 1000)}`);
-      }
+  async function handleFileUpload(e) {
+    e.preventDefault();
+    if (!file) {
+      setError('Please choose a file to upload.');
+      return;
+    }
 
-      if (!res.ok) throw new Error(data?.error || 'Request failed');
-      // Prefer returned JSON `text`, otherwise show full raw body.
-      setResult(data?.text || raw || JSON.stringify(data));
+    setLoading(true);
+    setError('');
+    setResult('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(`${apiBase}/api/extract-file`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const text = await parseResponse(res);
+      setResult(text);
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -52,6 +82,18 @@ function App() {
         />
         <button type="submit" disabled={loading} style={{ padding: '8px 12px' }}>
           {loading ? 'Extracting…' : 'Extract'}
+        </button>
+      </form>
+
+      <form onSubmit={handleFileUpload} style={{ marginBottom: 12 }}>
+        <input
+          type="file"
+          accept=".pdf,.docx"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          style={{ marginRight: 8 }}
+        />
+        <button type="submit" disabled={loading || !file} style={{ padding: '8px 12px' }}>
+          {loading ? 'Uploading…' : 'Upload & Extract'}
         </button>
       </form>
 

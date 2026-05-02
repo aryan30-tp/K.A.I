@@ -27,4 +27,19 @@ export async function extract(req, res) {
   }
 }
 
-export default { extract };
+export async function extractFile(req, res) {
+  try {
+    const uploadedFile = req.file;
+    if (!uploadedFile) {
+      return res.status(400).json({ error: 'Missing file in request' });
+    }
+
+    const text = await extractor.extractContent(uploadedFile.path);
+    return res.json({ ok: true, text });
+  } catch (err) {
+    console.error('extract file error', err);
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+}
+
+export default { extract, extractFile };

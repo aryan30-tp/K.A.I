@@ -5,6 +5,7 @@ function App() {
   const [file, setFile] = useState(null);
   const [syllabusText, setSyllabusText] = useState('');
   const [notesText, setNotesText] = useState('');
+  const [pastPapersText, setPastPapersText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
@@ -98,6 +99,32 @@ function App() {
     }
   }
 
+  async function handleAnalyzePapers(e) {
+    e.preventDefault();
+    if (!syllabusText.trim() || !pastPapersText.trim()) {
+      setError('Please provide both syllabus and past papers text.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setResult('');
+    try {
+      const res = await fetch(`${apiBase}/api/analyze-papers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ syllabusText, pastPapersText }),
+      });
+
+      const text = await parseResponse(res);
+      setResult(text);
+    } catch (err) {
+      setError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div style={{ padding: 20, fontFamily: 'Arial, sans-serif' }}>
       <h1>K.A.I. — Extractor Test</h1>
@@ -144,6 +171,28 @@ function App() {
         </div>
         <button type="submit" disabled={loading} style={{ padding: '8px 12px' }}>
           {loading ? 'Mapping…' : 'Map Syllabus'}
+        </button>
+      </form>
+
+      <form onSubmit={handleAnalyzePapers} style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
+          <textarea
+            placeholder="Paste syllabus text here"
+            value={syllabusText}
+            onChange={(e) => setSyllabusText(e.target.value)}
+            rows={6}
+            style={{ flex: 1, padding: 8 }}
+          />
+          <textarea
+            placeholder="Paste past exam papers text here"
+            value={pastPapersText}
+            onChange={(e) => setPastPapersText(e.target.value)}
+            rows={6}
+            style={{ flex: 1, padding: 8 }}
+          />
+        </div>
+        <button type="submit" disabled={loading} style={{ padding: '8px 12px' }}>
+          {loading ? 'Analyzing…' : 'Analyze Past Papers'}
         </button>
       </form>
 

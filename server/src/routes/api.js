@@ -4,6 +4,7 @@ import { generateStudyPlan } from '../controllers/studyPlanController.js';
 import { extract, extractFile } from '../controllers/extractController.js';
 import { mapSyllabus } from '../controllers/mapController.js';
 import { listModels } from '../controllers/modelsController.js';
+import { analyzePapers } from '../controllers/analysisController.js';
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -19,6 +20,9 @@ router.post('/extract-file', upload.single('file'), extractFile);
 
 // POST /api/map-syllabus
 router.post('/map-syllabus', mapSyllabus);
+
+// POST /api/analyze-papers
+router.post('/analyze-papers', analyzePapers);
 
 // GET /api/list-models
 router.get('/list-models', listModels);

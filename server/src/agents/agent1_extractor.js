@@ -1,11 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import mammoth from 'mammoth';
-import officeParser from 'officeparser';
-import { PDFParse } from 'pdf-parse';
-import { fetchTranscript, YoutubeTranscript } from 'youtube-transcript';
+import pdfParse from 'pdf-parse';
+import { YoutubeTranscript } from 'youtube-transcript';
 
-const DOCUMENT_EXTENSIONS = new Set(['.pdf', '.docx', '.pptx']);
+const DOCUMENT_EXTENSIONS = new Set(['.pdf', '.docx']);
 
 function normalizeText(value) {
   return value
@@ -34,25 +33,26 @@ function extractYoutubeId(input) {
 }
 
 async function extractPdfText(filePath) {
-  const fileBuffer = await fs.readFile(filePath);
-  const parser = new PDFParse({ data: fileBuffer });
-  const result = await parser.getText();
-  await parser.destroy();
-  return normalizeText(result.text || '');
+  try {
+    console.log(`Extracting PDF: ${filePath}`);
+    const dataBuffer = await fs.readFile(filePath);
+    const data = await pdfParse(dataBuffer);
+    return normalizeText((data.text || '').replace(/\n+/g, ' '));
+  } catch (error) {
+    console.error('Error extracting PDF:', error?.message || error);
+    throw new Error('Failed to parse PDF.');
+  }
 }
 
 async function extractWordText(filePath) {
-  const result = await mammoth.extractRawText({ path: filePath });
-  return normalizeText(result.value || '');
-}
-
-async function extractPresentationText(filePath) {
-  const ast = await officeParser.parseOffice(filePath, {
-    newlineDelimiter: '\n',
-    ignoreNotes: false,
-  });
-
-  return normalizeText(ast.toText() || '');
+  try {
+    console.log(`Extracting Docx: ${filePath}`);
+    const result = await mammoth.extractRawText({ path: filePath });
+    return normalizeText(result.value || '');
+  } catch (error) {
+    console.error('Error extracting Docx:', error?.message || error);
+    throw new Error('Failed to parse Document.');
+  }
 }
 
 export async function extractFromPdf(filePath) {
@@ -61,10 +61,6 @@ export async function extractFromPdf(filePath) {
 
 export async function extractFromDocx(filePath) {
   return extractWordText(filePath);
-}
-
-export async function extractFromPptx(filePath) {
-  return extractPresentationText(filePath);
 }
 
 export async function extractFromYoutube(input) {
@@ -114,7 +110,17 @@ export async function extractContent(source) {
     return extractFromDocx(source);
   }
 
-  return extractFromPptx(source);
+  throw new Error(`Unsupported source type: ${source}`);
+}
+
+/**
+ * Routes the file/URL to the correct extractor and returns the text.
+ */
+export async function processStudyMaterial(type, source) {
+  if (type === 'youtube') return extractYouTubeText(source);
+  if (type === 'pdf') return extractPdfText(source);
+  if (type === 'docx') return extractWordText(source);
+  throw new Error('Unsupported file type');
 }
 
 export function resolveInputPath(relativeOrAbsolutePath) {
@@ -127,7 +133,7 @@ export default {
   extractContent,
   extractFromDocx,
   extractFromPdf,
-  extractFromPptx,
   extractFromYoutube,
+  processStudyMaterial,
   resolveInputPath,
 };

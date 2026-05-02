@@ -1,3 +1,4 @@
+import path from 'node:path';
 import extractor from '../agents/agent1_extractor.js';
 
 export async function extract(req, res) {
@@ -34,8 +35,18 @@ export async function extractFile(req, res) {
       return res.status(400).json({ error: 'Missing file in request' });
     }
 
-    const text = await extractor.extractContent(uploadedFile.path);
-    return res.json({ ok: true, text });
+    const extension = path.extname(uploadedFile.originalname || '').toLowerCase();
+    if (extension === '.pdf') {
+      const text = await extractor.extractFromPdf(uploadedFile.path);
+      return res.json({ ok: true, text });
+    }
+
+    if (extension === '.docx') {
+      const text = await extractor.extractFromDocx(uploadedFile.path);
+      return res.json({ ok: true, text });
+    }
+
+    return res.status(400).json({ ok: false, error: 'Unsupported file type' });
   } catch (err) {
     console.error('extract file error', err);
     return res.status(500).json({ ok: false, error: err?.message || String(err) });

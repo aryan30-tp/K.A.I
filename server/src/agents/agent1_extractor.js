@@ -79,68 +79,40 @@ export async function extractYouTubeText(videoUrl) {
   try {
     console.log(`Starting RapidAPI extraction for: ${videoUrl}`);
 
-    const videoId = extractVideoId(videoUrl);
-    if (!videoId) throw new Error('Invalid YouTube URL');
-
     const apiKey = process.env.RAPIDAPI_KEY;
     if (!apiKey) throw new Error('RAPIDAPI_KEY is not set');
 
     const response = await axios.request({
       method: 'GET',
-      url: 'https://youtube-transcript3.p.rapidapi.com/api/transcript',
-      params: { videoId },
+      url: 'https://youtube-transcript3.p.rapidapi.com/api/transcript-with-url',
+      params: {
+        url: videoUrl,
+        flat_text: 'true',
+        lang: 'en',
+      },
       headers: {
         'x-rapidapi-host': 'youtube-transcript3.p.rapidapi.com',
         'x-rapidapi-key': apiKey,
         'Content-Type': 'application/json',
       },
-      timeout: 15000,
+      timeout: 30000,
     });
 
-    let transcriptArray = response.data;
-
-    if (!Array.isArray(transcriptArray) || transcriptArray.length === 0) {
-      // Fallback to URL-based endpoint if ID-based endpoint returns empty
-      const urlResponse = await axios.request({
-        method: 'GET',
-        url: 'https://youtube-transcript3.p.rapidapi.com/api/transcript-with-url',
-        params: {
-          url: videoUrl,
-          flat_text: true,
-          lang: 'en',
-        },
-        headers: {
-          'x-rapidapi-host': 'youtube-transcript3.p.rapidapi.com',
-          'x-rapidapi-key': apiKey,
-          'Content-Type': 'application/json',
-        },
-        timeout: 15000,
-      });
-
-      transcriptArray = urlResponse.data?.transcript || urlResponse.data;
+    let cleanText = '';
+    if (typeof response.data === 'string') {
+      cleanText = response.data;
+    } else if (response.data?.text || response.data?.transcript) {
+      cleanText = response.data.text || response.data.transcript;
+    } else {
+      throw new Error('Unexpected API response structure.');
     }
 
-    if (!Array.isArray(transcriptArray) || transcriptArray.length === 0) {
-      throw new Error('No transcript returned by provider.');
-    }
-
-    const cleanText = transcriptArray.map((item) => item.text).join(' ');
     console.log('YouTube extraction successful via RapidAPI.');
     return normalizeText(cleanText);
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const status = error.response?.status;
-      const data = error.response?.data;
-      console.error('RapidAPI extraction error:', {
-        status,
-        data,
-        message: error.message,
-      });
-    } else {
-      console.error('RapidAPI extraction error:', error?.message || error);
-    }
+    console.error('RapidAPI extraction error:', error?.response?.data || error?.message || error);
 
-    // Fallback to Groq Whisper if RapidAPI fails or returns empty
+    // Fallback to Groq Whisper if RapidAPI fails or times out
     return extractViaWhisper(videoUrl);
   }
 }

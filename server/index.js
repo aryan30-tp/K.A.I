@@ -5,10 +5,13 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import axios from 'axios';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 // Import Firebase config (initializes Admin SDK)
 import './src/config/firebase.js';
 import { getCachedOutput, saveCachedOutput } from './src/services/dbService.js';
+
+const db = getFirestore();
 
 // Import our Agents
 import { 
@@ -178,6 +181,62 @@ app.post('/api/generate', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ ok: false, error: `Failed to generate ${req.body.requestType}` });
+  }
+});
+
+// --- FLASHCARD SRS REVIEW ---
+app.post('/api/flashcards/review', async (req, res) => {
+  try {
+    const { cardId, qualityScore } = req.body;
+
+    if (!cardId || typeof qualityScore !== 'number') {
+      return res.status(400).json({ ok: false, error: 'cardId and qualityScore are required.' });
+    }
+
+    const cardRef = db.collection('flashcards').doc(cardId);
+    const doc = await cardRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ ok: false, error: 'Flashcard not found.' });
+    }
+
+    let { repetitionCount, easeFactor, intervalDays } = doc.data();
+
+    repetitionCount = repetitionCount || 0;
+    easeFactor = easeFactor || 2.5;
+    intervalDays = intervalDays || 0;
+
+    if (qualityScore < 3) {
+      repetitionCount = 0;
+      intervalDays = 1;
+    } else {
+      if (repetitionCount === 0) {
+        intervalDays = 1;
+      } else if (repetitionCount === 1) {
+        intervalDays = 6;
+      } else {
+        intervalDays = Math.round(intervalDays * easeFactor);
+      }
+      repetitionCount += 1;
+    }
+
+    easeFactor = easeFactor + (0.1 - (5 - qualityScore) * (0.08 + (5 - qualityScore) * 0.02));
+    if (easeFactor < 1.3) easeFactor = 1.3;
+
+    const nextDate = new Date();
+    nextDate.setDate(nextDate.getDate() + intervalDays);
+
+    await cardRef.update({
+      repetitionCount,
+      easeFactor,
+      intervalDays,
+      nextReviewDate: Timestamp.fromDate(nextDate),
+    });
+
+    res.json({ ok: true, nextReviewDate: nextDate.toISOString() });
+  } catch (error) {
+    console.error('SRS Calculation Error:', error?.message || error);
+    res.status(500).json({ ok: false, error: 'Failed to update flashcard interval.' });
   }
 });
 

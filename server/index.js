@@ -73,6 +73,14 @@ app.post('/api/extract', upload.single('file'), async (req, res) => {
       if (mimeType === 'application/pdf' || originalName.endsWith('.pdf')) {
         rawText = await extractFromPdf(req.file.path);
       } else if (
+        originalName.endsWith('.ppt') ||
+        mimeType === 'application/vnd.ms-powerpoint'
+      ) {
+        fs.unlinkSync(req.file.path);
+        return res
+          .status(400)
+          .json({ error: 'Legacy .ppt files are not supported. Please export as .pptx.' });
+      } else if (
         originalName.endsWith('.pptx') ||
         originalName.endsWith('.docx') ||
         mimeType.includes('presentation') ||

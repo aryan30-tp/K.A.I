@@ -62,6 +62,23 @@ async function extractWordText(filePath) {
 export async function extractOfficeFile(filePath) {
   try {
     console.log(`Extracting text from office file: ${filePath}`);
+    const header = await readFileHeader(filePath, 8);
+    const isZip = header[0] === 0x50 && header[1] === 0x4b;
+    const isOle =
+      header[0] === 0xd0 &&
+      header[1] === 0xcf &&
+      header[2] === 0x11 &&
+      header[3] === 0xe0;
+    const ext = path.extname(filePath).toLowerCase();
+
+    if (ext === '.pptx' && !isZip) {
+      throw new Error('This file is not a valid .pptx. Please re-export as .pptx.');
+    }
+
+    if (ext === '.ppt' || isOle) {
+      throw new Error('Legacy .ppt files are not supported. Please export as .pptx.');
+    }
+
     let rawText = '';
     if (typeof officeParser.parseOfficeAsync === 'function') {
       rawText = await officeParser.parseOfficeAsync(filePath);
@@ -78,6 +95,17 @@ export async function extractOfficeFile(filePath) {
     throw new Error(
       `Failed to extract text from the presentation or document. ${message}`
     );
+  }
+}
+
+async function readFileHeader(filePath, length) {
+  const handle = await fsPromises.open(filePath, 'r');
+  try {
+    const buffer = Buffer.alloc(length);
+    await handle.read(buffer, 0, length, 0);
+    return buffer;
+  } finally {
+    await handle.close();
   }
 }
 

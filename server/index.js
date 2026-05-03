@@ -15,7 +15,8 @@ import {
   extractContent, 
   extractFromPdf, 
   extractFromDocx, 
-  extractFromYoutube 
+  extractFromYoutube, 
+  extractViaWhisper 
 } from './src/agents/agent1_extractor.js';
 import { mapSyllabusToNotes } from './src/agents/agent2_mapper.js';
 import { analyzePastPapers } from './src/agents/agent3_analyst.js';
@@ -52,14 +53,18 @@ const upload = multer({ dest: 'uploads/' });
 // --- ROUTE 1: EXTRACT FUEL (Agent 1) ---
 app.post('/api/extract', upload.single('file'), async (req, res) => {
   try {
-    const { youtubeUrl } = req.body;
+    const { youtubeUrl, forceWhisper } = req.body;
     let rawText = "";
 
     // Generate a unique ID for this specific study session/document
     const uploadId = uuidv4(); 
 
     if (youtubeUrl) {
-      rawText = await extractFromYoutube(youtubeUrl);
+      if (forceWhisper === 'true') {
+        rawText = await extractViaWhisper(youtubeUrl);
+      } else {
+        rawText = await extractFromYoutube(youtubeUrl);
+      }
     } else if (req.file) {
       const type = req.file.mimetype === 'application/pdf' ? 'pdf' : 'docx';
       if (type === 'pdf') {

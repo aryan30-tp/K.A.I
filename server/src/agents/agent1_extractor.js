@@ -5,7 +5,6 @@ import mammoth from 'mammoth';
 import { PDFParse } from 'pdf-parse';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import ytdl from '@distube/ytdl-core';
 import OpenAI from 'openai';
 
 const groq = new OpenAI({
@@ -121,36 +120,61 @@ export async function extractViaWhisper(videoUrl) {
   const audioFilePath = path.resolve(`./uploads/${uuidv4()}.mp3`);
 
   try {
-    if (!process.env.YTDL_NO_UPDATE) {
-      process.env.YTDL_NO_UPDATE = '1';
+    console.log(`Starting bulletproof Whisper extraction for: ${videoUrl}`);
+
+    console.log('Asking RapidAPI for the audio bypass link...');
+
+    const videoId = extractVideoId(videoUrl);
+    if (!videoId) throw new Error('Invalid YouTube URL');
+
+    const mp3Response = await axios.request({
+      method: 'GET',
+      url: 'https://youtube-mp36.p.rapidapi.com/dl',
+      params: { id: videoId },
+      headers: {
+        'x-rapidapi-host': 'youtube-mp36.p.rapidapi.com',
+        'x-rapidapi-key': process.env.RAPIDAPI_KEY,
+        'Content-Type': 'application/json',
+      },
+      timeout: 20000,
+    });
+
+    const downloadUrl = mp3Response.data?.link;
+    if (!downloadUrl) {
+      throw new Error(
+        `RapidAPI failed to generate an audio link. Response: ${JSON.stringify(mp3Response.data)}`
+      );
     }
-    console.log(`Starting Groq Whisper extraction for: ${videoUrl}`);
+
+    console.log('Downloading audio file from bypass link...');
+
+    const fileStream = fs.createWriteStream(audioFilePath);
+    const downloadResponse = await axios({
+      method: 'GET',
+      url: downloadUrl,
+      responseType: 'stream',
+      timeout: 60000,
+    });
 
     await new Promise((resolve, reject) => {
-      const stream = ytdl(videoUrl, {
-        filter: 'audioonly',
-        quality: 'highestaudio',
-      });
-      const output = fs.createWriteStream(audioFilePath);
-
-      stream.on('error', reject);
-      output.on('error', reject);
-      output.on('finish', resolve);
-
-      stream.pipe(output);
+      downloadResponse.data
+        .pipe(fileStream)
+        .on('finish', resolve)
+        .on('error', reject);
     });
 
     const stats = fs.statSync(audioFilePath);
     const fileSizeInMB = stats.size / (1024 * 1024);
-    console.log(`Audio downloaded. Size: ${fileSizeInMB.toFixed(2)} MB`);
+    console.log(`Audio downloaded successfully. Size: ${fileSizeInMB.toFixed(2)} MB`);
 
     if (fileSizeInMB >= 24.5) {
       fs.unlinkSync(audioFilePath);
       throw new Error(
-        `The audio file is too large (${fileSizeInMB.toFixed(1)}MB). Whisper's limit is 25MB. Please use the RapidAPI option for long videos.`
+        `The audio file is too large (${fileSizeInMB.toFixed(1)}MB). Limit is 25MB.`
       );
     }
 
+    console.log('File size safe. Transcribing via Groq Whisper...');
     const transcription = await groq.audio.transcriptions.create({
       file: fs.createReadStream(audioFilePath),
       model: 'whisper-large-v3',
@@ -161,12 +185,8 @@ export async function extractViaWhisper(videoUrl) {
     return transcription;
   } catch (error) {
     if (fs.existsSync(audioFilePath)) fs.unlinkSync(audioFilePath);
-    const message = error?.message || String(error || 'Unknown error');
-    console.error('Groq Whisper error:', message);
-    if (message.includes('Status code: 429')) {
-      throw new Error('YouTube rate-limited the audio download. Please try again later.');
-    }
-    throw new Error('Failed to transcribe audio via Groq.');
+    console.error('Whisper Pipeline Error:', error?.response?.data || error?.message || error);
+    throw new Error('Failed to transcribe audio. See backend logs.');
   }
 }
 

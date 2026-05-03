@@ -12,7 +12,6 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@distube/ytdl-core": "^4.16.12",
     "@langchain/core": "^1.1.43",
     "@langchain/google-genai": "^2.1.30",
     "axios": "^1.16.0",

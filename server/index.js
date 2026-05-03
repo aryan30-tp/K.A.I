@@ -69,14 +69,22 @@ app.post('/api/extract', upload.single('file'), async (req, res) => {
     } else if (req.file) {
       const mimeType = req.file.mimetype;
       const originalName = req.file.originalname.toLowerCase();
+      const originalExt = originalName.includes('.')
+        ? `.${originalName.split('.').pop()}`
+        : '';
+      const filePathWithExt = originalExt ? `${req.file.path}${originalExt}` : req.file.path;
+
+      if (filePathWithExt !== req.file.path) {
+        fs.renameSync(req.file.path, filePathWithExt);
+      }
 
       if (mimeType === 'application/pdf' || originalName.endsWith('.pdf')) {
-        rawText = await extractFromPdf(req.file.path);
+        rawText = await extractFromPdf(filePathWithExt);
       } else if (
         originalName.endsWith('.ppt') ||
         mimeType === 'application/vnd.ms-powerpoint'
       ) {
-        fs.unlinkSync(req.file.path);
+        fs.unlinkSync(filePathWithExt);
         return res
           .status(400)
           .json({ error: 'Legacy .ppt files are not supported. Please export as .pptx.' });
@@ -86,16 +94,16 @@ app.post('/api/extract', upload.single('file'), async (req, res) => {
         mimeType.includes('presentation') ||
         mimeType.includes('wordprocessingml')
       ) {
-        rawText = await extractOfficeFile(req.file.path);
+        rawText = await extractOfficeFile(filePathWithExt);
       } else {
-        fs.unlinkSync(req.file.path);
+        fs.unlinkSync(filePathWithExt);
         return res
           .status(400)
           .json({ error: 'Unsupported file format. Please upload PDF, DOCX, or PPTX.' });
       }
 
       // Clean up the temporary file immediately after reading it
-      fs.unlinkSync(req.file.path);
+      fs.unlinkSync(filePathWithExt);
     } else {
       return res.status(400).json({ error: "No file or URL provided" });
     }

@@ -121,6 +121,9 @@ export async function extractViaWhisper(videoUrl) {
   const audioFilePath = path.resolve(`./uploads/${uuidv4()}.mp3`);
 
   try {
+    if (!process.env.YTDL_NO_UPDATE) {
+      process.env.YTDL_NO_UPDATE = '1';
+    }
     console.log(`Starting Groq Whisper extraction for: ${videoUrl}`);
 
     await new Promise((resolve, reject) => {
@@ -128,11 +131,13 @@ export async function extractViaWhisper(videoUrl) {
         filter: 'audioonly',
         quality: 'highestaudio',
       });
+      const output = fs.createWriteStream(audioFilePath);
 
-      stream
-        .pipe(fs.createWriteStream(audioFilePath))
-        .on('finish', resolve)
-        .on('error', reject);
+      stream.on('error', reject);
+      output.on('error', reject);
+      output.on('finish', resolve);
+
+      stream.pipe(output);
     });
 
     const stats = fs.statSync(audioFilePath);
@@ -156,7 +161,11 @@ export async function extractViaWhisper(videoUrl) {
     return transcription;
   } catch (error) {
     if (fs.existsSync(audioFilePath)) fs.unlinkSync(audioFilePath);
-    console.error('Groq Whisper error:', error?.message || error);
+    const message = error?.message || String(error || 'Unknown error');
+    console.error('Groq Whisper error:', message);
+    if (message.includes('Status code: 429')) {
+      throw new Error('YouTube rate-limited the audio download. Please try again later.');
+    }
     throw new Error('Failed to transcribe audio via Groq.');
   }
 }

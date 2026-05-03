@@ -62,7 +62,14 @@ async function extractWordText(filePath) {
 export async function extractOfficeFile(filePath) {
   try {
     console.log(`Extracting text from office file: ${filePath}`);
-    const rawText = await officeParser.parseOfficeAsync(filePath);
+    let rawText = '';
+    if (typeof officeParser.parseOfficeAsync === 'function') {
+      rawText = await officeParser.parseOfficeAsync(filePath);
+    } else if (typeof officeParser.parseOffice === 'function') {
+      rawText = await officeParser.parseOffice(filePath);
+    } else {
+      throw new Error('officeparser API not available.');
+    }
     console.log('Office extraction successful.');
     return normalizeText(rawText || '');
   } catch (error) {

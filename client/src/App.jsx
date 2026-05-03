@@ -174,6 +174,7 @@ function App() {
             <input
               type="file"
               accept=".pdf,.docx,.pptx"
+              multiple
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               style={{ marginBottom: 8 }}
             />

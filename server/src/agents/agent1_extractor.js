@@ -87,8 +87,19 @@ export async function extractOfficeFile(filePath) {
     } else {
       throw new Error('officeparser API not available.');
     }
+    let normalizedInput = '';
+    if (typeof rawText === 'string') {
+      normalizedInput = rawText;
+    } else if (rawText?.text && typeof rawText.text === 'string') {
+      normalizedInput = rawText.text;
+    } else if (Array.isArray(rawText)) {
+      normalizedInput = rawText.map((item) => String(item)).join('\n');
+    } else if (rawText != null) {
+      normalizedInput = String(rawText);
+    }
+
     console.log('Office extraction successful.');
-    return normalizeText(rawText || '');
+    return normalizeText(normalizedInput || '');
   } catch (error) {
     const message = error?.message || String(error || 'Unknown error');
     console.error('Office Extraction Error:', message);

@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 
 function App() {
-  const [url, setUrl] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
   const [file, setFile] = useState(null);
   const [syllabusText, setSyllabusText] = useState('');
-  const [notesText, setNotesText] = useState('');
   const [pastPapersText, setPastPapersText] = useState('');
+  const [uploadId, setUploadId] = useState(null);
   const [rawNotes, setRawNotes] = useState('');
-  const [syllabusAnalysisText, setSyllabusAnalysisText] = useState('');
-  const [examAnalysisText, setExamAnalysisText] = useState('');
+  const [syllabusAnalysis, setSyllabusAnalysis] = useState(null);
+  const [examAnalysis, setExamAnalysis] = useState(null);
   const [requestType, setRequestType] = useState('flashcards');
   const [specificTopic, setSpecificTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
+  const [resultSource, setResultSource] = useState('');
   const [error, setError] = useState('');
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
@@ -27,33 +28,13 @@ function App() {
     }
 
     if (!res.ok) throw new Error(data?.error || 'Request failed');
-    return data?.text || raw || JSON.stringify(data);
+    return data;
   }
 
-  async function handleSubmit(e) {
+  async function handleExtract(e) {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-    setResult('');
-    try {
-      const res = await fetch(`${apiBase}/api/extract`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source: url }),
-      });
-      const text = await parseResponse(res);
-      setResult(text);
-    } catch (err) {
-      setError(err.message || String(err));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleFileUpload(e) {
-    e.preventDefault();
-    if (!file) {
-      setError('Please choose a file to upload.');
+    if (!youtubeUrl && !file) {
+      setError('Please provide a YouTube URL or upload a file.');
       return;
     }
 
@@ -62,15 +43,25 @@ function App() {
     setResult('');
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      if (youtubeUrl) {
+        formData.append('youtubeUrl', youtubeUrl);
+      }
+      if (file) {
+        formData.append('file', file);
+      }
 
-      const res = await fetch(`${apiBase}/api/extract-file`, {
+      const res = await fetch(`${apiBase}/api/extract`, {
         method: 'POST',
         body: formData,
       });
 
-      const text = await parseResponse(res);
-      setResult(text);
+      const data = await parseResponse(res);
+      if (!data.ok) throw new Error(data.error);
+      
+      setUploadId(data.uploadId);
+      setRawNotes(data.rawText);
+      setResult(data.rawText);
+      setResultSource('extracted');
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -78,10 +69,15 @@ function App() {
     }
   }
 
-  async function handleMapSyllabus(e) {
+  async function handleAnalyze(e) {
     e.preventDefault();
-    if (!syllabusText.trim() || !notesText.trim()) {
-      setError('Please provide both syllabus and notes text.');
+    if (!rawNotes.trim()) {
+      setError('Please extract notes first.');
+      return;
+    }
+
+    if (!syllabusText.trim()) {
+      setError('Please provide syllabus text.');
       return;
     }
 
@@ -89,40 +85,23 @@ function App() {
     setError('');
     setResult('');
     try {
-      const res = await fetch(`${apiBase}/api/map-syllabus`, {
+      const res = await fetch(`${apiBase}/api/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ syllabusText, notesText }),
+        body: JSON.stringify({
+          rawNotes,
+          syllabusText,
+          pastPapersText: pastPapersText.trim() || null,
+        }),
       });
 
-      const text = await parseResponse(res);
-      setResult(text);
-    } catch (err) {
-      setError(err.message || String(err));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleAnalyzePapers(e) {
-    e.preventDefault();
-    if (!syllabusText.trim() || !pastPapersText.trim()) {
-      setError('Please provide both syllabus and past papers text.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setResult('');
-    try {
-      const res = await fetch(`${apiBase}/api/analyze-papers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ syllabusText, pastPapersText }),
-      });
-
-      const text = await parseResponse(res);
-      setResult(text);
+      const data = await parseResponse(res);
+      if (!data.ok) throw new Error(data.error);
+      
+      setSyllabusAnalysis(data.syllabusAnalysis);
+      setExamAnalysis(data.examAnalysis);
+      setResult(JSON.stringify(data, null, 2));
+      setResultSource('analyzed');
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -132,29 +111,14 @@ function App() {
 
   async function handleGenerateOutput(e) {
     e.preventDefault();
-    if (!rawNotes.trim()) {
-      setError('Please provide raw notes for generation.');
+    if (!uploadId) {
+      setError('Please extract content first to get an uploadId.');
       return;
     }
 
-    let parsedSyllabus = null;
-    let parsedExam = null;
-    if (syllabusAnalysisText.trim()) {
-      try {
-        parsedSyllabus = JSON.parse(syllabusAnalysisText);
-      } catch (err) {
-        setError('Syllabus analysis must be valid JSON if provided.');
-        return;
-      }
-    }
-
-    if (examAnalysisText.trim()) {
-      try {
-        parsedExam = JSON.parse(examAnalysisText);
-      } catch (err) {
-        setError('Exam analysis must be valid JSON if provided.');
-        return;
-      }
+    if (!rawNotes.trim()) {
+      setError('Please provide raw notes for generation.');
+      return;
     }
 
     setLoading(true);
@@ -165,16 +129,20 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          uploadId,
           requestType,
           rawNotes,
-          syllabusAnalysis: parsedSyllabus,
-          examAnalysis: parsedExam,
+          syllabusAnalysis,
+          examAnalysis,
           specificTopic: specificTopic.trim() ? specificTopic.trim() : null,
         }),
       });
 
-      const text = await parseResponse(res);
-      setResult(text);
+      const data = await parseResponse(res);
+      if (!data.ok) throw new Error(data.error);
+      
+      setResult(JSON.stringify(data.data, null, 2));
+      setResultSource(`generated (from ${data.source})`);
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -184,129 +152,102 @@ function App() {
 
   return (
     <div style={{ padding: 20, fontFamily: 'Arial, sans-serif' }}>
-      <h1>K.A.I. — Extractor Test</h1>
-      <form onSubmit={handleSubmit} style={{ marginBottom: 12 }}>
-        <input
-          placeholder="YouTube URL or local file path"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          style={{ width: '60%', padding: 8, marginRight: 8 }}
-        />
-        <button type="submit" disabled={loading} style={{ padding: '8px 12px' }}>
-          {loading ? 'Extracting…' : 'Extract'}
-        </button>
-      </form>
+      <h1>🤖 K.A.I. — Study Assistant</h1>
+      
+      {/* Step 1: Extract */}
+      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+        <h2>Step 1: Extract Content</h2>
+        <form onSubmit={handleExtract}>
+          <div style={{ marginBottom: 12 }}>
+            <input
+              type="text"
+              placeholder="YouTube URL (or leave blank for file upload)"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              style={{ width: '100%', padding: 8, marginBottom: 8, boxSizing: 'border-box' }}
+            />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <input
+              type="file"
+              accept=".pdf,.docx"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              style={{ marginBottom: 8 }}
+            />
+            <small>{file ? `Selected: ${file.name}` : 'Or upload a PDF/DOCX file'}</small>
+          </div>
+          <button type="submit" disabled={loading || (!youtubeUrl && !file)} style={{ padding: '10px 16px', cursor: 'pointer' }}>
+            {loading ? '⏳ Extracting…' : '📤 Extract Content'}
+          </button>
+          {uploadId && <p style={{ color: 'green', marginTop: 8 }}>✅ Extracted! Upload ID: {uploadId.slice(0, 8)}...</p>}
+        </form>
+      </section>
 
-      <form onSubmit={handleFileUpload} style={{ marginBottom: 12 }}>
-        <input
-          type="file"
-          accept=".pdf,.docx"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          style={{ marginRight: 8 }}
-        />
-        <button type="submit" disabled={loading || !file} style={{ padding: '8px 12px' }}>
-          {loading ? 'Uploading…' : 'Upload & Extract'}
-        </button>
-      </form>
+      {/* Step 2: Analyze */}
+      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+        <h2>Step 2: Analyze (Optional)</h2>
+        <form onSubmit={handleAnalyze}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
+            <textarea
+              placeholder="Paste syllabus text here (required)"
+              value={syllabusText}
+              onChange={(e) => setSyllabusText(e.target.value)}
+              rows={4}
+              style={{ flex: 1, padding: 8 }}
+            />
+            <textarea
+              placeholder="Paste past exam papers (optional)"
+              value={pastPapersText}
+              onChange={(e) => setPastPapersText(e.target.value)}
+              rows={4}
+              style={{ flex: 1, padding: 8 }}
+            />
+          </div>
+          <button type="submit" disabled={loading || !rawNotes.trim()} style={{ padding: '10px 16px', cursor: 'pointer' }}>
+            {loading ? '⏳ Analyzing…' : '🔍 Analyze Content'}
+          </button>
+          {syllabusAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Syllabus mapped!</p>}
+          {examAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Exam patterns analyzed!</p>}
+        </form>
+      </section>
 
-      <form onSubmit={handleMapSyllabus} style={{ marginBottom: 12 }}>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
-          <textarea
-            placeholder="Paste syllabus text here"
-            value={syllabusText}
-            onChange={(e) => setSyllabusText(e.target.value)}
-            rows={6}
-            style={{ flex: 1, padding: 8 }}
-          />
-          <textarea
-            placeholder="Paste extracted notes text here"
-            value={notesText}
-            onChange={(e) => setNotesText(e.target.value)}
-            rows={6}
-            style={{ flex: 1, padding: 8 }}
-          />
-        </div>
-        <button type="submit" disabled={loading} style={{ padding: '8px 12px' }}>
-          {loading ? 'Mapping…' : 'Map Syllabus'}
-        </button>
-      </form>
+      {/* Step 3: Generate */}
+      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+        <h2>Step 3: Generate Output</h2>
+        <form onSubmit={handleGenerateOutput}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+            <label>
+              Output Type:{' '}
+              <select value={requestType} onChange={(e) => setRequestType(e.target.value)} style={{ padding: 6 }}>
+                <option value="flashcards">📇 Flashcards</option>
+                <option value="study_plan">📋 Study Plan</option>
+                <option value="summary">📝 Summary</option>
+                <option value="mock_test">❓ Mock Test</option>
+                <option value="eli5">🧒 ELI5</option>
+              </select>
+            </label>
+            <input
+              type="text"
+              placeholder="Specific topic for ELI5 (optional)"
+              value={specificTopic}
+              onChange={(e) => setSpecificTopic(e.target.value)}
+              style={{ flex: 1, padding: 6 }}
+            />
+          </div>
+          <button type="submit" disabled={loading || !uploadId} style={{ padding: '10px 16px', cursor: 'pointer' }}>
+            {loading ? '⏳ Generating…' : '✨ Generate Output'}
+          </button>
+        </form>
+      </section>
 
-      <form onSubmit={handleAnalyzePapers} style={{ marginBottom: 12 }}>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
-          <textarea
-            placeholder="Paste syllabus text here"
-            value={syllabusText}
-            onChange={(e) => setSyllabusText(e.target.value)}
-            rows={6}
-            style={{ flex: 1, padding: 8 }}
-          />
-          <textarea
-            placeholder="Paste past exam papers text here"
-            value={pastPapersText}
-            onChange={(e) => setPastPapersText(e.target.value)}
-            rows={6}
-            style={{ flex: 1, padding: 8 }}
-          />
-        </div>
-        <button type="submit" disabled={loading} style={{ padding: '8px 12px' }}>
-          {loading ? 'Analyzing…' : 'Analyze Past Papers'}
-        </button>
-      </form>
-
-      <form onSubmit={handleGenerateOutput} style={{ marginBottom: 12 }}>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
-          <textarea
-            placeholder="Paste raw notes text here"
-            value={rawNotes}
-            onChange={(e) => setRawNotes(e.target.value)}
-            rows={6}
-            style={{ flex: 1, padding: 8 }}
-          />
-          <textarea
-            placeholder="Paste syllabus analysis JSON (optional)"
-            value={syllabusAnalysisText}
-            onChange={(e) => setSyllabusAnalysisText(e.target.value)}
-            rows={6}
-            style={{ flex: 1, padding: 8 }}
-          />
-          <textarea
-            placeholder="Paste exam analysis JSON (optional)"
-            value={examAnalysisText}
-            onChange={(e) => setExamAnalysisText(e.target.value)}
-            rows={6}
-            style={{ flex: 1, padding: 8 }}
-          />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <label>
-            Request Type:{' '}
-            <select value={requestType} onChange={(e) => setRequestType(e.target.value)}>
-              <option value="flashcards">Flashcards</option>
-              <option value="study_plan">Study Plan</option>
-              <option value="summary">Summary</option>
-              <option value="mock_test">Mock Test</option>
-              <option value="eli5">ELI5</option>
-            </select>
-          </label>
-          <input
-            placeholder="Specific topic for ELI5 (optional)"
-            value={specificTopic}
-            onChange={(e) => setSpecificTopic(e.target.value)}
-            style={{ flex: 1, padding: 6 }}
-          />
-        </div>
-        <button type="submit" disabled={loading} style={{ padding: '8px 12px' }}>
-          {loading ? 'Generating…' : 'Generate Output'}
-        </button>
-      </form>
-
-      {error && <div style={{ color: 'crimson' }}>{error}</div>}
+      {/* Results */}
+      {error && <div style={{ color: 'crimson', marginBottom: 12, padding: 12, backgroundColor: '#ffe6e6', borderRadius: 4 }}>❌ {error}</div>}
 
       {result && (
-        <div>
-          <h3>Transcript / Extracted Text</h3>
-          <pre style={{ whiteSpace: 'pre-wrap', maxHeight: '60vh', overflow: 'auto' }}>{result}</pre>
-        </div>
+        <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ddd', borderRadius: 4, backgroundColor: '#f9f9f9' }}>
+          <h3>📊 Results {resultSource && `(${resultSource})`}</h3>
+          <pre style={{ whiteSpace: 'pre-wrap', maxHeight: '60vh', overflow: 'auto', padding: 12, backgroundColor: '#fff', borderRadius: 4 }}>{result}</pre>
+        </section>
       )}
     </div>
   );

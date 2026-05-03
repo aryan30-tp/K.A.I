@@ -97,6 +97,20 @@ export async function extractYouTubeText(videoUrl) {
     console.log('YouTube extraction successful via RapidAPI.');
     return normalizeText(cleanText);
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const data = error.response?.data;
+      console.error('RapidAPI extraction error:', {
+        status,
+        data,
+        message: error.message,
+      });
+
+      throw new Error(
+        `RapidAPI transcript failed (status ${status || 'unknown'}). See server logs for details.`
+      );
+    }
+
     console.error('RapidAPI extraction error:', error?.message || error);
     throw new Error(
       'Failed to extract video transcript. The video might not have captions, the API limit was reached, or RAPIDAPI_KEY is missing.'

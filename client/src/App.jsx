@@ -7,6 +7,7 @@ function App() {
   const [pastPapersText, setPastPapersText] = useState('');
   const [uploadId, setUploadId] = useState(null);
   const [rawNotes, setRawNotes] = useState('');
+  const [manualTranscript, setManualTranscript] = useState('');
   const [syllabusAnalysis, setSyllabusAnalysis] = useState(null);
   const [examAnalysis, setExamAnalysis] = useState(null);
   const [requestType, setRequestType] = useState('flashcards');
@@ -67,6 +68,21 @@ function App() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleManualTranscript(e) {
+    e.preventDefault();
+    if (!manualTranscript.trim()) {
+      setError('Please paste a transcript first.');
+      return;
+    }
+
+    const manualId = `manual-${Date.now()}`;
+    setUploadId(manualId);
+    setRawNotes(manualTranscript.trim());
+    setResult(manualTranscript.trim());
+    setResultSource('manual');
+    setError('');
   }
 
   async function handleAnalyze(e) {
@@ -180,6 +196,19 @@ function App() {
             {loading ? '⏳ Extracting…' : '📤 Extract Content'}
           </button>
           {uploadId && <p style={{ color: 'green', marginTop: 8 }}>✅ Extracted! Upload ID: {uploadId.slice(0, 8)}...</p>}
+        </form>
+
+        <form onSubmit={handleManualTranscript} style={{ marginTop: 12 }}>
+          <textarea
+            placeholder="Paste transcript here to skip extraction (testing only)"
+            value={manualTranscript}
+            onChange={(e) => setManualTranscript(e.target.value)}
+            rows={4}
+            style={{ width: '100%', padding: 8, boxSizing: 'border-box', marginBottom: 8 }}
+          />
+          <button type="submit" disabled={loading || !manualTranscript.trim()} style={{ padding: '10px 16px', cursor: 'pointer' }}>
+            {loading ? '⏳ Setting…' : '🧪 Use Pasted Transcript'}
+          </button>
         </form>
       </section>
 

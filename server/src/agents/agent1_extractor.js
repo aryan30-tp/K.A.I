@@ -88,9 +88,31 @@ export async function extractYouTubeText(videoUrl) {
       timeout: 15000,
     });
 
-    const transcriptArray = response.data;
-    if (!Array.isArray(transcriptArray)) {
-      throw new Error('Unexpected API response format.');
+    let transcriptArray = response.data;
+
+    if (!Array.isArray(transcriptArray) || transcriptArray.length === 0) {
+      // Fallback to URL-based endpoint if ID-based endpoint returns empty
+      const urlResponse = await axios.request({
+        method: 'GET',
+        url: 'https://youtube-transcript3.p.rapidapi.com/api/transcript-with-url',
+        params: {
+          url: videoUrl,
+          flat_text: true,
+          lang: 'en',
+        },
+        headers: {
+          'x-rapidapi-host': 'youtube-transcript3.p.rapidapi.com',
+          'x-rapidapi-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        timeout: 15000,
+      });
+
+      transcriptArray = urlResponse.data?.transcript || urlResponse.data;
+    }
+
+    if (!Array.isArray(transcriptArray) || transcriptArray.length === 0) {
+      throw new Error('No transcript returned by provider.');
     }
 
     const cleanText = transcriptArray.map((item) => item.text).join(' ');

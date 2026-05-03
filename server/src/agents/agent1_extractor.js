@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import mammoth from 'mammoth';
 import { PDFParse } from 'pdf-parse';
-import { YoutubeTranscript } from 'youtube-transcript';
+import axios from 'axios';
 
 const DOCUMENT_EXTENSIONS = new Set(['.pdf', '.docx']);
 
@@ -18,18 +18,10 @@ function isYoutubeUrl(input) {
   return /(?:youtube\.com|youtu\.be)/i.test(input);
 }
 
-function extractYoutubeId(input) {
-  try {
-    const url = new URL(input);
-
-    if (url.hostname.includes('youtu.be')) {
-      return url.pathname.split('/').filter(Boolean)[0] || '';
-    }
-
-    return url.searchParams.get('v') || '';
-  } catch {
-    return input;
-  }
+function extractVideoId(url) {
+  const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = String(url).match(regExp);
+  return match && match[2]?.length === 11 ? match[2] : null;
 }
 
 async function extractPdfText(filePath) {
@@ -70,47 +62,45 @@ export async function extractFromYoutube(input) {
 }
 
 /**
- * Extracts the transcript from a YouTube URL and converts it to a clean string.
- * @param {string} videoUrl - The full YouTube URL or video id
+ * Extracts the transcript from a YouTube URL via RapidAPI and converts it to a clean string.
+ * @param {string} videoUrl - The full YouTube URL
  * @returns {Promise<string>} - The combined text transcript
  */
 export async function extractYouTubeText(videoUrl) {
   try {
-    console.log(`Starting extraction for: ${videoUrl}`);
+    console.log(`Starting RapidAPI extraction for: ${videoUrl}`);
 
-    const videoId = extractYoutubeId(videoUrl);
-    const attempts = [
-      { input: videoUrl, options: undefined },
-      { input: videoId, options: undefined },
-      { input: videoUrl, options: { lang: 'en' } },
-      { input: videoId, options: { lang: 'en' } },
-    ];
+    const videoId = extractVideoId(videoUrl);
+    if (!videoId) throw new Error('Invalid YouTube URL');
 
-    let lastError = null;
+    const apiKey = process.env.RAPIDAPI_KEY;
+    if (!apiKey) throw new Error('RAPIDAPI_KEY is not set');
 
-    for (const attempt of attempts) {
-      try {
-        const transcriptArray = await YoutubeTranscript.fetchTranscript(
-          attempt.input,
-          attempt.options
-        );
+    const response = await axios.request({
+      method: 'GET',
+      url: 'https://youtube-transcript3.p.rapidapi.com/api/transcript',
+      params: { videoId },
+      headers: {
+        'x-rapidapi-host': 'youtube-transcript3.p.rapidapi.com',
+        'x-rapidapi-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      timeout: 15000,
+    });
 
-        const cleanText = transcriptArray.map((item) => item.text).join(' ');
-        console.log('Extraction successful!');
-        return normalizeText(cleanText);
-      } catch (err) {
-        lastError = err;
-      }
+    const transcriptArray = response.data;
+    if (!Array.isArray(transcriptArray)) {
+      throw new Error('Unexpected API response format.');
     }
 
-    const lastMessage = lastError?.message || String(lastError || 'Unknown error');
-    console.error('Error extracting YouTube transcript:', lastMessage);
-    throw new Error(
-      `Failed to extract video transcript. Underlying error: ${lastMessage}`
-    );
+    const cleanText = transcriptArray.map((item) => item.text).join(' ');
+    console.log('YouTube extraction successful via RapidAPI.');
+    return normalizeText(cleanText);
   } catch (error) {
-    console.error('Error extracting YouTube transcript:', error?.message || error);
-    throw error;
+    console.error('RapidAPI extraction error:', error?.message || error);
+    throw new Error(
+      'Failed to extract video transcript. The video might not have captions, the API limit was reached, or RAPIDAPI_KEY is missing.'
+    );
   }
 }
 

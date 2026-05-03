@@ -1,8 +1,17 @@
-import fs from 'node:fs/promises';
+import fs from 'node:fs';
+import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import mammoth from 'mammoth';
 import { PDFParse } from 'pdf-parse';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+import ytdl from '@distube/ytdl-core';
+import OpenAI from 'openai';
+
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: 'https://api.groq.com/openai/v1',
+});
 
 const DOCUMENT_EXTENSIONS = new Set(['.pdf', '.docx']);
 
@@ -27,7 +36,7 @@ function extractVideoId(url) {
 async function extractPdfText(filePath) {
   try {
     console.log(`Extracting PDF: ${filePath}`);
-    const dataBuffer = await fs.readFile(filePath);
+    const dataBuffer = await fsPromises.readFile(filePath);
     const parser = new PDFParse({ data: dataBuffer });
     const data = await parser.getText();
     await parser.destroy();
@@ -127,16 +136,45 @@ export async function extractYouTubeText(videoUrl) {
         data,
         message: error.message,
       });
-
-      throw new Error(
-        `RapidAPI transcript failed (status ${status || 'unknown'}). See server logs for details.`
-      );
+    } else {
+      console.error('RapidAPI extraction error:', error?.message || error);
     }
 
-    console.error('RapidAPI extraction error:', error?.message || error);
-    throw new Error(
-      'Failed to extract video transcript. The video might not have captions, the API limit was reached, or RAPIDAPI_KEY is missing.'
-    );
+    // Fallback to Groq Whisper if RapidAPI fails or returns empty
+    return extractViaWhisper(videoUrl);
+  }
+}
+
+export async function extractViaWhisper(videoUrl) {
+  const audioFilePath = path.resolve(`./uploads/${uuidv4()}.mp3`);
+
+  try {
+    console.log(`Starting Groq Whisper extraction for: ${videoUrl}`);
+
+    await new Promise((resolve, reject) => {
+      const stream = ytdl(videoUrl, {
+        filter: 'audioonly',
+        quality: 'highestaudio',
+      });
+
+      stream
+        .pipe(fs.createWriteStream(audioFilePath))
+        .on('finish', resolve)
+        .on('error', reject);
+    });
+
+    const transcription = await groq.audio.transcriptions.create({
+      file: fs.createReadStream(audioFilePath),
+      model: 'whisper-large-v3',
+      response_format: 'text',
+    });
+
+    fs.unlinkSync(audioFilePath);
+    return transcription;
+  } catch (error) {
+    if (fs.existsSync(audioFilePath)) fs.unlinkSync(audioFilePath);
+    console.error('Groq Whisper error:', error?.message || error);
+    throw new Error('Failed to transcribe audio via Groq.');
   }
 }
 

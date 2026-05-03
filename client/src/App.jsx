@@ -173,7 +173,7 @@ function App() {
           <div style={{ marginBottom: 12 }}>
             <input
               type="file"
-              accept=".pdf,.docx"
+              accept=".pdf,.docx,.pptx"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               style={{ marginBottom: 8 }}
             />

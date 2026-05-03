@@ -6,13 +6,14 @@ import { PDFParse } from 'pdf-parse';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import OpenAI from 'openai';
+import officeParser from 'officeparser';
 
 const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
   baseURL: 'https://api.groq.com/openai/v1',
 });
 
-const DOCUMENT_EXTENSIONS = new Set(['.pdf', '.docx']);
+const DOCUMENT_EXTENSIONS = new Set(['.pdf', '.docx', '.pptx']);
 
 function normalizeText(value) {
   return value
@@ -54,6 +55,19 @@ async function extractWordText(filePath) {
   } catch (error) {
     console.error('Error extracting Docx:', error?.message || error);
     throw new Error('Failed to parse Document.');
+  }
+}
+
+// --- 3. PPTX / DOCX EXTRACTOR ---
+export async function extractOfficeFile(filePath) {
+  try {
+    console.log(`Extracting text from office file: ${filePath}`);
+    const rawText = await officeParser.parseOfficeAsync(filePath);
+    console.log('Office extraction successful.');
+    return normalizeText(rawText || '');
+  } catch (error) {
+    console.error('Office Extraction Error:', error?.message || error);
+    throw new Error('Failed to extract text from the presentation or document.');
   }
 }
 
@@ -236,6 +250,10 @@ export async function extractContent(source) {
     return extractFromDocx(source);
   }
 
+  if (extension === '.pptx') {
+    return extractOfficeFile(source);
+  }
+
   throw new Error(`Unsupported source type: ${source}`);
 }
 
@@ -246,6 +264,7 @@ export async function processStudyMaterial(type, source) {
   if (type === 'youtube') return extractYouTubeText(source);
   if (type === 'pdf') return extractPdfText(source);
   if (type === 'docx') return extractWordText(source);
+  if (type === 'pptx') return extractOfficeFile(source);
   throw new Error('Unsupported file type');
 }
 
@@ -260,6 +279,7 @@ export default {
   extractFromDocx,
   extractFromPdf,
   extractFromYoutube,
+  extractOfficeFile,
   processStudyMaterial,
   resolveInputPath,
 };

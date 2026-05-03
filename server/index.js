@@ -16,7 +16,8 @@ import {
   extractFromPdf, 
   extractFromDocx, 
   extractFromYoutube, 
-  extractViaWhisper 
+  extractViaWhisper,
+  extractOfficeFile 
 } from './src/agents/agent1_extractor.js';
 import { mapSyllabusToNotes } from './src/agents/agent2_mapper.js';
 import { analyzePastPapers } from './src/agents/agent3_analyst.js';
@@ -66,15 +67,27 @@ app.post('/api/extract', upload.single('file'), async (req, res) => {
         rawText = await extractFromYoutube(youtubeUrl);
       }
     } else if (req.file) {
-      const type = req.file.mimetype === 'application/pdf' ? 'pdf' : 'docx';
-      if (type === 'pdf') {
+      const mimeType = req.file.mimetype;
+      const originalName = req.file.originalname.toLowerCase();
+
+      if (mimeType === 'application/pdf' || originalName.endsWith('.pdf')) {
         rawText = await extractFromPdf(req.file.path);
+      } else if (
+        originalName.endsWith('.pptx') ||
+        originalName.endsWith('.docx') ||
+        mimeType.includes('presentation') ||
+        mimeType.includes('wordprocessingml')
+      ) {
+        rawText = await extractOfficeFile(req.file.path);
       } else {
-        rawText = await extractFromDocx(req.file.path);
+        fs.unlinkSync(req.file.path);
+        return res
+          .status(400)
+          .json({ error: 'Unsupported file format. Please upload PDF, DOCX, or PPTX.' });
       }
-      
+
       // Clean up the temporary file immediately after reading it
-      fs.unlinkSync(req.file.path); 
+      fs.unlinkSync(req.file.path);
     } else {
       return res.status(400).json({ error: "No file or URL provided" });
     }

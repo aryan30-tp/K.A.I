@@ -103,8 +103,11 @@ export async function extractYouTubeText(videoUrl) {
       }
     }
 
-    console.error('Error extracting YouTube transcript:', lastError?.message || lastError);
-    throw new Error('Failed to extract video transcript. Make sure the video has captions enabled and is publicly available.');
+    const lastMessage = lastError?.message || String(lastError || 'Unknown error');
+    console.error('Error extracting YouTube transcript:', lastMessage);
+    throw new Error(
+      `Failed to extract video transcript. Underlying error: ${lastMessage}`
+    );
   } catch (error) {
     console.error('Error extracting YouTube transcript:', error?.message || error);
     throw error;

@@ -75,8 +75,11 @@ app.post('/api/extract', upload.single('file'), async (req, res) => {
 
     res.json({ ok: true, uploadId, rawText });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ ok: false, error: "Extraction failed" });
+    console.error('Extraction error:', error);
+    res.status(500).json({
+      ok: false,
+      error: error?.message || 'Extraction failed',
+    });
   }
 });
 

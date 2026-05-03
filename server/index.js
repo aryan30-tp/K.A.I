@@ -4,6 +4,7 @@ import cors from 'cors';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
+import axios from 'axios';
 
 // Import Firebase config (initializes Admin SDK)
 import './src/config/firebase.js';
@@ -140,6 +141,58 @@ app.post('/api/generate', async (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
+});
+
+// Debug RapidAPI availability without touching the extractor pipeline
+app.get('/api/debug-rapidapi', async (req, res) => {
+  try {
+    const videoUrl = req.query?.url;
+    if (!videoUrl) {
+      return res.status(400).json({ ok: false, error: 'Missing url query param' });
+    }
+
+    const apiKey = process.env.RAPIDAPI_KEY;
+    if (!apiKey) {
+      return res.status(400).json({ ok: false, error: 'RAPIDAPI_KEY is not set' });
+    }
+
+    const match = String(videoUrl).match(
+      /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
+    );
+    const videoId = match && match[2]?.length === 11 ? match[2] : null;
+    if (!videoId) {
+      return res.status(400).json({ ok: false, error: 'Invalid YouTube URL' });
+    }
+
+    const response = await axios.request({
+      method: 'GET',
+      url: 'https://youtube-transcript3.p.rapidapi.com/api/transcript',
+      params: { videoId },
+      headers: {
+        'x-rapidapi-host': 'youtube-transcript3.p.rapidapi.com',
+        'x-rapidapi-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      timeout: 15000,
+    });
+
+    return res.json({
+      ok: true,
+      status: response.status,
+      isArray: Array.isArray(response.data),
+      sample: Array.isArray(response.data) ? response.data.slice(0, 2) : response.data,
+    });
+  } catch (error) {
+    const status = error.response?.status || null;
+    const data = error.response?.data || null;
+    return res.status(500).json({
+      ok: false,
+      status,
+      data,
+      message: error.message,
+      code: error.code || null,
+    });
+  }
 });
 
 app.get('/', (req, res) => {

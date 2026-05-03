@@ -135,6 +135,17 @@ export async function extractViaWhisper(videoUrl) {
         .on('error', reject);
     });
 
+    const stats = fs.statSync(audioFilePath);
+    const fileSizeInMB = stats.size / (1024 * 1024);
+    console.log(`Audio downloaded. Size: ${fileSizeInMB.toFixed(2)} MB`);
+
+    if (fileSizeInMB >= 24.5) {
+      fs.unlinkSync(audioFilePath);
+      throw new Error(
+        `The audio file is too large (${fileSizeInMB.toFixed(1)}MB). Whisper's limit is 25MB. Please use the RapidAPI option for long videos.`
+      );
+    }
+
     const transcription = await groq.audio.transcriptions.create({
       file: fs.createReadStream(audioFilePath),
       model: 'whisper-large-v3',

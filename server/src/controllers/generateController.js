@@ -2,13 +2,19 @@ import agent4 from '../agents/agent4_generator.js';
 
 export async function generateContent(req, res) {
   try {
-    const { requestType, rawNotes, syllabusAnalysis, examAnalysis } = req.body;
+    const { requestType, rawNotes, syllabusAnalysis, examAnalysis, specificTopic } = req.body;
     if (!requestType || !rawNotes) {
       return res.status(400).json({ error: 'Missing requestType or rawNotes in request body' });
     }
 
     const { generateOutput } = agent4;
-    const result = await generateOutput(requestType, rawNotes, syllabusAnalysis, examAnalysis);
+    const result = await generateOutput(
+      requestType,
+      rawNotes,
+      syllabusAnalysis,
+      examAnalysis,
+      specificTopic
+    );
     return res.json({ ok: true, result });
   } catch (err) {
     console.error('generate content error', err);

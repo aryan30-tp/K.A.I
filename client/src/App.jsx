@@ -10,6 +10,7 @@ function App() {
   const [syllabusAnalysisText, setSyllabusAnalysisText] = useState('');
   const [examAnalysisText, setExamAnalysisText] = useState('');
   const [requestType, setRequestType] = useState('flashcards');
+  const [specificTopic, setSpecificTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
@@ -168,6 +169,7 @@ function App() {
           rawNotes,
           syllabusAnalysis: parsedSyllabus,
           examAnalysis: parsedExam,
+          specificTopic: specificTopic.trim() ? specificTopic.trim() : null,
         }),
       });
 
@@ -281,8 +283,17 @@ function App() {
             <select value={requestType} onChange={(e) => setRequestType(e.target.value)}>
               <option value="flashcards">Flashcards</option>
               <option value="study_plan">Study Plan</option>
+              <option value="summary">Summary</option>
+              <option value="mock_test">Mock Test</option>
+              <option value="eli5">ELI5</option>
             </select>
           </label>
+          <input
+            placeholder="Specific topic for ELI5 (optional)"
+            value={specificTopic}
+            onChange={(e) => setSpecificTopic(e.target.value)}
+            style={{ flex: 1, padding: 6 }}
+          />
         </div>
         <button type="submit" disabled={loading} style={{ padding: '8px 12px' }}>
           {loading ? 'Generating…' : 'Generate Output'}

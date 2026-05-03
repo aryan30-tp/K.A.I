@@ -78,18 +78,36 @@ export async function extractYouTubeText(videoUrl) {
   try {
     console.log(`Starting extraction for: ${videoUrl}`);
 
-    // Fetch the transcript array
-    const transcriptArray = await YoutubeTranscript.fetchTranscript(videoUrl);
+    const videoId = extractYoutubeId(videoUrl);
+    const attempts = [
+      { input: videoUrl, options: undefined },
+      { input: videoId, options: undefined },
+      { input: videoUrl, options: { lang: 'en' } },
+      { input: videoId, options: { lang: 'en' } },
+    ];
 
-    // The package returns an array of objects: { text: "hello", duration: 1.5, offset: 0 }
-    // We map through it to grab just the text and join it with spaces.
-    const cleanText = transcriptArray.map((item) => item.text).join(' ');
+    let lastError = null;
 
-    console.log('Extraction successful!');
-    return normalizeText(cleanText);
+    for (const attempt of attempts) {
+      try {
+        const transcriptArray = await YoutubeTranscript.fetchTranscript(
+          attempt.input,
+          attempt.options
+        );
+
+        const cleanText = transcriptArray.map((item) => item.text).join(' ');
+        console.log('Extraction successful!');
+        return normalizeText(cleanText);
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    console.error('Error extracting YouTube transcript:', lastError?.message || lastError);
+    throw new Error('Failed to extract video transcript. Make sure the video has captions enabled and is publicly available.');
   } catch (error) {
     console.error('Error extracting YouTube transcript:', error?.message || error);
-    throw new Error('Failed to extract video transcript. Make sure the video has captions enabled.');
+    throw error;
   }
 }
 

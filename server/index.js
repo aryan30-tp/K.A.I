@@ -25,6 +25,8 @@ import {
 import { mapSyllabusToNotes } from './src/agents/agent2_mapper.js';
 import { analyzePastPapers } from './src/agents/agent3_analyst.js';
 import { generateOutput } from './src/agents/agent4_generator.js';
+import { generateMockExam } from './src/agents/agent7_exam_generator.js';
+import { gradeExamAnswer } from './src/agents/agent6_grader.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -181,6 +183,39 @@ app.post('/api/generate', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ ok: false, error: `Failed to generate ${req.body.requestType}` });
+  }
+});
+
+// --- EXAM ENGINE ---
+app.post('/api/exam/generate', async (req, res) => {
+  try {
+    const { topic, workspaceId } = req.body;
+
+    if (!topic || !workspaceId) {
+      return res.status(400).json({ ok: false, error: 'Missing topic or workspaceId' });
+    }
+
+    const examJson = await generateMockExam(topic, workspaceId);
+    return res.json({ ok: true, exam: examJson });
+  } catch (error) {
+    console.error('Exam Generation Error:', error?.message || error);
+    return res.status(500).json({ ok: false, error: 'Failed to generate exam.' });
+  }
+});
+
+app.post('/api/exam/grade', async (req, res) => {
+  try {
+    const { question, studentAnswer, workspaceId } = req.body;
+
+    if (!question || !studentAnswer || !workspaceId) {
+      return res.status(400).json({ ok: false, error: 'Missing required grading parameters' });
+    }
+
+    const gradingReport = await gradeExamAnswer(question, studentAnswer, workspaceId);
+    return res.json({ ok: true, report: gradingReport });
+  } catch (error) {
+    console.error('Exam Grading Error:', error?.message || error);
+    return res.status(500).json({ ok: false, error: 'Agent 6 failed to grade the answer.' });
   }
 });
 

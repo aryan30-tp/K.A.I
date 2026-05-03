@@ -1,4 +1,4 @@
-import { generateOutput } from '../agents/agent4_generator.js';
+import agent4 from '../agents/agent4_generator.js';
 
 export async function generateContent(req, res) {
   try {
@@ -7,6 +7,7 @@ export async function generateContent(req, res) {
       return res.status(400).json({ error: 'Missing requestType or rawNotes in request body' });
     }
 
+    const { generateOutput } = agent4;
     const result = await generateOutput(requestType, rawNotes, syllabusAnalysis, examAnalysis);
     return res.json({ ok: true, result });
   } catch (err) {

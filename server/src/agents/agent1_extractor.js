@@ -66,8 +66,11 @@ export async function extractOfficeFile(filePath) {
     console.log('Office extraction successful.');
     return normalizeText(rawText || '');
   } catch (error) {
-    console.error('Office Extraction Error:', error?.message || error);
-    throw new Error('Failed to extract text from the presentation or document.');
+    const message = error?.message || String(error || 'Unknown error');
+    console.error('Office Extraction Error:', message);
+    throw new Error(
+      `Failed to extract text from the presentation or document. ${message}`
+    );
   }
 }
 

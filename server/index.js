@@ -52,7 +52,7 @@ app.use(cors(corsOptions));
 const upload = multer({ dest: 'uploads/' });
 
 // --- ROUTE 1: EXTRACT FUEL (Agent 1) ---
-app.post('/api/extract', upload.single('file'), async (req, res) => {
+app.post('/api/extract', upload.array('file', 10), async (req, res) => {
   try {
     const { youtubeUrl, forceWhisper } = req.body;
     let rawText = "";
@@ -66,44 +66,53 @@ app.post('/api/extract', upload.single('file'), async (req, res) => {
       } else {
         rawText = await extractFromYoutube(youtubeUrl);
       }
-    } else if (req.file) {
-      const mimeType = req.file.mimetype;
-      const originalName = req.file.originalname.toLowerCase();
-      const originalExt = originalName.includes('.')
-        ? `.${originalName.split('.').pop()}`
-        : '';
-      const filePathWithExt = originalExt ? `${req.file.path}${originalExt}` : req.file.path;
+    } else if (req.files && req.files.length > 0) {
+      const extractedTexts = [];
 
-      if (filePathWithExt !== req.file.path) {
-        fs.renameSync(req.file.path, filePathWithExt);
+      for (const file of req.files) {
+        const mimeType = file.mimetype;
+        const originalName = file.originalname.toLowerCase();
+        const originalExt = originalName.includes('.')
+          ? `.${originalName.split('.').pop()}`
+          : '';
+        const filePathWithExt = originalExt ? `${file.path}${originalExt}` : file.path;
+
+        if (filePathWithExt !== file.path) {
+          fs.renameSync(file.path, filePathWithExt);
+        }
+
+        let fileText = '';
+        if (mimeType === 'application/pdf' || originalName.endsWith('.pdf')) {
+          fileText = await extractFromPdf(filePathWithExt);
+        } else if (
+          originalName.endsWith('.ppt') ||
+          mimeType === 'application/vnd.ms-powerpoint'
+        ) {
+          fs.unlinkSync(filePathWithExt);
+          return res
+            .status(400)
+            .json({ error: 'Legacy .ppt files are not supported. Please export as .pptx.' });
+        } else if (
+          originalName.endsWith('.pptx') ||
+          originalName.endsWith('.docx') ||
+          mimeType.includes('presentation') ||
+          mimeType.includes('wordprocessingml')
+        ) {
+          fileText = await extractOfficeFile(filePathWithExt);
+        } else {
+          fs.unlinkSync(filePathWithExt);
+          return res
+            .status(400)
+            .json({ error: 'Unsupported file format. Please upload PDF, DOCX, or PPTX.' });
+        }
+
+        extractedTexts.push(`### ${originalName}\n\n${fileText}`);
+
+        // Clean up the temporary file immediately after reading it
+        fs.unlinkSync(filePathWithExt);
       }
 
-      if (mimeType === 'application/pdf' || originalName.endsWith('.pdf')) {
-        rawText = await extractFromPdf(filePathWithExt);
-      } else if (
-        originalName.endsWith('.ppt') ||
-        mimeType === 'application/vnd.ms-powerpoint'
-      ) {
-        fs.unlinkSync(filePathWithExt);
-        return res
-          .status(400)
-          .json({ error: 'Legacy .ppt files are not supported. Please export as .pptx.' });
-      } else if (
-        originalName.endsWith('.pptx') ||
-        originalName.endsWith('.docx') ||
-        mimeType.includes('presentation') ||
-        mimeType.includes('wordprocessingml')
-      ) {
-        rawText = await extractOfficeFile(filePathWithExt);
-      } else {
-        fs.unlinkSync(filePathWithExt);
-        return res
-          .status(400)
-          .json({ error: 'Unsupported file format. Please upload PDF, DOCX, or PPTX.' });
-      }
-
-      // Clean up the temporary file immediately after reading it
-      fs.unlinkSync(filePathWithExt);
+      rawText = extractedTexts.join('\n\n---\n\n');
     } else {
       return res.status(400).json({ error: "No file or URL provided" });
     }

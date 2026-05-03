@@ -5,6 +5,7 @@ import { extract, extractFile } from '../controllers/extractController.js';
 import { mapSyllabus } from '../controllers/mapController.js';
 import { listModels } from '../controllers/modelsController.js';
 import { analyzePapers } from '../controllers/analysisController.js';
+import { generateContent } from '../controllers/generateController.js';
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -23,6 +24,9 @@ router.post('/map-syllabus', mapSyllabus);
 
 // POST /api/analyze-papers
 router.post('/analyze-papers', analyzePapers);
+
+// POST /api/generate
+router.post('/generate', generateContent);
 
 // GET /api/list-models
 router.get('/list-models', listModels);

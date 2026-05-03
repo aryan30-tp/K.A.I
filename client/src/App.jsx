@@ -6,6 +6,10 @@ function App() {
   const [syllabusText, setSyllabusText] = useState('');
   const [notesText, setNotesText] = useState('');
   const [pastPapersText, setPastPapersText] = useState('');
+  const [rawNotes, setRawNotes] = useState('');
+  const [syllabusAnalysisText, setSyllabusAnalysisText] = useState('');
+  const [examAnalysisText, setExamAnalysisText] = useState('');
+  const [requestType, setRequestType] = useState('flashcards');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
@@ -125,6 +129,57 @@ function App() {
     }
   }
 
+  async function handleGenerateOutput(e) {
+    e.preventDefault();
+    if (!rawNotes.trim()) {
+      setError('Please provide raw notes for generation.');
+      return;
+    }
+
+    let parsedSyllabus = null;
+    let parsedExam = null;
+    if (syllabusAnalysisText.trim()) {
+      try {
+        parsedSyllabus = JSON.parse(syllabusAnalysisText);
+      } catch (err) {
+        setError('Syllabus analysis must be valid JSON if provided.');
+        return;
+      }
+    }
+
+    if (examAnalysisText.trim()) {
+      try {
+        parsedExam = JSON.parse(examAnalysisText);
+      } catch (err) {
+        setError('Exam analysis must be valid JSON if provided.');
+        return;
+      }
+    }
+
+    setLoading(true);
+    setError('');
+    setResult('');
+    try {
+      const res = await fetch(`${apiBase}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestType,
+          rawNotes,
+          syllabusAnalysis: parsedSyllabus,
+          examAnalysis: parsedExam,
+        }),
+      });
+
+      const text = await parseResponse(res);
+      setResult(text);
+    } catch (err) {
+      setError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div style={{ padding: 20, fontFamily: 'Arial, sans-serif' }}>
       <h1>K.A.I. — Extractor Test</h1>
@@ -193,6 +248,44 @@ function App() {
         </div>
         <button type="submit" disabled={loading} style={{ padding: '8px 12px' }}>
           {loading ? 'Analyzing…' : 'Analyze Past Papers'}
+        </button>
+      </form>
+
+      <form onSubmit={handleGenerateOutput} style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
+          <textarea
+            placeholder="Paste raw notes text here"
+            value={rawNotes}
+            onChange={(e) => setRawNotes(e.target.value)}
+            rows={6}
+            style={{ flex: 1, padding: 8 }}
+          />
+          <textarea
+            placeholder="Paste syllabus analysis JSON (optional)"
+            value={syllabusAnalysisText}
+            onChange={(e) => setSyllabusAnalysisText(e.target.value)}
+            rows={6}
+            style={{ flex: 1, padding: 8 }}
+          />
+          <textarea
+            placeholder="Paste exam analysis JSON (optional)"
+            value={examAnalysisText}
+            onChange={(e) => setExamAnalysisText(e.target.value)}
+            rows={6}
+            style={{ flex: 1, padding: 8 }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <label>
+            Request Type:{' '}
+            <select value={requestType} onChange={(e) => setRequestType(e.target.value)}>
+              <option value="flashcards">Flashcards</option>
+              <option value="study_plan">Study Plan</option>
+            </select>
+          </label>
+        </div>
+        <button type="submit" disabled={loading} style={{ padding: '8px 12px' }}>
+          {loading ? 'Generating…' : 'Generate Output'}
         </button>
       </form>
 

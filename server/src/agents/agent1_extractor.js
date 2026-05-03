@@ -95,7 +95,8 @@ export async function extractOfficeFile(filePath) {
     } else if (Array.isArray(rawText)) {
       normalizedInput = rawText.map((item) => String(item)).join('\n');
     } else if (rawText != null) {
-      normalizedInput = String(rawText);
+      const strings = collectStrings(rawText, 10000);
+      normalizedInput = strings.join('\n');
     }
 
     console.log('Office extraction successful.');
@@ -118,6 +119,31 @@ async function readFileHeader(filePath, length) {
   } finally {
     await handle.close();
   }
+}
+
+function collectStrings(value, limit) {
+  const results = [];
+
+  const walk = (node) => {
+    if (results.length >= limit) return;
+    if (typeof node === 'string') {
+      const trimmed = node.trim();
+      if (trimmed) results.push(trimmed);
+      return;
+    }
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item);
+      return;
+    }
+    if (node && typeof node === 'object') {
+      for (const key of Object.keys(node)) {
+        walk(node[key]);
+      }
+    }
+  };
+
+  walk(value);
+  return results;
 }
 
 export async function extractFromPdf(filePath) {

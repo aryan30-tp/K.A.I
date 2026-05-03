@@ -127,7 +127,7 @@ export async function extractViaWhisper(videoUrl) {
     const videoId = extractVideoId(videoUrl);
     if (!videoId) throw new Error('Invalid YouTube URL');
 
-    const mp3Response = await axios.request({
+    const mp3ApiOptions = {
       method: 'GET',
       url: 'https://youtube-mp36.p.rapidapi.com/dl',
       params: { id: videoId },
@@ -137,12 +137,39 @@ export async function extractViaWhisper(videoUrl) {
         'Content-Type': 'application/json',
       },
       timeout: 20000,
-    });
+    };
 
-    const downloadUrl = mp3Response.data?.link;
+    let downloadUrl = '';
+    let attempts = 0;
+    const maxAttempts = 15;
+
+    while (attempts < maxAttempts) {
+      const mp3Response = await axios.request(mp3ApiOptions);
+      const data = mp3Response.data;
+
+      if (data?.link) {
+        downloadUrl = data.link;
+        console.log('API finished processing! Link acquired.');
+        break;
+      }
+
+      if (data?.status === 'processing' || data?.msg === 'in process') {
+        attempts += 1;
+        console.log(
+          `API is processing the audio (Attempt ${attempts}/${maxAttempts}). Waiting 3 seconds...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        continue;
+      }
+
+      throw new Error(
+        `RapidAPI returned an unexpected error: ${JSON.stringify(data)}`
+      );
+    }
+
     if (!downloadUrl) {
       throw new Error(
-        `RapidAPI failed to generate an audio link. Response: ${JSON.stringify(mp3Response.data)}`
+        'RapidAPI timed out while trying to generate the audio link. The file might be too large.'
       );
     }
 

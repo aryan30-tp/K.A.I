@@ -197,7 +197,7 @@ export async function extractViaWhisper(videoUrl) {
     if (fileSizeInMB >= 24.5) {
       fs.unlinkSync(audioFilePath);
       throw new Error(
-        `The audio file is too large (${fileSizeInMB.toFixed(1)}MB). Limit is 25MB.`
+        'This video is too large for AI Audio Transcription. For videos over 30 minutes, please ensure they have YouTube captions enabled so K.A.I. can read the text directly.'
       );
     }
 

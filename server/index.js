@@ -6,12 +6,14 @@ import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import axios from 'axios';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Import Firebase config (initializes Admin SDK)
 import './src/config/firebase.js';
 import { getCachedOutput, saveCachedOutput } from './src/services/dbService.js';
 
 const db = getFirestore();
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 // Import our Agents
 import { 
@@ -330,6 +332,25 @@ app.post('/api/flashcards/review', async (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
+});
+
+// List available Gemini models for debugging
+app.get('/api/list-models', async (req, res) => {
+  try {
+    const response = await genAI.listModels();
+    const models = response.models || [];
+
+    const formatted = models.map((model) => ({
+      name: model.name,
+      displayName: model.displayName,
+      supportedGenerationMethods: model.supportedGenerationMethods,
+    }));
+
+    res.json({ ok: true, models: formatted });
+  } catch (error) {
+    console.error('List models error:', error?.message || error);
+    res.status(500).json({ ok: false, error: 'Failed to list models.' });
+  }
 });
 
 // Debug RapidAPI availability without touching the extractor pipeline

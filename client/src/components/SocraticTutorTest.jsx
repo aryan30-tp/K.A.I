@@ -1,8 +1,11 @@
 import React, { useRef, useState } from 'react';
 
-export default function SocraticTutorTest({ apiBase = '' }) {
+export default function SocraticTutorTest({
+  apiBase = '',
+  workspaceId = '',
+  onWorkspaceIdChange = () => {},
+}) {
   const [topic, setTopic] = useState('Graph Algorithms');
-  const [workspaceId, setWorkspaceId] = useState('user_123');
   const [chatHistory, setChatHistory] = useState('[]');
   const [isRecording, setIsRecording] = useState(false);
   const [statusText, setStatusText] = useState('Ready for input.');
@@ -120,7 +123,7 @@ export default function SocraticTutorTest({ apiBase = '' }) {
           <input
             type="text"
             value={workspaceId}
-            onChange={(e) => setWorkspaceId(e.target.value)}
+            onChange={(e) => onWorkspaceIdChange(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="Workspace ID"
           />

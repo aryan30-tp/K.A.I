@@ -28,6 +28,7 @@ import {
 import { mapSyllabusToNotes } from './src/agents/agent2_mapper.js';
 import { analyzePastPapers } from './src/agents/agent3_analyst.js';
 import { generateOutput } from './src/agents/agent4_generator.js';
+import { ingestDocumentToBrain } from './src/agents/agent5_rag.js';
 import { generateMockExam } from './src/agents/agent7_exam_generator.js';
 import { gradeExamAnswer } from './src/agents/agent6_grader.js';
 import { processSocraticTurn } from './src/agents/agent8_socratic.js';
@@ -65,8 +66,12 @@ const upload = multer({ dest: 'uploads/' });
 // --- ROUTE 1: EXTRACT FUEL (Agent 1) ---
 app.post('/api/extract', upload.array('file', 10), async (req, res) => {
   try {
-    const { youtubeUrl, forceWhisper } = req.body;
+    const { youtubeUrl, forceWhisper, workspaceId } = req.body;
     let rawText = "";
+
+    if (!workspaceId) {
+      return res.status(400).json({ error: 'workspaceId is required' });
+    }
 
     // Generate a unique ID for this specific study session/document
     const uploadId = uuidv4(); 
@@ -128,7 +133,19 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
       return res.status(400).json({ error: "No file or URL provided" });
     }
 
-    res.json({ ok: true, uploadId, rawText });
+    await ingestDocumentToBrain(rawText, workspaceId, uploadId);
+
+    await db.collection('study_sessions').doc(uploadId).set(
+      {
+        workspaceId,
+        rawText,
+        sourceType: youtubeUrl ? 'youtube' : 'file',
+        createdAt: Timestamp.now(),
+      },
+      { merge: true }
+    );
+
+    res.json({ ok: true, uploadId, rawText, workspaceId });
   } catch (error) {
     console.error('Extraction error:', error);
     res.status(500).json({

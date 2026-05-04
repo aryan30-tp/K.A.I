@@ -8,6 +8,7 @@ function App() {
   const [pastPapersText, setPastPapersText] = useState('');
   const [uploadId, setUploadId] = useState(null);
   const [rawNotes, setRawNotes] = useState('');
+  const [workspaceId, setWorkspaceId] = useState('user_123');
   const [forceWhisper, setForceWhisper] = useState(false);
   const [syllabusAnalysis, setSyllabusAnalysis] = useState(null);
   const [examAnalysis, setExamAnalysis] = useState(null);
@@ -17,11 +18,9 @@ function App() {
   const [result, setResult] = useState('');
   const [resultSource, setResultSource] = useState('');
   const [error, setError] = useState('');
-  const [heatmapWorkspaceId, setHeatmapWorkspaceId] = useState('user_123');
   const [heatmapLoading, setHeatmapLoading] = useState(false);
   const [heatmapError, setHeatmapError] = useState('');
   const [heatmapResult, setHeatmapResult] = useState(null);
-  const [survivalWorkspaceId, setSurvivalWorkspaceId] = useState('user_123');
   const [hoursRemaining, setHoursRemaining] = useState('6');
   const [survivalLoading, setSurvivalLoading] = useState(false);
   const [survivalError, setSurvivalError] = useState('');
@@ -54,6 +53,10 @@ function App() {
       setError('Please provide a YouTube URL or upload a file.');
       return;
     }
+    if (!workspaceId.trim()) {
+      setError('Please provide a workspaceId.');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -66,6 +69,7 @@ function App() {
       if (file) {
         formData.append('file', file);
       }
+      formData.append('workspaceId', workspaceId.trim());
       formData.append('forceWhisper', forceWhisper ? 'true' : 'false');
 
       const res = await fetch(`${apiBase}/api/extract`, {
@@ -171,7 +175,7 @@ function App() {
 
   async function handleFetchHeatmap(e) {
     e.preventDefault();
-    if (!heatmapWorkspaceId.trim()) {
+    if (!workspaceId.trim()) {
       setHeatmapError('Please provide a workspaceId.');
       return;
     }
@@ -182,7 +186,7 @@ function App() {
 
     try {
       const res = await fetch(
-        `${apiBase}/api/analytics/heatmap/${encodeURIComponent(heatmapWorkspaceId.trim())}`
+        `${apiBase}/api/analytics/heatmap/${encodeURIComponent(workspaceId.trim())}`
       );
       const data = await parseResponse(res);
       if (!data.ok) throw new Error(data.error);
@@ -196,7 +200,7 @@ function App() {
 
   async function handleSurvivalPlan(e) {
     e.preventDefault();
-    const trimmedWorkspaceId = survivalWorkspaceId.trim();
+    const trimmedWorkspaceId = workspaceId.trim();
     const hoursValue = Number(hoursRemaining);
 
     if (!trimmedWorkspaceId) {
@@ -241,6 +245,15 @@ function App() {
       <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
         <h2>Step 1: Extract Content</h2>
         <form onSubmit={handleExtract}>
+          <div style={{ marginBottom: 12 }}>
+            <input
+              type="text"
+              placeholder="Workspace ID"
+              value={workspaceId}
+              onChange={(e) => setWorkspaceId(e.target.value)}
+              style={{ width: '100%', padding: 8, marginBottom: 8, boxSizing: 'border-box' }}
+            />
+          </div>
           <div style={{ marginBottom: 12 }}>
             <input
               type="text"
@@ -333,20 +346,17 @@ function App() {
         </form>
       </section>
 
-      <SocraticTutorTest apiBase={apiBase} />
+      <SocraticTutorTest
+        apiBase={apiBase}
+        workspaceId={workspaceId}
+        onWorkspaceIdChange={setWorkspaceId}
+      />
 
       {/* Survival Mode Test Panel */}
       <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
         <h2>Step 4: Survival Mode (Agent 11)</h2>
         <form onSubmit={handleSurvivalPlan}>
           <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-            <input
-              type="text"
-              value={survivalWorkspaceId}
-              onChange={(e) => setSurvivalWorkspaceId(e.target.value)}
-              placeholder="Workspace ID"
-              style={{ flex: 1, padding: 8 }}
-            />
             <input
               type="number"
               min="1"
@@ -425,14 +435,14 @@ function App() {
           <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
             <input
               type="text"
-              value={heatmapWorkspaceId}
-              onChange={(e) => setHeatmapWorkspaceId(e.target.value)}
+              value={workspaceId}
+              onChange={(e) => setWorkspaceId(e.target.value)}
               placeholder="Workspace ID"
               style={{ flex: 1, padding: 8 }}
             />
             <button
               type="submit"
-              disabled={heatmapLoading || !heatmapWorkspaceId.trim()}
+              disabled={heatmapLoading || !workspaceId.trim()}
               style={{ padding: '10px 16px', cursor: 'pointer' }}
             >
               {heatmapLoading ? '⏳ Fetching…' : '📈 Fetch Heatmap'}

@@ -340,8 +340,13 @@ app.get('/api/list-models', async (req, res) => {
     if (!process.env.GOOGLE_API_KEY) {
       return res.status(400).json({ ok: false, error: 'GOOGLE_API_KEY is not set.' });
     }
-    const response = await genAI.listModels();
-    const models = response.models || [];
+    const response = await axios.get(
+      'https://generativelanguage.googleapis.com/v1beta/models',
+      {
+        params: { key: process.env.GOOGLE_API_KEY },
+      }
+    );
+    const models = response.data?.models || [];
 
     const formatted = models.map((model) => ({
       name: model.name,

@@ -306,6 +306,21 @@ export async function extractViaWhisper(videoUrl) {
   }
 }
 
+export async function processLocalAudioViaGroq(filePath) {
+  try {
+    console.log(`Transcribing local audio file: ${filePath}`);
+    const transcription = await groq.audio.transcriptions.create({
+      file: fs.createReadStream(filePath),
+      model: 'whisper-large-v3',
+      response_format: 'text',
+    });
+    return transcription;
+  } catch (error) {
+    console.error('Groq local transcription error:', error?.message || error);
+    throw new Error('Failed to transcribe audio via Groq.');
+  }
+}
+
 export async function extractContent(source) {
   if (isYoutubeUrl(source)) {
     return extractFromYoutube(source);

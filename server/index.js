@@ -20,13 +20,15 @@ import {
   extractFromDocx, 
   extractFromYoutube, 
   extractViaWhisper,
-  extractOfficeFile 
+  extractOfficeFile,
+  processLocalAudioViaGroq
 } from './src/agents/agent1_extractor.js';
 import { mapSyllabusToNotes } from './src/agents/agent2_mapper.js';
 import { analyzePastPapers } from './src/agents/agent3_analyst.js';
 import { generateOutput } from './src/agents/agent4_generator.js';
 import { generateMockExam } from './src/agents/agent7_exam_generator.js';
 import { gradeExamAnswer } from './src/agents/agent6_grader.js';
+import { processSocraticTurn } from './src/agents/agent8_socratic.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -216,6 +218,46 @@ app.post('/api/exam/grade', async (req, res) => {
   } catch (error) {
     console.error('Exam Grading Error:', error?.message || error);
     return res.status(500).json({ ok: false, error: 'Agent 6 failed to grade the answer.' });
+  }
+});
+
+// --- SOCRATIC VOICE EXAM ---
+app.post('/api/socratic/turn', upload.single('audioFile'), async (req, res) => {
+  try {
+    const { chatHistory, topic, workspaceId } = req.body;
+
+    if (!req.file || !topic || !workspaceId) {
+      return res.status(400).json({ ok: false, error: 'Missing audio file, topic, or workspaceId' });
+    }
+
+    const transcriptionResult = await processLocalAudioViaGroq(req.file.path);
+    const transcriptionText =
+      typeof transcriptionResult === 'string'
+        ? transcriptionResult
+        : transcriptionResult?.text || String(transcriptionResult || '');
+    const parsedHistory = chatHistory ? JSON.parse(chatHistory) : [];
+
+    const tutorResponse = await processSocraticTurn(
+      transcriptionText,
+      parsedHistory,
+      topic,
+      workspaceId
+    );
+
+    fs.unlinkSync(req.file.path);
+
+    return res.json({
+      ok: true,
+      studentTranscription: transcriptionText,
+      tutorSpeech: tutorResponse.tutorSpeech,
+      isConceptMastered: tutorResponse.isConceptMastered,
+    });
+  } catch (error) {
+    console.error('Socratic Turn Error:', error?.message || error);
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    return res.status(500).json({ ok: false, error: 'The tutor lost connection.' });
   }
 });
 

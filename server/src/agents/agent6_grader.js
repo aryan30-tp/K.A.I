@@ -36,7 +36,7 @@ export async function gradeExamAnswer(question, studentAnswer, workspaceId) {
       .join('\n\n---\n\n');
 
     const chatModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',
+      model: process.env.GEMINI_MODEL || 'models/gemini-2.0-flash',
     });
 
     const prompt = `You are K.A.I., a strict exam grader.

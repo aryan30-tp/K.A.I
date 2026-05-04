@@ -54,7 +54,7 @@ export async function generateSurvivalPlan(workspaceId, hoursRemaining) {
     }
 
     const chatModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',
+      model: process.env.GEMINI_MODEL || 'models/gemini-2.0-flash',
     });
 
     const prompt = `You are an emergency academic triage director. A university student has exactly ${hoursRemaining} hours until their final exam.

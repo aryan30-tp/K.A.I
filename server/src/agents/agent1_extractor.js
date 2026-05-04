@@ -48,7 +48,7 @@ export async function extractFromImage(filePath, providedMime) {
     const base64Data = imageBuffer.toString('base64');
 
     const visionModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_VISION_MODEL || process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',
+      model: process.env.GEMINI_VISION_MODEL || process.env.GEMINI_MODEL || 'models/gemini-2.0-flash',
     });
 
     const prompt =

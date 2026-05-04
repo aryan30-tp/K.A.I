@@ -93,7 +93,7 @@ export async function askKAI(studentQuestion, workspaceId) {
       .join('\n\n---\n\n');
 
     const chatModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',
+      model: process.env.GEMINI_MODEL || 'models/gemini-2.0-flash',
     });
     const prompt = `You are K.A.I., a brilliant, strict, but helpful AI tutor.
 Answer the student's question using ONLY the provided course material below.

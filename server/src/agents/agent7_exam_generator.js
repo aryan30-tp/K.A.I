@@ -35,7 +35,7 @@ export async function generateMockExam(topic, workspaceId) {
       .join('\n---\n');
 
     const chatModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',
+      model: process.env.GEMINI_MODEL || 'models/gemini-2.0-flash',
     });
 
     const prompt = `You are a university professor creating a difficult mock exam.

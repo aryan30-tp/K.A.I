@@ -12,6 +12,10 @@ function App() {
   const [examAnalysis, setExamAnalysis] = useState(null);
   const [requestType, setRequestType] = useState('flashcards');
   const [specificTopic, setSpecificTopic] = useState('');
+  const [socraticAudio, setSocraticAudio] = useState(null);
+  const [socraticTopic, setSocraticTopic] = useState('');
+  const [socraticWorkspaceId, setSocraticWorkspaceId] = useState('');
+  const [socraticHistory, setSocraticHistory] = useState('[]');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
   const [resultSource, setResultSource] = useState('');
@@ -153,6 +157,44 @@ function App() {
     }
   }
 
+  async function handleSocraticTurn(e) {
+    e.preventDefault();
+    if (!socraticAudio) {
+      setError('Please attach an audio file for the Socratic turn.');
+      return;
+    }
+    if (!socraticTopic.trim() || !socraticWorkspaceId.trim()) {
+      setError('Please provide topic and workspaceId.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setResult('');
+    try {
+      const formData = new FormData();
+      formData.append('audioFile', socraticAudio);
+      formData.append('topic', socraticTopic.trim());
+      formData.append('workspaceId', socraticWorkspaceId.trim());
+      formData.append('chatHistory', socraticHistory.trim() || '[]');
+
+      const res = await fetch(`${apiBase}/api/socratic/turn`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await parseResponse(res);
+      if (!data.ok) throw new Error(data.error);
+
+      setResult(JSON.stringify(data, null, 2));
+      setResultSource('socratic');
+    } catch (err) {
+      setError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div style={{ padding: 20, fontFamily: 'Arial, sans-serif' }}>
       <h1>🤖 K.A.I. — Study Assistant</h1>
@@ -249,6 +291,48 @@ function App() {
           </div>
           <button type="submit" disabled={loading || !uploadId} style={{ padding: '10px 16px', cursor: 'pointer' }}>
             {loading ? '⏳ Generating…' : '✨ Generate Output'}
+          </button>
+        </form>
+      </section>
+
+      {/* Step 4: Socratic Tutor */}
+      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+        <h2>Step 4: Socratic Tutor (Audio)</h2>
+        <form onSubmit={handleSocraticTurn}>
+          <div style={{ marginBottom: 12 }}>
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={(e) => setSocraticAudio(e.target.files?.[0] || null)}
+              style={{ marginBottom: 8 }}
+            />
+            <small>{socraticAudio ? `Selected: ${socraticAudio.name}` : 'Upload an audio response'}</small>
+          </div>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
+            <input
+              type="text"
+              placeholder="Topic (e.g., Graph Algorithms)"
+              value={socraticTopic}
+              onChange={(e) => setSocraticTopic(e.target.value)}
+              style={{ flex: 1, padding: 8 }}
+            />
+            <input
+              type="text"
+              placeholder="workspaceId"
+              value={socraticWorkspaceId}
+              onChange={(e) => setSocraticWorkspaceId(e.target.value)}
+              style={{ flex: 1, padding: 8 }}
+            />
+          </div>
+          <textarea
+            placeholder='Chat history JSON array (optional). Example: [{"role":"user","parts":[{"text":"Hi"}]}]'
+            value={socraticHistory}
+            onChange={(e) => setSocraticHistory(e.target.value)}
+            rows={4}
+            style={{ width: '100%', padding: 8, marginBottom: 8 }}
+          />
+          <button type="submit" disabled={loading} style={{ padding: '10px 16px', cursor: 'pointer' }}>
+            {loading ? '⏳ Sending…' : '🎙️ Send Socratic Turn'}
           </button>
         </form>
       </section>

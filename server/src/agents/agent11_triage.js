@@ -1,8 +1,10 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getFirestore } from 'firebase-admin/firestore';
+import Groq from 'groq-sdk';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const db = getFirestore();
 
 const pc = new Pinecone({
@@ -53,14 +55,10 @@ export async function generateSurvivalPlan(workspaceId, hoursRemaining) {
       throw new Error('No study material found. Upload your syllabus first.');
     }
 
-    const chatModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'models/gemini-2.0-flash',
-    });
-
     const prompt = `You are an emergency academic triage director. A university student has exactly ${hoursRemaining} hours until their final exam.
 They know very little. If they study everything, they will fail.
 
-You must identify the absolute highest-yield 20% of this syllabus that will generate 80% of their exam grade.
+Identify the absolute highest-yield 20% of this syllabus that will generate 80% of their exam grade.
 Ignore history, edge cases, and deep theory. Focus ONLY on core mechanics, heavy-weight formulas, and primary algorithms.
 
 SYLLABUS DATA:
@@ -69,32 +67,39 @@ ${sourceSyllabus}
 Divide their remaining ${hoursRemaining} hours into a strict, minute-by-minute survival plan.
 For each phase, assign an "action" and a "triggerAgent" (either "agent8_socratic" for voice drills, or "agent7_exam" for practice tests).
 
-Respond STRICTLY in this JSON format, with no markdown formatting or extra text:
+Respond STRICTLY in JSON format with this exact structure:
 {
-  "missionBriefing": "A brutal, 2-sentence reality check about what they must do to pass.",
+  "missionBriefing": "A brutal, 2-sentence reality check.",
   "survivalPlan": [
     {
       "phase": "Hour 1-2",
       "action": "Memorize Core Mechanic",
-      "concept": "[Insert High Yield Concept]",
+      "concept": "[Insert Concept]",
       "triggerAgent": "agent8_socratic",
       "instruction": "Do a voice drill on this specific mechanism."
-    },
-    {
-      "phase": "Hour 3",
-      "action": "Application Test",
-      "concept": "[Insert High Yield Concept]",
-      "triggerAgent": "agent7_exam",
-      "instruction": "Take a 3-question short-answer exam to secure partial credit."
     }
   ]
 }`;
 
-    const response = await chatModel.generateContent(prompt);
-    const rawText = response.response.text();
-    const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a JSON-only API. Output valid JSON for the given schema.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      model: process.env.GROQ_MODEL || 'llama3-8b-8192',
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
+    });
 
-    return JSON.parse(cleanJson);
+    const rawJson = chatCompletion.choices?.[0]?.message?.content || '';
+    if (!rawJson.trim()) {
+      throw new Error('Groq returned empty JSON.');
+    }
+
+    return JSON.parse(rawJson);
   } catch (error) {
     console.error('Triage director error:', error?.message || error);
     throw new Error('Failed to generate survival plan.');

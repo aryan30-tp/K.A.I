@@ -169,9 +169,17 @@ function App() {
       if (!data.ok) throw new Error(data.error);
 
       if (target === 'syllabus') {
-        setSyllabusText(data.text || '');
+        setSyllabusText((prev) => {
+          const trimmed = (data.text || '').trim();
+          if (!trimmed) return prev;
+          return prev ? `${prev}\n\n${trimmed}` : trimmed;
+        });
       } else {
-        setRawNotes(data.text || '');
+        setRawNotes((prev) => {
+          const trimmed = (data.text || '').trim();
+          if (!trimmed) return prev;
+          return prev ? `${prev}\n\n${trimmed}` : trimmed;
+        });
       }
     } catch (err) {
       if (target === 'syllabus') {

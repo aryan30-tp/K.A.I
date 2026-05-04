@@ -1,6 +1,6 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 

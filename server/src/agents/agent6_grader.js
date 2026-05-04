@@ -61,7 +61,8 @@ JSON FORMAT:
   "maxScore": 5,
   "verdict": "Correct | Partially Correct | Incorrect",
   "feedback": "...",
-  "referenceAnswer": "..."
+  "referenceAnswer": "...",
+  "missingConcepts": ["..."]
 }`;
 
     const response = await chatModel.generateContent(prompt);

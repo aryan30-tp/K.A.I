@@ -1,0 +1,88 @@
+import { getFirestore } from 'firebase-admin/firestore';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const db = getFirestore();
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+
+export async function generateHeatmap(workspaceId) {
+  try {
+    console.log(`Compiling Heatmap for workspace: ${workspaceId}`);
+
+    const cardsRef = db.collection('flashcards').where('workspaceId', '==', workspaceId);
+    const cardsSnap = await cardsRef.get();
+
+    let totalCards = 0;
+    let strongCards = 0;
+    let weakCards = 0;
+
+    cardsSnap.forEach((doc) => {
+      totalCards += 1;
+      const data = doc.data();
+      if ((data.intervalDays || 0) > 5) strongCards += 1;
+      else weakCards += 1;
+    });
+
+    const examsRef = db.collection('exam_results').where('workspaceId', '==', workspaceId);
+    const examsSnap = await examsRef.get();
+
+    const topicStats = {};
+
+    examsSnap.forEach((doc) => {
+      const data = doc.data();
+      if (!data.topic) return;
+
+      if (!topicStats[data.topic]) {
+        topicStats[data.topic] = { totalScore: 0, attempts: 0, missingConcepts: new Set() };
+      }
+
+      topicStats[data.topic].totalScore += data.score || 0;
+      topicStats[data.topic].attempts += 1;
+
+      const missing = Array.isArray(data.missingConcepts) ? data.missingConcepts : [];
+      missing.forEach((concept) => topicStats[data.topic].missingConcepts.add(concept));
+    });
+
+    let rawStatsText = `OVERALL MEMORY: ${strongCards} mastered facts, ${weakCards} weak facts out of ${totalCards} total.\n\nEXAM PERFORMANCE BY TOPIC:\n`;
+
+    const formattedTopics = [];
+    for (const [topic, stats] of Object.entries(topicStats)) {
+      const avgScore = stats.attempts
+        ? Math.round(stats.totalScore / stats.attempts)
+        : 0;
+      const missed = Array.from(stats.missingConcepts).join(', ');
+      rawStatsText += `- ${topic}: Average Score ${avgScore}%. Weak concepts: ${missed}\n`;
+
+      let status = 'Red';
+      if (avgScore >= 85) status = 'Green';
+      else if (avgScore >= 65) status = 'Yellow';
+
+      formattedTopics.push({ topic, avgScore, status, missed });
+    }
+
+    const chatModel = genAI.getGenerativeModel({
+      model: process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',
+    });
+
+    const prompt = `You are a data-driven academic advisor analyzing a student's performance metrics.
+
+RAW STUDENT DATA:
+${rawStatsText}
+
+Write a brief, punchy, and highly analytical summary (max 3 sentences) telling the student exactly what their probability of passing is, and what one specific thing they need to study immediately to avoid failing. Do not be overly encouraging. Be clinical and direct.`;
+
+    const response = await chatModel.generateContent(prompt);
+    const aiSummary = response.response.text().trim();
+
+    return {
+      overview: {
+        totalCards,
+        memoryRetentionRate: totalCards > 0 ? Math.round((strongCards / totalCards) * 100) : 0,
+        aiActionPlan: aiSummary,
+      },
+      heatmap: formattedTopics,
+    };
+  } catch (error) {
+    console.error('Heatmap generation error:', error?.message || error);
+    throw new Error('Failed to compile analytics.');
+  }
+}

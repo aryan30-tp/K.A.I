@@ -31,6 +31,7 @@ import { generateOutput } from './src/agents/agent4_generator.js';
 import { generateMockExam } from './src/agents/agent7_exam_generator.js';
 import { gradeExamAnswer } from './src/agents/agent6_grader.js';
 import { processSocraticTurn } from './src/agents/agent8_socratic.js';
+import { generateHeatmap } from './src/agents/agent9_analyst.js';
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -209,17 +210,42 @@ app.post('/api/exam/generate', async (req, res) => {
 
 app.post('/api/exam/grade', async (req, res) => {
   try {
-    const { question, studentAnswer, workspaceId } = req.body;
+    const { question, studentAnswer, workspaceId, topic } = req.body;
 
-    if (!question || !studentAnswer || !workspaceId) {
+    if (!question || !studentAnswer || !workspaceId || !topic) {
       return res.status(400).json({ ok: false, error: 'Missing required grading parameters' });
     }
 
     const gradingReport = await gradeExamAnswer(question, studentAnswer, workspaceId);
+
+    await db.collection('exam_results').add({
+      workspaceId,
+      topic,
+      score: gradingReport.score,
+      missingConcepts: gradingReport.missingConcepts || [],
+      timestamp: Timestamp.now(),
+    });
+
     return res.json({ ok: true, report: gradingReport });
   } catch (error) {
     console.error('Exam Grading Error:', error?.message || error);
     return res.status(500).json({ ok: false, error: 'Agent 6 failed to grade the answer.' });
+  }
+});
+
+// --- PREDICTIVE HEATMAP ---
+app.get('/api/analytics/heatmap/:workspaceId', async (req, res) => {
+  try {
+    const { workspaceId } = req.params;
+    if (!workspaceId) {
+      return res.status(400).json({ ok: false, error: 'Missing workspaceId' });
+    }
+
+    const heatmapData = await generateHeatmap(workspaceId);
+    return res.json({ ok: true, data: heatmapData });
+  } catch (error) {
+    console.error('Heatmap Generation Error:', error?.message || error);
+    return res.status(500).json({ ok: false, error: 'Failed to compile analytics.' });
   }
 });
 

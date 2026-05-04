@@ -14,18 +14,30 @@ export async function ingestDocumentToBrain(rawText, workspaceId, sourceName) {
   try {
     console.log(`Slicing and embedding document: ${sourceName}`);
 
+    if (!rawText || !rawText.trim()) {
+      console.warn('Skipping ingestion: empty document text.');
+      return;
+    }
+
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 1000,
       chunkOverlap: 200,
     });
 
     const chunks = await splitter.createDocuments([rawText]);
+    if (!chunks || chunks.length === 0) {
+      console.warn('Skipping ingestion: splitter produced no chunks.');
+      return;
+    }
     const embeddingModel = genAI.getGenerativeModel({
       model: process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004',
     });
 
     const vectors = await Promise.all(
       chunks.map(async (chunk, i) => {
+        if (!chunk.pageContent || !chunk.pageContent.trim()) {
+          return null;
+        }
         const result = await embeddingModel.embedContent(chunk.pageContent);
         const embedding = result.embedding.values;
 
@@ -41,7 +53,13 @@ export async function ingestDocumentToBrain(rawText, workspaceId, sourceName) {
       })
     );
 
-    await index.upsert(vectors);
+    const filteredVectors = vectors.filter(Boolean);
+    if (filteredVectors.length === 0) {
+      console.warn('Skipping ingestion: no vectors produced.');
+      return;
+    }
+
+    await index.upsert(filteredVectors);
     console.log(`Successfully injected ${vectors.length} chunks into K.A.I. brain.`);
   } catch (error) {
     console.error('Brain ingestion error:', error?.message || error);

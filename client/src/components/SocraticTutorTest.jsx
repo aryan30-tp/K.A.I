@@ -7,6 +7,7 @@ export default function SocraticTutorTest({
 }) {
   const [topic, setTopic] = useState('Graph Algorithms');
   const [chatHistory, setChatHistory] = useState('[]');
+  const [attemptCount, setAttemptCount] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [statusText, setStatusText] = useState('Ready for input.');
   const [output, setOutput] = useState(null);
@@ -54,6 +55,7 @@ export default function SocraticTutorTest({
         formData.append('topic', topic);
         formData.append('workspaceId', workspaceId);
         formData.append('chatHistory', chatHistory);
+        formData.append('attemptCount', String(attemptCount));
 
         try {
           const response = await fetch(`${apiBase}/api/socratic/turn`, {
@@ -81,6 +83,12 @@ export default function SocraticTutorTest({
             } catch (parseErr) {
               console.error('Failed to parse chat history', parseErr);
             }
+          }
+
+          if (data.isConceptMastered) {
+            setAttemptCount(0);
+          } else {
+            setAttemptCount((prev) => prev + 1);
           }
         } catch (error) {
           setStatusText('Error connecting to backend.');
@@ -116,7 +124,10 @@ export default function SocraticTutorTest({
           <input
             type="text"
             value={topic}
-            onChange={(e) => setTopic(e.target.value)}
+            onChange={(e) => {
+              setTopic(e.target.value);
+              setAttemptCount(0);
+            }}
             className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="Topic (e.g., Graph Algorithms)"
           />

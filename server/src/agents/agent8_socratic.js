@@ -11,7 +11,8 @@ export async function processSocraticTurn(
   studentSpeechText,
   chatHistory,
   topic,
-  workspaceId
+  workspaceId,
+  attemptCount = 0
 ) {
   try {
     console.log('Socratic Tutor processing turn...');
@@ -44,22 +45,29 @@ export async function processSocraticTurn(
         }))
       : [];
 
-    const systemPrompt = `You are Professor K.A.I., conducting a real-time oral exam with a university student.
+    const systemPrompt = `You are K.A.I., an elite academic mentor.
 
 TOPIC OF DISCUSSION: ${topic}
 SOURCE OF TRUTH (The facts you must test them on):
 ${sourceTruth}
 
-YOUR INSTRUCTIONS:
-1. Evaluate what the student just said against the Source of Truth.
-2. If they are correct, confirm it and push them slightly deeper with a follow-up question.
-3. If they are wrong or missing key details, DO NOT GIVE THEM THE ANSWER. Ask a leading, Socratic question to help them realize their mistake and find the answer themselves.
-4. Keep your response conversational, spoken-word friendly, and under 3 sentences. (This will be read aloud by a text-to-speech engine).
+ATTEMPT COUNT (prior incorrect attempts): ${attemptCount}
 
-Respond in JSON format:
+CORE INSTRUCTION:
+1. If the student's answer is correct, acknowledge it warmly and set "isConceptMastered" to true.
+2. If the student is wrong for the FIRST time: provide a subtle Socratic nudge.
+3. If the student is wrong for the SECOND time: provide a heavy hint.
+4. If the student is wrong for the THIRD time: REVEAL the correct answer clearly.
+
+CRITICAL: After revealing the correct answer, explain the underlying logic briefly so they understand the "Why".
+
+Keep responses conversational and spoken-word friendly (<= 3 sentences).
+
+Respond ONLY in JSON:
 {
-  "tutorSpeech": "The exact words you want to say to the student.",
-  "isConceptMastered": false
+  "tutorSpeech": "Your conversational response, hint, or reveal.",
+  "isConceptMastered": boolean,
+  "revealAnswer": "The full correct explanation (only populate this on the 3rd fail, else null)"
 }`;
 
     const chatCompletion = await groq.chat.completions.create({

@@ -334,7 +334,7 @@ app.post('/api/survival/triage', async (req, res) => {
 // --- SOCRATIC VOICE EXAM ---
 app.post('/api/socratic/turn', upload.single('audioFile'), async (req, res) => {
   try {
-    const { chatHistory, topic, workspaceId } = req.body;
+    const { chatHistory, topic, workspaceId, attemptCount } = req.body;
 
     if (!req.file || !topic || !workspaceId) {
       return res.status(400).json({ ok: false, error: 'Missing audio file, topic, or workspaceId' });
@@ -358,7 +358,8 @@ app.post('/api/socratic/turn', upload.single('audioFile'), async (req, res) => {
       transcriptionText,
       parsedHistory,
       topic,
-      workspaceId
+      workspaceId,
+      Number(attemptCount || 0)
     );
 
     fs.unlinkSync(audioPathWithExt);
@@ -368,6 +369,7 @@ app.post('/api/socratic/turn', upload.single('audioFile'), async (req, res) => {
       studentTranscription: transcriptionText,
       tutorSpeech: tutorResponse.tutorSpeech,
       isConceptMastered: tutorResponse.isConceptMastered,
+      revealAnswer: tutorResponse.revealAnswer || null,
     });
   } catch (error) {
     console.error('Socratic Turn Error:', error?.message || error);

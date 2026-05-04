@@ -12,6 +12,7 @@ const pc = new Pinecone({
 });
 
 const index = pc.index(process.env.PINECONE_INDEX || 'kai-semester-brain');
+const MAX_SYLLABUS_CHARS = 12000;
 
 export async function generateSurvivalPlan(workspaceId, hoursRemaining) {
   try {
@@ -28,7 +29,7 @@ export async function generateSurvivalPlan(workspaceId, hoursRemaining) {
 
     const searchResponse = await index.query({
       vector: queryResult.embedding.values,
-      topK: 15,
+      topK: 8,
       filter: { workspaceId: { $eq: workspaceId } },
       includeMetadata: true,
     });
@@ -51,23 +52,23 @@ export async function generateSurvivalPlan(workspaceId, hoursRemaining) {
         .join('\n---\n');
     }
 
+    if (sourceSyllabus.length > MAX_SYLLABUS_CHARS) {
+      sourceSyllabus = sourceSyllabus.slice(0, MAX_SYLLABUS_CHARS);
+    }
+
     if (!sourceSyllabus.trim()) {
       throw new Error('No study material found. Upload your syllabus first.');
     }
 
-    const prompt = `You are an emergency academic triage director. A university student has exactly ${hoursRemaining} hours until their final exam.
-They know very little. If they study everything, they will fail.
-
-Identify the absolute highest-yield 20% of this syllabus that will generate 80% of their exam grade.
-Ignore history, edge cases, and deep theory. Focus ONLY on core mechanics, heavy-weight formulas, and primary algorithms.
+    const prompt = `You are an emergency academic triage director. A student has ${hoursRemaining} hours until the exam.
+Find the top 20% highest-yield concepts (core mechanics, key formulas, primary algorithms) and ignore everything else.
 
 SYLLABUS DATA:
 ${sourceSyllabus}
 
-Divide their remaining ${hoursRemaining} hours into a strict, minute-by-minute survival plan.
-For each phase, assign an "action" and a "triggerAgent" (either "agent8_socratic" for voice drills, or "agent7_exam" for practice tests).
+Divide the time into phases with an action, concept, triggerAgent (agent8_socratic or agent7_exam), and instruction.
 
-Respond STRICTLY in JSON format with this exact structure:
+Respond STRICTLY in JSON with this exact structure:
 {
   "missionBriefing": "A brutal, 2-sentence reality check.",
   "survivalPlan": [

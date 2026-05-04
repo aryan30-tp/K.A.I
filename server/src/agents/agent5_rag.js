@@ -20,7 +20,9 @@ export async function ingestDocumentToBrain(rawText, workspaceId, sourceName) {
     });
 
     const chunks = await splitter.createDocuments([rawText]);
-    const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+    const embeddingModel = genAI.getGenerativeModel({
+      model: process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004',
+    });
 
     const vectors = await Promise.all(
       chunks.map(async (chunk, i) => {
@@ -51,7 +53,9 @@ export async function askKAI(studentQuestion, workspaceId) {
   try {
     console.log(`Searching K.A.I. brain for: "${studentQuestion}"`);
 
-    const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+    const embeddingModel = genAI.getGenerativeModel({
+      model: process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004',
+    });
     const queryResult = await embeddingModel.embedContent(studentQuestion);
     const queryVector = queryResult.embedding.values;
 

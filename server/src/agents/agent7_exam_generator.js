@@ -13,7 +13,9 @@ export async function generateMockExam(topic, workspaceId) {
   try {
     console.log(`Agent 7 generating exam for: ${topic}`);
 
-    const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+    const embeddingModel = genAI.getGenerativeModel({
+      model: process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004',
+    });
     const queryResult = await embeddingModel.embedContent(topic);
 
     const searchResponse = await index.query({

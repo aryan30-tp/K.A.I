@@ -18,7 +18,9 @@ export async function gradeExamAnswer(question, studentAnswer, workspaceId) {
       throw new Error('Question text is required for grading.');
     }
 
-    const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+    const embeddingModel = genAI.getGenerativeModel({
+      model: process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004',
+    });
     const queryResult = await embeddingModel.embedContent(questionText);
 
     const searchResponse = await index.query({

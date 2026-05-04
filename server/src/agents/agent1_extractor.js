@@ -7,13 +7,17 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import OpenAI from 'openai';
 import officeParser from 'officeparser';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
   baseURL: 'https://api.groq.com/openai/v1',
 });
 
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+
 const DOCUMENT_EXTENSIONS = new Set(['.pdf', '.docx', '.pptx']);
+const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
 
 function normalizeText(value) {
   return value
@@ -21,6 +25,51 @@ function normalizeText(value) {
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+function resolveImageMimeType(filePath, providedMime) {
+  if (providedMime && providedMime.startsWith('image/')) return providedMime;
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === '.png') return 'image/png';
+  if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
+  if (ext === '.webp') return 'image/webp';
+  return 'application/octet-stream';
+}
+
+export async function extractFromImage(filePath, providedMime) {
+  try {
+    console.log(`Extracting text from image: ${filePath}`);
+    const mimeType = resolveImageMimeType(filePath, providedMime);
+    if (!mimeType.startsWith('image/')) {
+      throw new Error('Unsupported image format.');
+    }
+
+    const imageBuffer = await fsPromises.readFile(filePath);
+    const base64Data = imageBuffer.toString('base64');
+
+    const visionModel = genAI.getGenerativeModel({
+      model: process.env.GEMINI_VISION_MODEL || process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',
+    });
+
+    const prompt =
+      'Extract all readable text from this image. Preserve headings and bullet lists when possible.';
+
+    const response = await visionModel.generateContent([
+      { text: prompt },
+      {
+        inlineData: {
+          data: base64Data,
+          mimeType,
+        },
+      },
+    ]);
+
+    const rawText = response.response.text() || '';
+    return normalizeText(rawText);
+  } catch (error) {
+    console.error('Image extraction error:', error?.message || error);
+    throw new Error('Failed to extract text from image.');
+  }
 }
 
 function isYoutubeUrl(input) {

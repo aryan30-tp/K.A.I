@@ -23,6 +23,7 @@ import {
   extractFromYoutube, 
   extractViaWhisper,
   extractOfficeFile,
+  extractFromImage,
   processLocalAudioViaGroq
 } from './src/agents/agent1_extractor.js';
 import { mapSyllabusToNotes } from './src/agents/agent2_mapper.js';
@@ -115,11 +116,19 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
           mimeType.includes('wordprocessingml')
         ) {
           fileText = await extractOfficeFile(filePathWithExt);
+        } else if (
+          originalName.endsWith('.png') ||
+          originalName.endsWith('.jpg') ||
+          originalName.endsWith('.jpeg') ||
+          originalName.endsWith('.webp') ||
+          mimeType.startsWith('image/')
+        ) {
+          fileText = await extractFromImage(filePathWithExt, mimeType);
         } else {
           fs.unlinkSync(filePathWithExt);
           return res
             .status(400)
-            .json({ error: 'Unsupported file format. Please upload PDF, DOCX, or PPTX.' });
+            .json({ error: 'Unsupported file format. Please upload PDF, DOCX, PPTX, PNG, JPG, or WEBP.' });
         }
 
         extractedTexts.push(`### ${originalName}\n\n${fileText}`);

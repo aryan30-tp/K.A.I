@@ -266,12 +266,14 @@ function App() {
           <div style={{ marginBottom: 12 }}>
             <input
               type="file"
-              accept=".pdf,.docx,.pptx"
+              accept=".pdf,.docx,.pptx,.png,.jpg,.jpeg,.webp"
               multiple
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               style={{ marginBottom: 8 }}
             />
-            <small>{file ? `Selected: ${file.name}` : 'Or upload a PDF/DOCX file'}</small>
+            <small>
+              {file ? `Selected: ${file.name}` : 'Or upload PDF/DOCX/PPTX or an image (PNG/JPG/WEBP)'}
+            </small>
           </div>
           <label style={{ display: 'block', marginBottom: 12 }}>
             <input

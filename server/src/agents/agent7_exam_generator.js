@@ -34,7 +34,9 @@ export async function generateMockExam(topic, workspaceId) {
       .filter(Boolean)
       .join('\n---\n');
 
-    const chatModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const chatModel = genAI.getGenerativeModel({
+      model: process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',
+    });
 
     const prompt = `You are a university professor creating a difficult mock exam.
 Create a 3-question exam based ONLY on this source material:

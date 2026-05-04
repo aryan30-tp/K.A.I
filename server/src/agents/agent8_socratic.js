@@ -31,7 +31,9 @@ export async function processSocraticTurn(
       .filter(Boolean)
       .join('\n---\n');
 
-    const chatModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const chatModel = genAI.getGenerativeModel({
+      model: process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',
+    });
     const chat = chatModel.startChat({
       history: chatHistory,
     });

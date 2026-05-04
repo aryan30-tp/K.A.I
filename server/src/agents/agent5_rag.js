@@ -71,7 +71,9 @@ export async function askKAI(studentQuestion, workspaceId) {
       .filter(Boolean)
       .join('\n\n---\n\n');
 
-    const chatModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const chatModel = genAI.getGenerativeModel({
+      model: process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',
+    });
     const prompt = `You are K.A.I., a brilliant, strict, but helpful AI tutor.
 Answer the student's question using ONLY the provided course material below.
 If the answer is not in the material, say "I cannot find this in your uploaded syllabus or lectures."

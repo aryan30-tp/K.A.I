@@ -68,7 +68,7 @@ Respond in JSON format:
         ...formattedHistory,
         { role: 'user', content: studentSpeechText },
       ],
-      model: process.env.GROQ_MODEL || 'llama3-70b-8192',
+      model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
       response_format: { type: 'json_object' },
       temperature: 0.4,
     });

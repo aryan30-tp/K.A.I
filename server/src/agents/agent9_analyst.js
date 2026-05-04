@@ -59,19 +59,29 @@ export async function generateHeatmap(workspaceId) {
       formattedTopics.push({ topic, avgScore, status, missed });
     }
 
-    const chatModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',
-    });
+    let aiSummary = '';
+    try {
+      const chatModel = genAI.getGenerativeModel({
+        model: process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',
+      });
 
-    const prompt = `You are a data-driven academic advisor analyzing a student's performance metrics.
+      const prompt = `You are a data-driven academic advisor analyzing a student's performance metrics.
 
 RAW STUDENT DATA:
 ${rawStatsText}
 
 Write a brief, punchy, and highly analytical summary (max 3 sentences) telling the student exactly what their probability of passing is, and what one specific thing they need to study immediately to avoid failing. Do not be overly encouraging. Be clinical and direct.`;
 
-    const response = await chatModel.generateContent(prompt);
-    const aiSummary = response.response.text().trim();
+      const response = await chatModel.generateContent(prompt);
+      aiSummary = response.response.text().trim();
+    } catch (aiError) {
+      console.warn(
+        'Heatmap summary fallback: Gemini unavailable.',
+        aiError?.message || aiError
+      );
+      aiSummary =
+        'Model busy. Review the red topics first and retake the heatmap later for a full plan.';
+    }
 
     return {
       overview: {

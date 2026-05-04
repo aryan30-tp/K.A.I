@@ -1,7 +1,9 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getFirestore } from 'firebase-admin/firestore';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const db = getFirestore();
 
 const pc = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY,
@@ -29,14 +31,27 @@ export async function generateSurvivalPlan(workspaceId, hoursRemaining) {
       includeMetadata: true,
     });
 
-    if (!searchResponse.matches || searchResponse.matches.length === 0) {
-      throw new Error('No study material found. Upload your syllabus first.');
-    }
-
-    const sourceSyllabus = searchResponse.matches
+    let sourceSyllabus = (searchResponse.matches || [])
       .map((match) => match.metadata?.text)
       .filter(Boolean)
       .join('\n---\n');
+
+    if (!sourceSyllabus.trim()) {
+      const sessionsSnap = await db
+        .collection('study_sessions')
+        .where('workspaceId', '==', workspaceId)
+        .limit(5)
+        .get();
+
+      sourceSyllabus = sessionsSnap.docs
+        .map((doc) => doc.data()?.rawText)
+        .filter(Boolean)
+        .join('\n---\n');
+    }
+
+    if (!sourceSyllabus.trim()) {
+      throw new Error('No study material found. Upload your syllabus first.');
+    }
 
     const chatModel = genAI.getGenerativeModel({
       model: process.env.GEMINI_MODEL || 'models/gemini-2.5-flash',

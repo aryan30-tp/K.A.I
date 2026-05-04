@@ -230,7 +230,14 @@ app.post('/api/socratic/turn', upload.single('audioFile'), async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Missing audio file, topic, or workspaceId' });
     }
 
-    const transcriptionResult = await processLocalAudioViaGroq(req.file.path);
+    const audioName = (req.file.originalname || '').toLowerCase();
+    const audioExt = audioName.includes('.') ? `.${audioName.split('.').pop()}` : '';
+    const audioPathWithExt = audioExt ? `${req.file.path}${audioExt}` : req.file.path;
+    if (audioPathWithExt !== req.file.path) {
+      fs.renameSync(req.file.path, audioPathWithExt);
+    }
+
+    const transcriptionResult = await processLocalAudioViaGroq(audioPathWithExt);
     const transcriptionText =
       typeof transcriptionResult === 'string'
         ? transcriptionResult
@@ -244,7 +251,7 @@ app.post('/api/socratic/turn', upload.single('audioFile'), async (req, res) => {
       workspaceId
     );
 
-    fs.unlinkSync(req.file.path);
+    fs.unlinkSync(audioPathWithExt);
 
     return res.json({
       ok: true,
@@ -254,8 +261,11 @@ app.post('/api/socratic/turn', upload.single('audioFile'), async (req, res) => {
     });
   } catch (error) {
     console.error('Socratic Turn Error:', error?.message || error);
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+    if (req.file) {
+      const cleanupPath = req.file.path;
+      if (fs.existsSync(cleanupPath)) {
+        fs.unlinkSync(cleanupPath);
+      }
     }
     return res.status(500).json({ ok: false, error: 'The tutor lost connection.' });
   }

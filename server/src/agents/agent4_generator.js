@@ -2,6 +2,14 @@ import { z } from 'zod';
 import Groq from 'groq-sdk';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const MAX_INPUT_CHARS = 9000;
+
+function clampText(value) {
+  if (!value) return '';
+  const trimmed = String(value).trim();
+  if (trimmed.length <= MAX_INPUT_CHARS) return trimmed;
+  return `${trimmed.slice(0, MAX_INPUT_CHARS)}\n\n[TRUNCATED]`;
+}
 
 // --- 1. DEFINE DYNAMIC SCHEMAS ---
 const flashcardSchema = z.object({
@@ -140,22 +148,25 @@ export async function generateOutput(
 
     // --- 4. EXECUTE VIA GROQ ---
     const userPrompt = `RAW NOTES:
-${rawNotes}
+  ${clampText(rawNotes)}
 
-SYLLABUS ANALYSIS:
-${syllabusAnalysis ? JSON.stringify(syllabusAnalysis) : 'None provided'}
+  SYLLABUS ANALYSIS:
+  ${clampText(syllabusAnalysis ? JSON.stringify(syllabusAnalysis) : 'None provided')}
 
-EXAM ANALYSIS:
-${examAnalysis ? JSON.stringify(examAnalysis) : 'None provided'}
+  EXAM ANALYSIS:
+  ${clampText(examAnalysis ? JSON.stringify(examAnalysis) : 'None provided')}
 
-Return JSON that matches the required schema for: ${requestType}.`;
+  Return JSON that matches the required schema for: ${requestType}.`;
 
     const completion = await groq.chat.completions.create({
       messages: [
         { role: 'system', content: systemInstructions },
         { role: 'user', content: userPrompt },
       ],
-      model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+      model:
+        process.env.GROQ_MODEL_GENERATOR ||
+        process.env.GROQ_MODEL ||
+        'llama-3.1-8b-instant',
       response_format: { type: 'json_object' },
       temperature: 0.2,
     });

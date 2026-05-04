@@ -1,7 +1,7 @@
 import { z } from 'zod';
-// LangChain prompt helpers (core/prompts export)
-import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { llm } from './llmConfig.js';
+import Groq from 'groq-sdk';
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // --- 1. DEFINE THE OUTPUT SCHEMA (The Zod Magic) ---
 // This forces Gemini to respond EXACTLY in this JSON format. No fluff.
@@ -27,31 +27,13 @@ const syllabusMappingSchema = z.object({
     .describe('A complete list of all topics extracted from the syllabus and their analysis.'),
 });
 
-// --- 2. BIND THE SCHEMA TO GEMINI ---
-const structuredLlm = llm.withStructuredOutput(syllabusMappingSchema, {
-  name: 'SyllabusMapping',
-});
-
-// --- 3. CREATE THE AI PROMPT ---
-const prompt = ChatPromptTemplate.fromMessages([
-  [
-    'system',
-    `You are an expert academic curriculum analyzer. Your job is to cross-reference a course syllabus with a student's extracted study materials (notes, transcripts, PDFs).
+// --- 2. CREATE THE AI PROMPT ---
+const systemPrompt = `You are an expert academic curriculum analyzer. Your job is to cross-reference a course syllabus with a student's extracted study materials (notes, transcripts, PDFs).
 
 RULES:
 1. Be ruthless. If a topic is in the syllabus but barely mentioned in the notes, mark it as NOT covered (isCovered: false).
 2. Determine the weightage (High/Medium/Low) based on how the syllabus describes it (e.g., if a topic has many subtopics or spans multiple weeks, it is High).
-3. Output ONLY the requested structured JSON data.`,
-  ],
-  [
-    'human',
-    `SYLLABUS TEXT:
-    {syllabus}
-
-    STUDENT EXTRACTED MATERIALS:
-    {notes}`,
-  ],
-]);
+3. Output ONLY the requested structured JSON data.`;
 
 // --- 4. THE EXECUTOR FUNCTION ---
 /**
@@ -66,11 +48,29 @@ export async function mapSyllabusToNotes(syllabusText, extractedNotesText) {
   try {
     console.log('Agent 2: Analyzing syllabus mapping...');
 
-    const chain = prompt.pipe(structuredLlm);
-    const result = await chain.invoke({
-      syllabus: syllabusText,
-      notes: extractedNotesText,
+    const userPrompt = `SYLLABUS TEXT:
+${syllabusText}
+
+STUDENT EXTRACTED MATERIALS:
+${extractedNotesText}`;
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
     });
+
+    const rawJson = completion.choices?.[0]?.message?.content || '';
+    if (!rawJson.trim()) {
+      throw new Error('Groq returned empty JSON.');
+    }
+
+    const parsed = JSON.parse(rawJson);
+    const result = syllabusMappingSchema.parse(parsed);
 
     console.log('Agent 2: Mapping complete!');
     return result;

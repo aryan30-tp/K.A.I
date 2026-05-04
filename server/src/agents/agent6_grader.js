@@ -1,7 +1,9 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const pc = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY,
@@ -35,10 +37,6 @@ export async function gradeExamAnswer(question, studentAnswer, workspaceId) {
       .filter(Boolean)
       .join('\n\n---\n\n');
 
-    const chatModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'models/gemini-2.0-flash',
-    });
-
     const prompt = `You are K.A.I., a strict exam grader.
 Grade the student's answer using ONLY the course material below.
 Return STRICT JSON with no extra text.
@@ -65,11 +63,22 @@ JSON FORMAT:
   "missingConcepts": ["..."]
 }`;
 
-    const response = await chatModel.generateContent(prompt);
-    const rawText = response.response.text();
-    const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: 'You output valid JSON only.' },
+        { role: 'user', content: prompt },
+      ],
+      model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
+    });
 
-    return JSON.parse(cleanJson);
+    const rawJson = completion.choices?.[0]?.message?.content || '';
+    if (!rawJson.trim()) {
+      throw new Error('Groq returned empty JSON.');
+    }
+
+    return JSON.parse(rawJson);
   } catch (error) {
     console.error('Exam grading error:', error?.message || error);
     throw new Error('Failed to grade exam answer.');

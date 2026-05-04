@@ -1,8 +1,8 @@
 import { getFirestore } from 'firebase-admin/firestore';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
 const db = getFirestore();
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function generateHeatmap(workspaceId) {
   try {
@@ -61,10 +61,6 @@ export async function generateHeatmap(workspaceId) {
 
     let aiSummary = '';
     try {
-      const chatModel = genAI.getGenerativeModel({
-        model: process.env.GEMINI_MODEL || 'models/gemini-2.0-flash',
-      });
-
       const prompt = `You are a data-driven academic advisor analyzing a student's performance metrics.
 
 RAW STUDENT DATA:
@@ -72,11 +68,19 @@ ${rawStatsText}
 
 Write a brief, punchy, and highly analytical summary (max 3 sentences) telling the student exactly what their probability of passing is, and what one specific thing they need to study immediately to avoid failing. Do not be overly encouraging. Be clinical and direct.`;
 
-      const response = await chatModel.generateContent(prompt);
-      aiSummary = response.response.text().trim();
+      const completion = await groq.chat.completions.create({
+        messages: [
+          { role: 'system', content: 'Be direct and concise.' },
+          { role: 'user', content: prompt },
+        ],
+        model: process.env.GROQ_MODEL_TEXT || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+        temperature: 0.2,
+      });
+
+      aiSummary = completion.choices?.[0]?.message?.content?.trim() || '';
     } catch (aiError) {
       console.warn(
-        'Heatmap summary fallback: Gemini unavailable.',
+        'Heatmap summary fallback: Groq unavailable.',
         aiError?.message || aiError
       );
       aiSummary =

@@ -1,8 +1,10 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const pc = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY,
@@ -92,21 +94,26 @@ export async function askKAI(studentQuestion, workspaceId) {
       .filter(Boolean)
       .join('\n\n---\n\n');
 
-    const chatModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'models/gemini-2.0-flash',
-    });
-    const prompt = `You are K.A.I., a brilliant, strict, but helpful AI tutor.
+    const systemPrompt = `You are K.A.I., a brilliant, strict, but helpful AI tutor.
 Answer the student's question using ONLY the provided course material below.
-If the answer is not in the material, say "I cannot find this in your uploaded syllabus or lectures."
+If the answer is not in the material, say "I cannot find this in your uploaded syllabus or lectures."`;
 
-COURSE MATERIAL:
+    const userPrompt = `COURSE MATERIAL:
 ${contextText}
 
 STUDENT QUESTION:
 ${studentQuestion}`;
 
-    const finalAnswer = await chatModel.generateContent(prompt);
-    return finalAnswer.response.text();
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      model: process.env.GROQ_MODEL_TEXT || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+      temperature: 0.2,
+    });
+
+    return completion.choices?.[0]?.message?.content || '';
   } catch (error) {
     console.error('Brain recall error:', error?.message || error);
     throw new Error('K.A.I. got a headache trying to recall that information.');

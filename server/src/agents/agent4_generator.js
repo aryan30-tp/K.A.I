@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { llm } from './llmConfig.js';
+import Groq from 'groq-sdk';
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // --- 1. DEFINE DYNAMIC SCHEMAS ---
 const flashcardSchema = z.object({
@@ -137,28 +138,35 @@ export async function generateOutput(
       throw new Error('Invalid request type');
     }
 
-    // --- 4. BIND AND EXECUTE ---
-    const structuredLlm = llm.withStructuredOutput(schema, { name: requestType });
+    // --- 4. EXECUTE VIA GROQ ---
+    const userPrompt = `RAW NOTES:
+${rawNotes}
 
-    const prompt = ChatPromptTemplate.fromMessages([
-      ['system', systemInstructions],
-      [
-        'human',
-        `
-        RAW NOTES: {notes}
-        SYLLABUS ANALYSIS: {syllabus}
-        EXAM ANALYSIS: {exam}
-      `,
+SYLLABUS ANALYSIS:
+${syllabusAnalysis ? JSON.stringify(syllabusAnalysis) : 'None provided'}
+
+EXAM ANALYSIS:
+${examAnalysis ? JSON.stringify(examAnalysis) : 'None provided'}
+
+Return JSON that matches the required schema for: ${requestType}.`;
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemInstructions },
+        { role: 'user', content: userPrompt },
       ],
-    ]);
-
-    const chain = prompt.pipe(structuredLlm);
-
-    const result = await chain.invoke({
-      notes: rawNotes,
-      syllabus: syllabusAnalysis ? JSON.stringify(syllabusAnalysis) : 'None provided',
-      exam: examAnalysis ? JSON.stringify(examAnalysis) : 'None provided',
+      model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
     });
+
+    const rawJson = completion.choices?.[0]?.message?.content || '';
+    if (!rawJson.trim()) {
+      throw new Error('Groq returned empty JSON.');
+    }
+
+    const parsed = JSON.parse(rawJson);
+    const result = schema.parse(parsed);
 
     console.log(`Agent 4: ${requestType} complete!`);
     return result;

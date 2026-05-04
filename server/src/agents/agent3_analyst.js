@@ -1,7 +1,8 @@
 // Agent 3: exam pattern analyzer
 import { z } from 'zod';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { llm } from './llmConfig.js';
+import Groq from 'groq-sdk';
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // --- 1. DEFINE THE STRICT SCHEMA ---
 const examAnalysisSchema = z.object({
@@ -31,43 +32,43 @@ const examAnalysisSchema = z.object({
     ),
 });
 
-// --- 2. BIND SCHEMA TO THE LLM ---
-const structuredLlm = llm.withStructuredOutput(examAnalysisSchema, {
-  name: 'ExamAnalysis',
-});
-
-// --- 3. CREATE THE AI PROMPT ---
-const prompt = ChatPromptTemplate.fromMessages([
-  [
-    'system',
-    `You are an expert exam pattern analyst. Your objective is to analyze historical exam papers against a curriculum syllabus to predict future exam questions.
+// --- 2. CREATE THE AI PROMPT ---
+const systemPrompt = `You are an expert exam pattern analyst. Your objective is to analyze historical exam papers against a curriculum syllabus to predict future exam questions.
 
 RULES:
 1. Identify which topics from the syllabus appear most frequently in the past papers.
 2. Analyze the 'style' of the questions. Are they asking for definitions, or are they asking the student to apply concepts?
 3. Generate a highly probable predicted question for the most recurring topics.
-4. Output ONLY the requested structured JSON data.`,
-  ],
-  [
-    'human',
-    `SYLLABUS TEXT:
-    {syllabus}
-
-    PAST EXAM PAPERS TEXT:
-    {pastPapers}`,
-  ],
-]);
+4. Output ONLY the requested structured JSON data.`;
 
 // --- 4. THE EXECUTOR FUNCTION ---
 export async function analyzePastPapers(syllabusText, pastPapersText) {
   try {
     console.log('Agent 3: Analyzing past exam patterns...');
 
-    const chain = prompt.pipe(structuredLlm);
-    const result = await chain.invoke({
-      syllabus: syllabusText,
-      pastPapers: pastPapersText,
+    const userPrompt = `SYLLABUS TEXT:
+${syllabusText}
+
+PAST EXAM PAPERS TEXT:
+${pastPapersText}`;
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
     });
+
+    const rawJson = completion.choices?.[0]?.message?.content || '';
+    if (!rawJson.trim()) {
+      throw new Error('Groq returned empty JSON.');
+    }
+
+    const parsed = JSON.parse(rawJson);
+    const result = examAnalysisSchema.parse(parsed);
 
     console.log('Agent 3: Analysis complete!');
     return result;

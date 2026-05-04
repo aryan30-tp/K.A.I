@@ -6,6 +6,12 @@ function App() {
   const [file, setFile] = useState(null);
   const [syllabusText, setSyllabusText] = useState('');
   const [pastPapersText, setPastPapersText] = useState('');
+  const [syllabusImage, setSyllabusImage] = useState(null);
+  const [notesImage, setNotesImage] = useState(null);
+  const [syllabusImageLoading, setSyllabusImageLoading] = useState(false);
+  const [notesImageLoading, setNotesImageLoading] = useState(false);
+  const [syllabusImageError, setSyllabusImageError] = useState('');
+  const [notesImageError, setNotesImageError] = useState('');
   const [uploadId, setUploadId] = useState(null);
   const [rawNotes, setRawNotes] = useState('');
   const [workspaceId, setWorkspaceId] = useState('user_123');
@@ -129,6 +135,56 @@ function App() {
       setError(err.message || String(err));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleOcrImage(target) {
+    const fileToUse = target === 'syllabus' ? syllabusImage : notesImage;
+    if (!fileToUse) {
+      if (target === 'syllabus') {
+        setSyllabusImageError('Please select a syllabus image.');
+      } else {
+        setNotesImageError('Please select a notes image.');
+      }
+      return;
+    }
+
+    if (target === 'syllabus') {
+      setSyllabusImageLoading(true);
+      setSyllabusImageError('');
+    } else {
+      setNotesImageLoading(true);
+      setNotesImageError('');
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('image', fileToUse);
+
+      const res = await fetch(`${apiBase}/api/ocr/image`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await parseResponse(res);
+      if (!data.ok) throw new Error(data.error);
+
+      if (target === 'syllabus') {
+        setSyllabusText(data.text || '');
+      } else {
+        setRawNotes(data.text || '');
+      }
+    } catch (err) {
+      if (target === 'syllabus') {
+        setSyllabusImageError(err.message || String(err));
+      } else {
+        setNotesImageError(err.message || String(err));
+      }
+    } finally {
+      if (target === 'syllabus') {
+        setSyllabusImageLoading(false);
+      } else {
+        setNotesImageLoading(false);
+      }
     }
   }
 
@@ -266,13 +322,13 @@ function App() {
           <div style={{ marginBottom: 12 }}>
             <input
               type="file"
-              accept=".pdf,.docx,.pptx,.png,.jpg,.jpeg,.webp"
+              accept=".pdf,.docx,.pptx"
               multiple
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               style={{ marginBottom: 8 }}
             />
             <small>
-              {file ? `Selected: ${file.name}` : 'Or upload PDF/DOCX/PPTX or an image (PNG/JPG/WEBP)'}
+              {file ? `Selected: ${file.name}` : 'Or upload PDF/DOCX/PPTX'}
             </small>
           </div>
           <label style={{ display: 'block', marginBottom: 12 }}>
@@ -295,6 +351,48 @@ function App() {
       <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
         <h2>Step 2: Analyze (Optional)</h2>
         <form onSubmit={handleAnalyze}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', marginBottom: 6 }}>Syllabus Image (optional)</label>
+              <input
+                type="file"
+                accept=".png,.jpg,.jpeg,.webp"
+                onChange={(e) => setSyllabusImage(e.target.files?.[0] || null)}
+                style={{ marginBottom: 8 }}
+              />
+              <button
+                type="button"
+                onClick={() => handleOcrImage('syllabus')}
+                disabled={syllabusImageLoading}
+                style={{ padding: '8px 12px', cursor: 'pointer' }}
+              >
+                {syllabusImageLoading ? '⏳ OCR Syllabus…' : '🖼️ OCR Syllabus'}
+              </button>
+              {syllabusImageError && (
+                <div style={{ color: 'crimson', marginTop: 8 }}>{syllabusImageError}</div>
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', marginBottom: 6 }}>Notes Image (optional)</label>
+              <input
+                type="file"
+                accept=".png,.jpg,.jpeg,.webp"
+                onChange={(e) => setNotesImage(e.target.files?.[0] || null)}
+                style={{ marginBottom: 8 }}
+              />
+              <button
+                type="button"
+                onClick={() => handleOcrImage('notes')}
+                disabled={notesImageLoading}
+                style={{ padding: '8px 12px', cursor: 'pointer' }}
+              >
+                {notesImageLoading ? '⏳ OCR Notes…' : '🖼️ OCR Notes'}
+              </button>
+              {notesImageError && (
+                <div style={{ color: 'crimson', marginTop: 8 }}>{notesImageError}</div>
+              )}
+            </div>
+          </div>
           <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
             <textarea
               placeholder="Paste syllabus text here (required)"

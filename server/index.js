@@ -116,19 +116,11 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
           mimeType.includes('wordprocessingml')
         ) {
           fileText = await extractOfficeFile(filePathWithExt);
-        } else if (
-          originalName.endsWith('.png') ||
-          originalName.endsWith('.jpg') ||
-          originalName.endsWith('.jpeg') ||
-          originalName.endsWith('.webp') ||
-          mimeType.startsWith('image/')
-        ) {
-          fileText = await extractFromImage(filePathWithExt, mimeType);
         } else {
           fs.unlinkSync(filePathWithExt);
           return res
             .status(400)
-            .json({ error: 'Unsupported file format. Please upload PDF, DOCX, PPTX, PNG, JPG, or WEBP.' });
+            .json({ error: 'Unsupported file format. Please upload PDF, DOCX, or PPTX.' });
         }
 
         extractedTexts.push(`### ${originalName}\n\n${fileText}`);
@@ -168,6 +160,36 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
       ok: false,
       error: error?.message || 'Extraction failed',
     });
+  }
+});
+
+// --- ROUTE: OCR IMAGE (Syllabus/Notes) ---
+app.post('/api/ocr/image', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ ok: false, error: 'Missing image file.' });
+    }
+
+    const imageName = (req.file.originalname || '').toLowerCase();
+    const imageExt = imageName.includes('.') ? `.${imageName.split('.').pop()}` : '';
+    const imagePathWithExt = imageExt ? `${req.file.path}${imageExt}` : req.file.path;
+    if (imagePathWithExt !== req.file.path) {
+      fs.renameSync(req.file.path, imagePathWithExt);
+    }
+
+    const extractedText = await extractFromImage(imagePathWithExt, req.file.mimetype);
+
+    if (fs.existsSync(imagePathWithExt)) {
+      fs.unlinkSync(imagePathWithExt);
+    }
+
+    return res.json({ ok: true, text: extractedText });
+  } catch (error) {
+    console.error('OCR Image Error:', error?.message || error);
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    return res.status(500).json({ ok: false, error: 'Failed to extract text from image.' });
   }
 });
 

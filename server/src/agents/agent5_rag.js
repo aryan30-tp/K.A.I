@@ -8,7 +8,7 @@ const pc = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY,
 });
 
-const index = pc.index('kai-semester-brain');
+const index = pc.index(process.env.PINECONE_INDEX || 'kai-semester-brain');
 
 export async function ingestDocumentToBrain(rawText, workspaceId, sourceName) {
   try {

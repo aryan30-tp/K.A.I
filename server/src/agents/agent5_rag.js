@@ -39,7 +39,10 @@ export async function ingestDocumentToBrain(rawText, workspaceId, sourceName) {
           return null;
         }
         const result = await embeddingModel.embedContent(chunk.pageContent);
-        const embedding = result.embedding.values;
+        const embedding = result?.embedding?.values;
+        if (!Array.isArray(embedding) || embedding.length === 0) {
+          return null;
+        }
 
         return {
           id: `${workspaceId}-${sourceName}-chunk-${i}`,
@@ -60,7 +63,7 @@ export async function ingestDocumentToBrain(rawText, workspaceId, sourceName) {
     }
 
     await index.upsert(filteredVectors);
-    console.log(`Successfully injected ${vectors.length} chunks into K.A.I. brain.`);
+    console.log(`Successfully injected ${filteredVectors.length} chunks into K.A.I. brain.`);
   } catch (error) {
     console.error('Brain ingestion error:', error?.message || error);
     throw new Error('Failed to memorize document.');

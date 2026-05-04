@@ -133,7 +133,14 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
       return res.status(400).json({ error: "No file or URL provided" });
     }
 
-    await ingestDocumentToBrain(rawText, workspaceId, uploadId);
+    try {
+      await ingestDocumentToBrain(rawText, workspaceId, uploadId);
+    } catch (ingestError) {
+      console.warn(
+        'Ingestion warning: skipping Pinecone upsert for this upload.',
+        ingestError?.message || ingestError
+      );
+    }
 
     await db.collection('study_sessions').doc(uploadId).set(
       {

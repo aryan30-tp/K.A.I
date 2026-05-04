@@ -337,6 +337,9 @@ app.get('/api/health', (req, res) => {
 // List available Gemini models for debugging
 app.get('/api/list-models', async (req, res) => {
   try {
+    if (!process.env.GOOGLE_API_KEY) {
+      return res.status(400).json({ ok: false, error: 'GOOGLE_API_KEY is not set.' });
+    }
     const response = await genAI.listModels();
     const models = response.models || [];
 
@@ -348,8 +351,9 @@ app.get('/api/list-models', async (req, res) => {
 
     res.json({ ok: true, models: formatted });
   } catch (error) {
-    console.error('List models error:', error?.message || error);
-    res.status(500).json({ ok: false, error: 'Failed to list models.' });
+    const message = error?.message || String(error || 'Unknown error');
+    console.error('List models error:', message);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 

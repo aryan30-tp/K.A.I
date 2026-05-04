@@ -1,7 +1,9 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
 const index = pc.index(process.env.PINECONE_INDEX || 'kai-semester-brain');
 
@@ -31,20 +33,22 @@ export async function processSocraticTurn(
       .filter(Boolean)
       .join('\n---\n');
 
-    const chatModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'models/gemini-2.0-flash',
-    });
-    const chat = chatModel.startChat({
-      history: chatHistory,
-    });
+    const formattedHistory = Array.isArray(chatHistory)
+      ? chatHistory.map((message) => ({
+          role: message.role === 'model' || message.role === 'assistant' ? 'assistant' : 'user',
+          content:
+            message.content ||
+            message.parts?.[0]?.text ||
+            message.text ||
+            '',
+        }))
+      : [];
 
-    const prompt = `You are Professor K.A.I., conducting a real-time oral exam with a university student.
+    const systemPrompt = `You are Professor K.A.I., conducting a real-time oral exam with a university student.
 
 TOPIC OF DISCUSSION: ${topic}
 SOURCE OF TRUTH (The facts you must test them on):
 ${sourceTruth}
-
-THE STUDENT JUST SAID: "${studentSpeechText}"
 
 YOUR INSTRUCTIONS:
 1. Evaluate what the student just said against the Source of Truth.
@@ -58,10 +62,23 @@ Respond in JSON format:
   "isConceptMastered": false
 }`;
 
-    const response = await chat.sendMessage(prompt);
-    const rawText = response.response.text();
-    const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanJson);
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...formattedHistory,
+        { role: 'user', content: studentSpeechText },
+      ],
+      model: process.env.GROQ_MODEL || 'llama3-70b-8192',
+      response_format: { type: 'json_object' },
+      temperature: 0.4,
+    });
+
+    const rawJson = chatCompletion.choices?.[0]?.message?.content || '';
+    if (!rawJson.trim()) {
+      throw new Error('Groq returned empty JSON.');
+    }
+
+    return JSON.parse(rawJson);
   } catch (error) {
     console.error('Socratic Tutor error:', error?.message || error);
     throw new Error('Failed to process Socratic turn.');

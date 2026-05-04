@@ -32,6 +32,7 @@ import { generateMockExam } from './src/agents/agent7_exam_generator.js';
 import { gradeExamAnswer } from './src/agents/agent6_grader.js';
 import { processSocraticTurn } from './src/agents/agent8_socratic.js';
 import { generateHeatmap } from './src/agents/agent9_analyst.js';
+import { generateSurvivalPlan } from './src/agents/agent11_triage.js';
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -246,6 +247,32 @@ app.get('/api/analytics/heatmap/:workspaceId', async (req, res) => {
   } catch (error) {
     console.error('Heatmap Generation Error:', error?.message || error);
     return res.status(500).json({ ok: false, error: 'Failed to compile analytics.' });
+  }
+});
+
+// --- DEFCON 1 SURVIVAL MODE ---
+app.post('/api/survival/triage', async (req, res) => {
+  try {
+    const { workspaceId, hoursRemaining } = req.body;
+    const hours = Number(hoursRemaining);
+
+    if (!workspaceId || Number.isNaN(hours)) {
+      return res.status(400).json({ ok: false, error: 'Missing workspaceId or hoursRemaining.' });
+    }
+
+    if (hours < 1) {
+      return res
+        .status(400)
+        .json({ ok: false, error: 'Less than 1 hour remaining. Triage impossible.' });
+    }
+
+    const battlePlan = await generateSurvivalPlan(workspaceId, hours);
+    return res.json({ ok: true, data: battlePlan });
+  } catch (error) {
+    console.error('Triage Engine Error:', error?.message || error);
+    return res
+      .status(500)
+      .json({ ok: false, error: 'The triage engine failed to compile a plan.' });
   }
 });
 

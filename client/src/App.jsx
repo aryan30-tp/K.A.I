@@ -17,6 +17,21 @@ function App() {
   const [result, setResult] = useState('');
   const [resultSource, setResultSource] = useState('');
   const [error, setError] = useState('');
+  const [heatmapWorkspaceId, setHeatmapWorkspaceId] = useState('user_123');
+  const [heatmapLoading, setHeatmapLoading] = useState(false);
+  const [heatmapError, setHeatmapError] = useState('');
+  const [heatmapResult, setHeatmapResult] = useState(null);
+  const [survivalWorkspaceId, setSurvivalWorkspaceId] = useState('user_123');
+  const [hoursRemaining, setHoursRemaining] = useState('6');
+  const [survivalLoading, setSurvivalLoading] = useState(false);
+  const [survivalError, setSurvivalError] = useState('');
+  const [survivalPlan, setSurvivalPlan] = useState(null);
+
+  const heatmapStatusStyles = {
+    Green: { backgroundColor: '#d6f5d6', color: '#1f7a1f' },
+    Yellow: { backgroundColor: '#fff3bf', color: '#8a6d00' },
+    Red: { backgroundColor: '#ffe3e3', color: '#a61e1e' },
+  };
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
 
@@ -154,6 +169,69 @@ function App() {
     }
   }
 
+  async function handleFetchHeatmap(e) {
+    e.preventDefault();
+    if (!heatmapWorkspaceId.trim()) {
+      setHeatmapError('Please provide a workspaceId.');
+      return;
+    }
+
+    setHeatmapLoading(true);
+    setHeatmapError('');
+    setHeatmapResult(null);
+
+    try {
+      const res = await fetch(
+        `${apiBase}/api/analytics/heatmap/${encodeURIComponent(heatmapWorkspaceId.trim())}`
+      );
+      const data = await parseResponse(res);
+      if (!data.ok) throw new Error(data.error);
+      setHeatmapResult(data.data);
+    } catch (err) {
+      setHeatmapError(err.message || String(err));
+    } finally {
+      setHeatmapLoading(false);
+    }
+  }
+
+  async function handleSurvivalPlan(e) {
+    e.preventDefault();
+    const trimmedWorkspaceId = survivalWorkspaceId.trim();
+    const hoursValue = Number(hoursRemaining);
+
+    if (!trimmedWorkspaceId) {
+      setSurvivalError('Please provide a workspaceId.');
+      return;
+    }
+
+    if (!hoursRemaining.trim() || Number.isNaN(hoursValue)) {
+      setSurvivalError('Please provide a valid hoursRemaining value.');
+      return;
+    }
+
+    setSurvivalLoading(true);
+    setSurvivalError('');
+    setSurvivalPlan(null);
+
+    try {
+      const res = await fetch(`${apiBase}/api/survival/triage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId: trimmedWorkspaceId,
+          hoursRemaining: hoursValue,
+        }),
+      });
+      const data = await parseResponse(res);
+      if (!data.ok) throw new Error(data.error);
+      setSurvivalPlan(data.data);
+    } catch (err) {
+      setSurvivalError(err.message || String(err));
+    } finally {
+      setSurvivalLoading(false);
+    }
+  }
+
 
   return (
     <div style={{ padding: 20, fontFamily: 'Arial, sans-serif' }}>
@@ -256,6 +334,184 @@ function App() {
       </section>
 
       <SocraticTutorTest apiBase={apiBase} />
+
+      {/* Survival Mode Test Panel */}
+      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+        <h2>Step 4: Survival Mode (Agent 11)</h2>
+        <form onSubmit={handleSurvivalPlan}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+            <input
+              type="text"
+              value={survivalWorkspaceId}
+              onChange={(e) => setSurvivalWorkspaceId(e.target.value)}
+              placeholder="Workspace ID"
+              style={{ flex: 1, padding: 8 }}
+            />
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={hoursRemaining}
+              onChange={(e) => setHoursRemaining(e.target.value)}
+              placeholder="Hours Remaining"
+              style={{ width: 160, padding: 8 }}
+            />
+            <button
+              type="submit"
+              disabled={survivalLoading}
+              style={{ padding: '10px 16px', cursor: 'pointer' }}
+            >
+              {survivalLoading ? '⏳ Planning…' : '🚨 Generate Plan'}
+            </button>
+          </div>
+        </form>
+
+        {survivalError && (
+          <div
+            style={{
+              color: 'crimson',
+              marginBottom: 12,
+              padding: 12,
+              backgroundColor: '#ffe6e6',
+              borderRadius: 4,
+            }}
+          >
+            ❌ {survivalError}
+          </div>
+        )}
+
+        {survivalPlan && (
+          <div style={{ backgroundColor: '#f7f7f7', padding: 12, borderRadius: 4 }}>
+            <h3 style={{ marginTop: 0 }}>Mission Briefing</h3>
+            <p style={{ marginTop: 0 }}>{survivalPlan.missionBriefing}</p>
+
+            <h3>Survival Plan</h3>
+            {Array.isArray(survivalPlan.survivalPlan) && survivalPlan.survivalPlan.length > 0 ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Phase</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Action</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Concept</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Trigger</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Instruction</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {survivalPlan.survivalPlan.map((row, idx) => (
+                      <tr key={`${row.phase}-${idx}`}>
+                        <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.phase}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.action}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.concept}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.triggerAgent}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.instruction}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p style={{ margin: 0 }}>No plan items returned.</p>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* Heatmap Test Panel */}
+      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+        <h2>Step 5: Heatmap Analytics (Test)</h2>
+        <form onSubmit={handleFetchHeatmap}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+            <input
+              type="text"
+              value={heatmapWorkspaceId}
+              onChange={(e) => setHeatmapWorkspaceId(e.target.value)}
+              placeholder="Workspace ID"
+              style={{ flex: 1, padding: 8 }}
+            />
+            <button
+              type="submit"
+              disabled={heatmapLoading || !heatmapWorkspaceId.trim()}
+              style={{ padding: '10px 16px', cursor: 'pointer' }}
+            >
+              {heatmapLoading ? '⏳ Fetching…' : '📈 Fetch Heatmap'}
+            </button>
+          </div>
+        </form>
+
+        {heatmapError && (
+          <div
+            style={{
+              color: 'crimson',
+              marginBottom: 12,
+              padding: 12,
+              backgroundColor: '#ffe6e6',
+              borderRadius: 4,
+            }}
+          >
+            ❌ {heatmapError}
+          </div>
+        )}
+
+        {heatmapResult && (
+          <div style={{ backgroundColor: '#f7f7f7', padding: 12, borderRadius: 4 }}>
+            <h3 style={{ marginTop: 0 }}>Overview</h3>
+            <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 12 }}>
+              {JSON.stringify(heatmapResult.overview, null, 2)}
+            </pre>
+            <h3 style={{ marginTop: 0 }}>Heatmap</h3>
+            {Array.isArray(heatmapResult.heatmap) && heatmapResult.heatmap.length > 0 ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Topic</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Avg Score</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Status</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Missed</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {heatmapResult.heatmap.map((row, idx) => {
+                      const statusStyle = heatmapStatusStyles[row.status] || {
+                        backgroundColor: '#f0f0f0',
+                        color: '#333',
+                      };
+                      return (
+                        <tr key={`${row.topic}-${idx}`}>
+                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.topic}</td>
+                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
+                            {typeof row.avgScore === 'number' ? `${row.avgScore}%` : row.avgScore}
+                          </td>
+                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '4px 10px',
+                                borderRadius: 12,
+                                fontWeight: 600,
+                                ...statusStyle,
+                              }}
+                            >
+                              {row.status}
+                            </span>
+                          </td>
+                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
+                            {row.missed || '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p style={{ margin: 0 }}>No heatmap data yet. Grade at least one exam with a topic.</p>
+            )}
+          </div>
+        )}
+      </section>
 
       {/* Results */}
       {error && <div style={{ color: 'crimson', marginBottom: 12, padding: 12, backgroundColor: '#ffe6e6', borderRadius: 4 }}>❌ {error}</div>}

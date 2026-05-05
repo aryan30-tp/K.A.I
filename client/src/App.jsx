@@ -91,6 +91,7 @@ function App() {
         formData.append('file', file);
       }
       formData.append('workspaceId', workspaceId.trim());
+      formData.append('userId', currentUser.uid);
       formData.append('forceWhisper', forceWhisper ? 'true' : 'false');
 
       const res = await fetch(`${apiBase}/api/extract`, {
@@ -247,6 +248,8 @@ function App() {
           syllabusAnalysis,
           examAnalysis,
           specificTopic: specificTopic.trim() ? specificTopic.trim() : null,
+          workspaceId: workspaceId.trim(),
+          userId: currentUser.uid,
         }),
       });
 

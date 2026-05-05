@@ -67,7 +67,7 @@ const upload = multer({ dest: 'uploads/' });
 // --- ROUTE 1: EXTRACT FUEL (Agent 1) ---
 app.post('/api/extract', upload.array('file', 10), async (req, res) => {
   try {
-    const { youtubeUrl, forceWhisper, workspaceId } = req.body;
+    const { youtubeUrl, forceWhisper, workspaceId, userId } = req.body;
     let rawText = "";
 
     if (!workspaceId) {
@@ -143,9 +143,12 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
       );
     }
 
+    const resolvedUserId = userId || workspaceId;
+
     await db.collection('study_sessions').doc(uploadId).set(
       {
         workspaceId,
+        userId: resolvedUserId,
         rawText,
         sourceType: youtubeUrl ? 'youtube' : 'file',
         createdAt: Timestamp.now(),
@@ -218,7 +221,16 @@ app.post('/api/analyze', async (req, res) => {
 // --- ROUTE 3: THE GENERATOR & CACHE (Agent 4 + Firebase) ---
 app.post('/api/generate', async (req, res) => {
   try {
-    const { uploadId, requestType, rawNotes, syllabusAnalysis, examAnalysis, specificTopic } = req.body;
+    const {
+      uploadId,
+      requestType,
+      rawNotes,
+      syllabusAnalysis,
+      examAnalysis,
+      specificTopic,
+      workspaceId,
+      userId,
+    } = req.body;
 
     // 1. Check Firebase first! 
     const cachedData = await getCachedOutput(uploadId, requestType);
@@ -236,7 +248,10 @@ app.post('/api/generate', async (req, res) => {
     );
 
     // 3. Save it to Firebase so we never pay for it again
-    await saveCachedOutput(uploadId, requestType, generatedData);
+    await saveCachedOutput(uploadId, requestType, generatedData, {
+      userId: userId || workspaceId,
+      workspaceId,
+    });
 
     // 4. Send back to React
     res.json({ ok: true, source: "ai", data: generatedData });

@@ -26,16 +26,20 @@ export async function getCachedOutput(uploadId, outputType) {
 }
 
 // 2. Save the AI's generation to Firebase so we never pay for it twice
-export async function saveCachedOutput(uploadId, outputType, data) {
+export async function saveCachedOutput(uploadId, outputType, data, meta = {}) {
   try {
     const docRef = db.collection('study_sessions').doc(uploadId);
+    const payload = {
+      [outputType]: data,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    if (meta.userId) payload.userId = meta.userId;
+    if (meta.workspaceId) payload.workspaceId = meta.workspaceId;
     
     // { merge: true } ensures we don't overwrite other outputs (like flashcards) 
     // when we save a new output (like a study plan).
-    await docRef.set({
-      [outputType]: data,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+    await docRef.set(payload, { merge: true });
 
     console.log(`💾 Saved ${outputType} to Firebase cache`);
   } catch (error) {

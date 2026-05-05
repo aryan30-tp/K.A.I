@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import SocraticTutorTest from './components/SocraticTutorTest.jsx';
+import VisualAid from './components/VisualAid.jsx';
 
 function App() {
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -24,6 +25,7 @@ function App() {
   const [result, setResult] = useState('');
   const [resultSource, setResultSource] = useState('');
   const [error, setError] = useState('');
+  const [generatedData, setGeneratedData] = useState(null);
   const [heatmapLoading, setHeatmapLoading] = useState(false);
   const [heatmapError, setHeatmapError] = useState('');
   const [heatmapResult, setHeatmapResult] = useState(null);
@@ -90,6 +92,7 @@ function App() {
       setRawNotes(data.rawText);
       setResult(data.rawText);
       setResultSource('extracted');
+      setGeneratedData(null);
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -131,6 +134,7 @@ function App() {
       setExamAnalysis(data.examAnalysis);
       setResult(JSON.stringify(data, null, 2));
       setResultSource('analyzed');
+      setGeneratedData(null);
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -230,6 +234,7 @@ function App() {
       
       setResult(JSON.stringify(data.data, null, 2));
       setResultSource(`generated (from ${data.source})`);
+      setGeneratedData(data.data);
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -633,6 +638,74 @@ function App() {
 
       {/* Results */}
       {error && <div style={{ color: 'crimson', marginBottom: 12, padding: 12, backgroundColor: '#ffe6e6', borderRadius: 4 }}>❌ {error}</div>}
+
+      {generatedData && (
+        <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ddd', borderRadius: 4, backgroundColor: '#fdf7ff' }}>
+          <h3 style={{ marginTop: 0 }}>🧠 Visual Outputs</h3>
+
+          {requestType === 'flashcards' && Array.isArray(generatedData.flashcards) && (
+            <div>
+              {generatedData.flashcards.map((card, idx) => (
+                <div key={`flashcard-${idx}`} style={{ padding: 12, marginBottom: 12, border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff' }}>
+                  <div style={{ fontWeight: 700, marginBottom: 6 }}>{card.front}</div>
+                  <div style={{ marginBottom: 8 }}>{card.back}</div>
+                  <VisualAid prompt={card.visualPrompt} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {requestType === 'summary' && generatedData.keyTakeaways && (
+            <div>
+              <h4 style={{ marginBottom: 6 }}>{generatedData.title}</h4>
+              <p style={{ marginTop: 0 }}>{generatedData.executiveSummary}</p>
+              {generatedData.keyTakeaways.map((takeaway, idx) => (
+                <div key={`summary-${idx}`} style={{ padding: 12, marginBottom: 12, border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff' }}>
+                  <div style={{ fontWeight: 700 }}>{takeaway.topic}</div>
+                  <div style={{ marginBottom: 6 }}>{takeaway.summary}</div>
+                  {takeaway.mnemonic && (
+                    <div style={{ fontStyle: 'italic', marginBottom: 6 }}>Mnemonic: {takeaway.mnemonic}</div>
+                  )}
+                  <VisualAid prompt={takeaway.visualPrompt} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {requestType === 'eli5' && generatedData.simpleExplanation && (
+            <div style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff' }}>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>{generatedData.topic}</div>
+              <div style={{ marginBottom: 6 }}>{generatedData.theAnalogy}</div>
+              <div style={{ marginBottom: 6 }}>{generatedData.simpleExplanation}</div>
+              <div style={{ marginBottom: 6 }}>{generatedData.whyItMatters}</div>
+              <VisualAid prompt={generatedData.visualPrompt} />
+            </div>
+          )}
+
+          {requestType === 'mock_test' && Array.isArray(generatedData.questions) && (
+            <div>
+              <h4 style={{ marginBottom: 6 }}>{generatedData.testTitle}</h4>
+              {generatedData.questions.map((question, idx) => (
+                <div key={`question-${idx}`} style={{ padding: 12, marginBottom: 12, border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff' }}>
+                  <div style={{ fontWeight: 700, marginBottom: 6 }}>
+                    Q{question.questionNumber}: {question.questionText}
+                  </div>
+                  {Array.isArray(question.options) && question.options.length > 0 && (
+                    <ul style={{ marginTop: 0, paddingLeft: 18 }}>
+                      {question.options.map((option, optIdx) => (
+                        <li key={`opt-${optIdx}`}>{option}</li>
+                      ))}
+                    </ul>
+                  )}
+                  <div style={{ marginBottom: 6 }}>Answer: {question.correctAnswer}</div>
+                  <div style={{ marginBottom: 6 }}>{question.explanation}</div>
+                  <VisualAid prompt={question.visualPrompt} />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {result && (
         <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ddd', borderRadius: 4, backgroundColor: '#f9f9f9' }}>

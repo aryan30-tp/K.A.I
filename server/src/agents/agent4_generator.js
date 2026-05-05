@@ -143,25 +143,25 @@ export async function generateOutput(
     if (requestType === 'flashcards') {
       schema = flashcardSchema;
       systemInstructions =
-        "You are an expert tutor creating highly effective flashcards. Use the provided notes to extract key concepts. Keep the 'back' of the card concise and easy to memorize.\n\nIf a concept is structural (process, hierarchy, cycle), include mermaidCode. RULES: start with graph TD or graph LR; use simple alphanumeric IDs; avoid special characters unless quoted. If not structural, set mermaidCode to null.";
+        "You are an expert tutor creating highly effective flashcards. Use the provided notes to extract key concepts. Keep the 'back' of the card concise and easy to memorize.\n\nIf a concept is structural (process, hierarchy, cycle), include mermaidCode. RULES: start with graph TD or graph LR; use simple alphanumeric IDs; avoid special characters unless quoted. If not structural, set mermaidCode to null.\n\nCRITICAL: Return JSON with this exact structure and do not omit keys:\n{\n  \"flashcards\": [\n    {\n      \"front\": \"String\",\n      \"back\": \"String\",\n      \"mermaidCode\": \"String (Mermaid) or null\"\n    }\n  ]\n}";
     } else if (requestType === 'study_plan') {
       schema = studyPlanSchema;
       systemInstructions =
-        'You are a ruthless academic coach building a one-night study plan. Prioritize topics based on the Exam Analysis (focus on high likelihood). Tell the student exactly what to focus on and what to skip.';
+        'You are a ruthless academic coach building a one-night study plan. Prioritize topics based on the Exam Analysis (focus on high likelihood). Tell the student exactly what to focus on and what to skip.\n\nCRITICAL: Return JSON with this exact structure and do not omit keys:\n{\n  \"planTitle\": \"String\",\n  \"tasks\": [\n    {\n      \"order\": Number,\n      \"topic\": \"String\",\n      \"priority\": \"Critical (Do Now) | High | Medium | Skip if out of time\",\n      \"estimatedMinutes\": Number,\n      \"actionableAdvice\": \"String\"\n    }\n  ]\n}';
     } else if (requestType === 'summary') {
       schema = summarySchema;
       systemInstructions =
-        'You are a master synthesizer. Condense the raw notes into a crisp, high-yield summary. Include clever mnemonics where appropriate to help the student memorize complex lists or concepts.\n\nIf a takeaway is structural, include mermaidCode. RULES: start with graph TD or graph LR; use simple alphanumeric IDs; avoid special characters unless quoted. If not structural, set mermaidCode to null.';
+        'You are a master synthesizer. Condense the raw notes into a crisp, high-yield summary. Include clever mnemonics where appropriate to help the student memorize complex lists or concepts.\n\nIf a takeaway is structural, include mermaidCode. RULES: start with graph TD or graph LR; use simple alphanumeric IDs; avoid special characters unless quoted. If not structural, set mermaidCode to null.\n\nCRITICAL: Return JSON with this exact structure and do not omit keys:\n{\n  \"title\": \"String\",\n  \"executiveSummary\": \"String\",\n  \"keyTakeaways\": [\n    {\n      \"topic\": \"String\",\n      \"summary\": \"String\",\n      \"mnemonic\": \"String or null\",\n      \"mermaidCode\": \"String (Mermaid) or null\"\n    }\n  ]\n}';
     } else if (requestType === 'mock_test') {
       schema = mockTestSchema;
       systemInstructions =
-        "You are a strict examiner. Generate a realistic mock test. If an Exam Analysis is provided, aggressively test the topics marked as 'Very High' likelihood. Include a mix of question types and provide the answer key.\n\nIf a question is structural, include mermaidCode. RULES: start with graph TD or graph LR; use simple alphanumeric IDs; avoid special characters unless quoted. If not structural, set mermaidCode to null.";
+        "You are a strict examiner. Generate a realistic mock test. If an Exam Analysis is provided, aggressively test the topics marked as 'Very High' likelihood. Include a mix of question types and provide the answer key.\n\nIf a question is structural, include mermaidCode. RULES: start with graph TD or graph LR; use simple alphanumeric IDs; avoid special characters unless quoted. If not structural, set mermaidCode to null.\n\nCRITICAL: Return JSON with this exact structure and do not omit keys:\n{\n  \"testTitle\": \"String\",\n  \"timeLimitMinutes\": Number,\n  \"questions\": [\n    {\n      \"questionNumber\": Number,\n      \"questionText\": \"String\",\n      \"questionType\": \"Multiple Choice | Short Answer | Essay\",\n      \"options\": [\"A\", \"B\", \"C\", \"D\"] or null,\n      \"correctAnswer\": \"String\",\n      \"explanation\": \"String\",\n      \"mermaidCode\": \"String (Mermaid) or null\"\n    }\n  ]\n}";
     } else if (requestType === 'eli5') {
       schema = eli5Schema;
       systemInstructions =
         `You are an incredibly empathetic tutor known for breaking down complex topics. The user wants you to explain the concept of '${
           specificTopic || 'the most complex topic in the notes'
-        }'. Explain it using brilliant, relatable everyday analogies. ZERO jargon.\n\nIf the concept is structural, include mermaidCode. RULES: start with graph TD or graph LR; use simple alphanumeric IDs; avoid special characters unless quoted. If not structural, set mermaidCode to null.`;
+        }'. Explain it using brilliant, relatable everyday analogies. ZERO jargon.\n\nIf the concept is structural, include mermaidCode. RULES: start with graph TD or graph LR; use simple alphanumeric IDs; avoid special characters unless quoted. If not structural, set mermaidCode to null.\n\nCRITICAL: Return JSON with this exact structure and do not omit keys:\n{\n  \"topic\": \"String\",\n  \"theAnalogy\": \"String\",\n  \"simpleExplanation\": \"String\",\n  \"whyItMatters\": \"String\",\n  \"mermaidCode\": \"String (Mermaid) or null\"\n}`;
     } else {
       throw new Error('Invalid request type');
     }

@@ -630,6 +630,106 @@ function App() {
           <pre style={{ whiteSpace: 'pre-wrap', maxHeight: '60vh', overflow: 'auto', padding: 12, backgroundColor: '#fff', borderRadius: 4 }}>{result}</pre>
         </section>
       )}
+
+      {/* Heatmap Test Panel */}
+      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+        <h2>📈 Heatmap Analytics</h2>
+        <form onSubmit={handleFetchHeatmap}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+            <input
+              type="text"
+              value={workspaceId}
+              onChange={(e) => setWorkspaceId(e.target.value)}
+              placeholder="Workspace ID"
+              style={{ flex: 1, padding: 8 }}
+            />
+            <button
+              type="submit"
+              disabled={heatmapLoading || !workspaceId.trim()}
+              style={{ padding: '10px 16px', cursor: 'pointer' }}
+            >
+              {heatmapLoading ? '⏳ Fetching…' : '📈 Fetch Heatmap'}
+            </button>
+          </div>
+        </form>
+
+        {heatmapError && (
+          <div
+            style={{
+              color: 'crimson',
+              marginBottom: 12,
+              padding: 12,
+              backgroundColor: '#ffe6e6',
+              borderRadius: 4,
+            }}
+          >
+            ❌ {heatmapError}
+          </div>
+        )}
+
+        {heatmapResult && (
+          <div style={{ backgroundColor: '#f7f7f7', padding: 12, borderRadius: 4 }}>
+            <h3 style={{ marginTop: 0 }}>Overview</h3>
+            <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 12 }}>
+              {JSON.stringify(heatmapResult.overview, null, 2)}
+            </pre>
+            <h3 style={{ marginTop: 0 }}>Heatmap</h3>
+            {Array.isArray(heatmapResult.heatmap) && heatmapResult.heatmap.length > 0 ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Topic</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Avg Score</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Status</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Missed</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {heatmapResult.heatmap.map((row, idx) => {
+                      const heatmapStatusStyles = {
+                        Green: { backgroundColor: '#d6f5d6', color: '#1f7a1f' },
+                        Yellow: { backgroundColor: '#fff3bf', color: '#8a6d00' },
+                        Red: { backgroundColor: '#ffe3e3', color: '#a61e1e' },
+                      };
+                      const statusStyle = heatmapStatusStyles[row.status] || {
+                        backgroundColor: '#f0f0f0',
+                        color: '#333',
+                      };
+                      return (
+                        <tr key={`${row.topic}-${idx}`}>
+                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.topic}</td>
+                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
+                            {typeof row.avgScore === 'number' ? `${row.avgScore}%` : row.avgScore}
+                          </td>
+                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '4px 10px',
+                                borderRadius: 12,
+                                fontWeight: 600,
+                                ...statusStyle,
+                              }}
+                            >
+                              {row.status}
+                            </span>
+                          </td>
+                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
+                            {row.missed || '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p style={{ margin: 0 }}>No heatmap data yet. Grade at least one exam with a topic.</p>
+            )}
+          </div>
+        )}
+      </section>
           </div>
         )}
 
@@ -641,106 +741,6 @@ function App() {
               workspaceId={workspaceId}
               onWorkspaceIdChange={setWorkspaceId}
             />
-
-            {/* Heatmap Test Panel */}
-            <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
-              <h2>📈 Heatmap Analytics</h2>
-              <form onSubmit={handleFetchHeatmap}>
-                <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-                  <input
-                    type="text"
-                    value={workspaceId}
-                    onChange={(e) => setWorkspaceId(e.target.value)}
-                    placeholder="Workspace ID"
-                    style={{ flex: 1, padding: 8 }}
-                  />
-                  <button
-                    type="submit"
-                    disabled={heatmapLoading || !workspaceId.trim()}
-                    style={{ padding: '10px 16px', cursor: 'pointer' }}
-                  >
-                    {heatmapLoading ? '⏳ Fetching…' : '📈 Fetch Heatmap'}
-                  </button>
-                </div>
-              </form>
-
-              {heatmapError && (
-                <div
-                  style={{
-                    color: 'crimson',
-                    marginBottom: 12,
-                    padding: 12,
-                    backgroundColor: '#ffe6e6',
-                    borderRadius: 4,
-                  }}
-                >
-                  ❌ {heatmapError}
-                </div>
-              )}
-
-              {heatmapResult && (
-                <div style={{ backgroundColor: '#f7f7f7', padding: 12, borderRadius: 4 }}>
-                  <h3 style={{ marginTop: 0 }}>Overview</h3>
-                  <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 12 }}>
-                    {JSON.stringify(heatmapResult.overview, null, 2)}
-                  </pre>
-                  <h3 style={{ marginTop: 0 }}>Heatmap</h3>
-                  {Array.isArray(heatmapResult.heatmap) && heatmapResult.heatmap.length > 0 ? (
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
-                        <thead>
-                          <tr>
-                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Topic</th>
-                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Avg Score</th>
-                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Status</th>
-                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Missed</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {heatmapResult.heatmap.map((row, idx) => {
-                            const heatmapStatusStyles = {
-                              Green: { backgroundColor: '#d6f5d6', color: '#1f7a1f' },
-                              Yellow: { backgroundColor: '#fff3bf', color: '#8a6d00' },
-                              Red: { backgroundColor: '#ffe3e3', color: '#a61e1e' },
-                            };
-                            const statusStyle = heatmapStatusStyles[row.status] || {
-                              backgroundColor: '#f0f0f0',
-                              color: '#333',
-                            };
-                            return (
-                              <tr key={`${row.topic}-${idx}`}>
-                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.topic}</td>
-                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
-                                  {typeof row.avgScore === 'number' ? `${row.avgScore}%` : row.avgScore}
-                                </td>
-                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
-                                  <span
-                                    style={{
-                                      display: 'inline-block',
-                                      padding: '4px 10px',
-                                      borderRadius: 12,
-                                      fontWeight: 600,
-                                      ...statusStyle,
-                                    }}
-                                  >
-                                    {row.status}
-                                  </span>
-                                </td>
-                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
-                                  {row.missed || '—'}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p style={{ margin: 0 }}>No heatmap data yet. Grade at least one exam with a topic.</p>
-                  )}
-                </div>
-              )}
-            </section>
           </div>
         )}
 

@@ -9,16 +9,76 @@ body {
   color: #E8E8E8;
 }
 
-.App {
-  text-align: center;
-  padding: 2rem;
+.app-header {
+  background-color: #000000;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #444;
 }
 
-h1 {
-  color: #282c34;
-  font-size: 2rem;
+.app-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #B3FF00;
 }
 
-p {
-  color: #666;
+.app-header-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  color: #999;
+}
+
+.app-header button {
+  padding: 6px 12px;
+  background-color: #B3FF00;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #000;
+  transition: background-color 0.2s;
+}
+
+.app-header button:hover {
+  background-color: #a8e600;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 0;
+  padding: 0;
+  background-color: #1a1c18;
+  border-bottom: 2px solid #B3FF00;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-button.active {
+  color: #B3FF00;
+  border-bottom-color: #B3FF00;
+}
+
+.tab-button:hover {
+  color: #B3FF00;
+}
+
+.tab-content {
+  padding: 20px;
+  min-height: calc(100vh - 120px);
 }

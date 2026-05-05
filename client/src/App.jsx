@@ -34,6 +34,7 @@ function App() {
   const [survivalLoading, setSurvivalLoading] = useState(false);
   const [survivalError, setSurvivalError] = useState('');
   const [survivalPlan, setSurvivalPlan] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
 
   const { currentUser, loadingAuth, signInWithGoogle, signOutUser } = useAuth();
 
@@ -349,12 +350,12 @@ function App() {
 
   if (!currentUser) {
     return (
-      <div style={{ padding: 24, fontFamily: 'Arial, sans-serif' }}>
-        <h1>🚨 K.A.I. Emergency Triage</h1>
-        <p>Sign in with Google to start your survival plan.</p>
+      <div style={{ padding: 24, fontFamily: 'Arial, sans-serif', textAlign: 'center' }}>
+        <h1 style={{ color: '#B3FF00' }}>🚨 K.A.I. Emergency Triage</h1>
+        <p style={{ color: '#E8E8E8' }}>Sign in with Google to start your survival plan.</p>
         <button
           onClick={signInWithGoogle}
-          style={{ padding: '10px 16px', cursor: 'pointer', fontWeight: 600 }}
+          style={{ padding: '10px 16px', cursor: 'pointer', fontWeight: 600, backgroundColor: '#B3FF00', color: '#000', border: 'none', borderRadius: 4 }}
         >
           Sign in with Google
         </button>
@@ -363,16 +364,43 @@ function App() {
   }
 
   return (
-    <div style={{ padding: 20, fontFamily: 'Arial, sans-serif' }}>
-      <h1>🤖 K.A.I. — Study Assistant</h1>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontSize: 12, color: '#555' }}>
-          Signed in as {currentUser.email || currentUser.uid}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#2C2E2A' }}>
+      {/* Header */}
+      <div className="app-header">
+        <h1>🤖 K.A.I.</h1>
+        <div className="app-header-user">
+          <span>{currentUser.email || currentUser.uid}</span>
+          <button onClick={signOutUser}>Sign out</button>
         </div>
-        <button onClick={signOutUser} style={{ padding: '6px 12px', cursor: 'pointer' }}>
-          Sign out
+      </div>
+
+      {/* Tab Bar */}
+      <div className="tab-bar">
+        <button
+          className={`tab-button ${activeTab === 0 ? 'active' : ''}`}
+          onClick={() => setActiveTab(0)}
+        >
+          📚 Build
+        </button>
+        <button
+          className={`tab-button ${activeTab === 1 ? 'active' : ''}`}
+          onClick={() => setActiveTab(1)}
+        >
+          🎙️ Study Lab
+        </button>
+        <button
+          className={`tab-button ${activeTab === 2 ? 'active' : ''}`}
+          onClick={() => setActiveTab(2)}
+        >
+          🚨 Survival Mode
         </button>
       </div>
+
+      {/* Tab Content */}
+      <div className="tab-content" style={{ overflowY: 'auto', flex: 1 }}>
+        {/* Tab 0: Build */}
+        {activeTab === 0 && (
+          <div>
       
       {/* Step 1: Extract */}
       <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
@@ -524,183 +552,6 @@ function App() {
         </form>
       </section>
 
-      <SocraticTutorTest
-        apiBase={apiBase}
-        workspaceId={workspaceId}
-        onWorkspaceIdChange={setWorkspaceId}
-      />
-
-      {/* Survival Mode Test Panel */}
-      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
-        <h2>Step 4: Survival Mode (Agent 11)</h2>
-        <form onSubmit={handleSurvivalPlan}>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={hoursRemaining}
-              onChange={(e) => setHoursRemaining(e.target.value)}
-              placeholder="Hours Remaining"
-              style={{ width: 160, padding: 8 }}
-            />
-            <button
-              type="submit"
-              disabled={survivalLoading}
-              style={{ padding: '10px 16px', cursor: 'pointer' }}
-            >
-              {survivalLoading ? '⏳ Planning…' : '🚨 Generate Plan'}
-            </button>
-          </div>
-        </form>
-
-        {survivalError && (
-          <div
-            style={{
-              color: 'crimson',
-              marginBottom: 12,
-              padding: 12,
-              backgroundColor: '#ffe6e6',
-              borderRadius: 4,
-            }}
-          >
-            ❌ {survivalError}
-          </div>
-        )}
-
-        {survivalPlan && (
-          <div style={{ backgroundColor: '#f7f7f7', padding: 12, borderRadius: 4 }}>
-            <h3 style={{ marginTop: 0 }}>Mission Briefing</h3>
-            <p style={{ marginTop: 0 }}>{survivalPlan.missionBriefing}</p>
-
-            <h3>Survival Plan</h3>
-            {Array.isArray(survivalPlan.survivalPlan) && survivalPlan.survivalPlan.length > 0 ? (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Phase</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Action</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Concept</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Trigger</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Instruction</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {survivalPlan.survivalPlan.map((row, idx) => (
-                      <tr key={`${row.phase}-${idx}`}>
-                        <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.phase}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.action}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.concept}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.triggerAgent}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.instruction}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p style={{ margin: 0 }}>No plan items returned.</p>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* Heatmap Test Panel */}
-      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
-        <h2>Step 5: Heatmap Analytics (Test)</h2>
-        <form onSubmit={handleFetchHeatmap}>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-            <input
-              type="text"
-              value={workspaceId}
-              onChange={(e) => setWorkspaceId(e.target.value)}
-              placeholder="Workspace ID"
-              style={{ flex: 1, padding: 8 }}
-            />
-            <button
-              type="submit"
-              disabled={heatmapLoading || !workspaceId.trim()}
-              style={{ padding: '10px 16px', cursor: 'pointer' }}
-            >
-              {heatmapLoading ? '⏳ Fetching…' : '📈 Fetch Heatmap'}
-            </button>
-          </div>
-        </form>
-
-        {heatmapError && (
-          <div
-            style={{
-              color: 'crimson',
-              marginBottom: 12,
-              padding: 12,
-              backgroundColor: '#ffe6e6',
-              borderRadius: 4,
-            }}
-          >
-            ❌ {heatmapError}
-          </div>
-        )}
-
-        {heatmapResult && (
-          <div style={{ backgroundColor: '#f7f7f7', padding: 12, borderRadius: 4 }}>
-            <h3 style={{ marginTop: 0 }}>Overview</h3>
-            <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 12 }}>
-              {JSON.stringify(heatmapResult.overview, null, 2)}
-            </pre>
-            <h3 style={{ marginTop: 0 }}>Heatmap</h3>
-            {Array.isArray(heatmapResult.heatmap) && heatmapResult.heatmap.length > 0 ? (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Topic</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Avg Score</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Status</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Missed</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {heatmapResult.heatmap.map((row, idx) => {
-                      const statusStyle = heatmapStatusStyles[row.status] || {
-                        backgroundColor: '#f0f0f0',
-                        color: '#333',
-                      };
-                      return (
-                        <tr key={`${row.topic}-${idx}`}>
-                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.topic}</td>
-                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
-                            {typeof row.avgScore === 'number' ? `${row.avgScore}%` : row.avgScore}
-                          </td>
-                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                padding: '4px 10px',
-                                borderRadius: 12,
-                                fontWeight: 600,
-                                ...statusStyle,
-                              }}
-                            >
-                              {row.status}
-                            </span>
-                          </td>
-                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
-                            {row.missed || '—'}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p style={{ margin: 0 }}>No heatmap data yet. Grade at least one exam with a topic.</p>
-            )}
-          </div>
-        )}
-      </section>
-
       {/* Results */}
       {error && <div style={{ color: 'crimson', marginBottom: 12, padding: 12, backgroundColor: '#ffe6e6', borderRadius: 4 }}>❌ {error}</div>}
 
@@ -779,6 +630,200 @@ function App() {
           <pre style={{ whiteSpace: 'pre-wrap', maxHeight: '60vh', overflow: 'auto', padding: 12, backgroundColor: '#fff', borderRadius: 4 }}>{result}</pre>
         </section>
       )}
+          </div>
+        )}
+
+        {/* Tab 1: Study Lab */}
+        {activeTab === 1 && (
+          <div>
+            <SocraticTutorTest
+              apiBase={import.meta.env.VITE_API_URL ?? ''}
+              workspaceId={workspaceId}
+              onWorkspaceIdChange={setWorkspaceId}
+            />
+
+            {/* Heatmap Test Panel */}
+            <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+              <h2>📈 Heatmap Analytics</h2>
+              <form onSubmit={handleFetchHeatmap}>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+                  <input
+                    type="text"
+                    value={workspaceId}
+                    onChange={(e) => setWorkspaceId(e.target.value)}
+                    placeholder="Workspace ID"
+                    style={{ flex: 1, padding: 8 }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={heatmapLoading || !workspaceId.trim()}
+                    style={{ padding: '10px 16px', cursor: 'pointer' }}
+                  >
+                    {heatmapLoading ? '⏳ Fetching…' : '📈 Fetch Heatmap'}
+                  </button>
+                </div>
+              </form>
+
+              {heatmapError && (
+                <div
+                  style={{
+                    color: 'crimson',
+                    marginBottom: 12,
+                    padding: 12,
+                    backgroundColor: '#ffe6e6',
+                    borderRadius: 4,
+                  }}
+                >
+                  ❌ {heatmapError}
+                </div>
+              )}
+
+              {heatmapResult && (
+                <div style={{ backgroundColor: '#f7f7f7', padding: 12, borderRadius: 4 }}>
+                  <h3 style={{ marginTop: 0 }}>Overview</h3>
+                  <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 12 }}>
+                    {JSON.stringify(heatmapResult.overview, null, 2)}
+                  </pre>
+                  <h3 style={{ marginTop: 0 }}>Heatmap</h3>
+                  {Array.isArray(heatmapResult.heatmap) && heatmapResult.heatmap.length > 0 ? (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
+                        <thead>
+                          <tr>
+                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Topic</th>
+                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Avg Score</th>
+                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Status</th>
+                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Missed</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {heatmapResult.heatmap.map((row, idx) => {
+                            const heatmapStatusStyles = {
+                              Green: { backgroundColor: '#d6f5d6', color: '#1f7a1f' },
+                              Yellow: { backgroundColor: '#fff3bf', color: '#8a6d00' },
+                              Red: { backgroundColor: '#ffe3e3', color: '#a61e1e' },
+                            };
+                            const statusStyle = heatmapStatusStyles[row.status] || {
+                              backgroundColor: '#f0f0f0',
+                              color: '#333',
+                            };
+                            return (
+                              <tr key={`${row.topic}-${idx}`}>
+                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.topic}</td>
+                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
+                                  {typeof row.avgScore === 'number' ? `${row.avgScore}%` : row.avgScore}
+                                </td>
+                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
+                                  <span
+                                    style={{
+                                      display: 'inline-block',
+                                      padding: '4px 10px',
+                                      borderRadius: 12,
+                                      fontWeight: 600,
+                                      ...statusStyle,
+                                    }}
+                                  >
+                                    {row.status}
+                                  </span>
+                                </td>
+                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
+                                  {row.missed || '—'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p style={{ margin: 0 }}>No heatmap data yet. Grade at least one exam with a topic.</p>
+                  )}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+
+        {/* Tab 2: Survival Mode */}
+        {activeTab === 2 && (
+          <div>
+            <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+              <h2>🚨 Survival Mode (Agent 11)</h2>
+              <form onSubmit={handleSurvivalPlan}>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={hoursRemaining}
+                    onChange={(e) => setHoursRemaining(e.target.value)}
+                    placeholder="Hours Remaining"
+                    style={{ width: 160, padding: 8 }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={survivalLoading}
+                    style={{ padding: '10px 16px', cursor: 'pointer' }}
+                  >
+                    {survivalLoading ? '⏳ Planning…' : '🚨 Generate Plan'}
+                  </button>
+                </div>
+              </form>
+
+              {survivalError && (
+                <div
+                  style={{
+                    color: 'crimson',
+                    marginBottom: 12,
+                    padding: 12,
+                    backgroundColor: '#ffe6e6',
+                    borderRadius: 4,
+                  }}
+                >
+                  ❌ {survivalError}
+                </div>
+              )}
+
+              {survivalPlan && (
+                <div style={{ backgroundColor: '#f7f7f7', padding: 12, borderRadius: 4 }}>
+                  <h3 style={{ marginTop: 0 }}>Mission Briefing</h3>
+                  <p style={{ marginTop: 0 }}>{survivalPlan.missionBriefing}</p>
+
+                  <h3>Survival Plan</h3>
+                  {Array.isArray(survivalPlan.survivalPlan) && survivalPlan.survivalPlan.length > 0 ? (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
+                        <thead>
+                          <tr>
+                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Phase</th>
+                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Action</th>
+                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Concept</th>
+                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Trigger</th>
+                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Instruction</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {survivalPlan.survivalPlan.map((row, idx) => (
+                            <tr key={`${row.phase}-${idx}`}>
+                              <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.phase}</td>
+                              <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.action}</td>
+                              <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.concept}</td>
+                              <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.triggerAgent}</td>
+                              <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.instruction}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p style={{ margin: 0 }}>No plan items returned.</p>
+                  )}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

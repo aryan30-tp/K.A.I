@@ -1,33 +1,54 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import mermaid from 'mermaid';
 
-export default function VisualAid({ prompt }) {
-  if (!prompt) return null;
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  securityLevel: 'loose',
+  fontFamily: 'Fira Code, monospace',
+});
 
-  const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
-    `${prompt} academic diagram schematic educational style`
-  )}?width=800&height=500&nologo=true`;
+export default function VisualAid({ code }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (code && containerRef.current) {
+      containerRef.current.removeAttribute('data-processed');
+      mermaid.contentLoaded();
+    }
+  }, [code]);
+
+  if (!code) return null;
 
   return (
-    <div style={{ marginTop: 12, borderRadius: 10, overflow: 'hidden', border: '1px solid #cbd5f5' }}>
+    <div
+      style={{
+        marginTop: 12,
+        padding: 12,
+        background: 'rgba(15, 23, 42, 0.6)',
+        border: '1px solid #334155',
+        borderRadius: 12,
+        overflowX: 'auto',
+      }}
+    >
       <div
         style={{
-          background: '#eef2ff',
-          color: '#312e81',
-          padding: '6px 10px',
-          fontSize: 12,
-          fontWeight: 700,
-          letterSpacing: 0.4,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          marginBottom: 10,
+          fontSize: 11,
+          fontFamily: 'Fira Code, monospace',
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+          color: '#94a3b8',
         }}
       >
-        AI-Generated Visual Aid
+        <span style={{ width: 8, height: 8, borderRadius: 999, background: '#38bdf8' }} />
+        Verified Logic Diagram
       </div>
-      <div style={{ background: '#fafafa', padding: 8 }}>
-        <img
-          src={imageUrl}
-          alt="Educational diagram"
-          style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 6 }}
-          loading="lazy"
-        />
+      <div className="mermaid" ref={containerRef}>
+        {code}
       </div>
     </div>
   );

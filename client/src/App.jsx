@@ -649,7 +649,7 @@ function App() {
                 <div key={`flashcard-${idx}`} style={{ padding: 12, marginBottom: 12, border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff' }}>
                   <div style={{ fontWeight: 700, marginBottom: 6 }}>{card.front}</div>
                   <div style={{ marginBottom: 8 }}>{card.back}</div>
-                  <VisualAid prompt={card.visualPrompt} />
+                  <VisualAid code={card.mermaidCode} />
                 </div>
               ))}
             </div>
@@ -666,7 +666,7 @@ function App() {
                   {takeaway.mnemonic && (
                     <div style={{ fontStyle: 'italic', marginBottom: 6 }}>Mnemonic: {takeaway.mnemonic}</div>
                   )}
-                  <VisualAid prompt={takeaway.visualPrompt} />
+                  <VisualAid code={takeaway.mermaidCode} />
                 </div>
               ))}
             </div>
@@ -678,7 +678,7 @@ function App() {
               <div style={{ marginBottom: 6 }}>{generatedData.theAnalogy}</div>
               <div style={{ marginBottom: 6 }}>{generatedData.simpleExplanation}</div>
               <div style={{ marginBottom: 6 }}>{generatedData.whyItMatters}</div>
-              <VisualAid prompt={generatedData.visualPrompt} />
+              <VisualAid code={generatedData.mermaidCode} />
             </div>
           )}
 
@@ -699,7 +699,7 @@ function App() {
                   )}
                   <div style={{ marginBottom: 6 }}>Answer: {question.correctAnswer}</div>
                   <div style={{ marginBottom: 6 }}>{question.explanation}</div>
-                  <VisualAid prompt={question.visualPrompt} />
+                  <VisualAid code={question.mermaidCode} />
                 </div>
               ))}
             </div>

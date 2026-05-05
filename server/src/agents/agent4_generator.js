@@ -18,11 +18,11 @@ const flashcardSchema = z.object({
       z.object({
         front: z.string().describe('The concept, term, or question.'),
         back: z.string().describe('The concise answer or definition.'),
-        visualPrompt: z
+        mermaidCode: z
           .string()
           .nullable()
           .optional()
-          .describe('10-word diagram prompt if the concept is high-visual, else null.'),
+          .describe('Mermaid diagram code for structural concepts, else null.'),
       })
     )
     .describe('A list of flashcards optimized for active recall.'),
@@ -63,11 +63,11 @@ const summarySchema = z.object({
           .string()
           .optional()
           .describe('A clever memory trick or acronym to remember this topic easily.'),
-        visualPrompt: z
+        mermaidCode: z
           .string()
           .nullable()
           .optional()
-          .describe('10-word diagram prompt if the concept is high-visual, else null.'),
+          .describe('Mermaid diagram code for structural concepts, else null.'),
       })
     )
     .describe('The core notes, organized by topic severity.'),
@@ -88,11 +88,11 @@ const mockTestSchema = z.object({
           .describe('Provide 4 options ONLY if the type is Multiple Choice.'),
         correctAnswer: z.string().describe('The exact answer key.'),
         explanation: z.string().describe('Brief explanation of why the answer is correct.'),
-        visualPrompt: z
+        mermaidCode: z
           .string()
           .nullable()
           .optional()
-          .describe('10-word diagram prompt if the concept is high-visual, else null.'),
+          .describe('Mermaid diagram code for structural concepts, else null.'),
       })
     )
     .describe("A realistic practice exam heavily weighted toward 'Very High' likelihood topics from the past papers."),
@@ -109,11 +109,11 @@ const eli5Schema = z.object({
   whyItMatters: z
     .string()
     .describe('Explain why this concept is actually useful or why the professor cares about it.'),
-  visualPrompt: z
+  mermaidCode: z
     .string()
     .nullable()
     .optional()
-    .describe('10-word diagram prompt if the concept is high-visual, else null.'),
+    .describe('Mermaid diagram code for structural concepts, else null.'),
 });
 
 // --- 2. THE GENERATOR FUNCTION ---
@@ -143,7 +143,7 @@ export async function generateOutput(
     if (requestType === 'flashcards') {
       schema = flashcardSchema;
       systemInstructions =
-        "You are an expert tutor creating highly effective flashcards. Use the provided notes to extract key concepts. Keep the 'back' of the card concise and easy to memorize.\n\nAnalyze if each concept is high-visual (processes, structures, cycles). If yes, add a 10-word diagram 'visualPrompt'; otherwise set it to null.";
+        "You are an expert tutor creating highly effective flashcards. Use the provided notes to extract key concepts. Keep the 'back' of the card concise and easy to memorize.\n\nIf a concept is structural (process, hierarchy, cycle), include mermaidCode. RULES: start with graph TD or graph LR; use simple alphanumeric IDs; avoid special characters unless quoted. If not structural, set mermaidCode to null.";
     } else if (requestType === 'study_plan') {
       schema = studyPlanSchema;
       systemInstructions =
@@ -151,17 +151,17 @@ export async function generateOutput(
     } else if (requestType === 'summary') {
       schema = summarySchema;
       systemInstructions =
-        'You are a master synthesizer. Condense the raw notes into a crisp, high-yield summary. Include clever mnemonics where appropriate to help the student memorize complex lists or concepts.\n\nAnalyze if each takeaway is high-visual (processes, structures, cycles). If yes, add a 10-word diagram visualPrompt; otherwise set it to null.';
+        'You are a master synthesizer. Condense the raw notes into a crisp, high-yield summary. Include clever mnemonics where appropriate to help the student memorize complex lists or concepts.\n\nIf a takeaway is structural, include mermaidCode. RULES: start with graph TD or graph LR; use simple alphanumeric IDs; avoid special characters unless quoted. If not structural, set mermaidCode to null.';
     } else if (requestType === 'mock_test') {
       schema = mockTestSchema;
       systemInstructions =
-        "You are a strict examiner. Generate a realistic mock test. If an Exam Analysis is provided, aggressively test the topics marked as 'Very High' likelihood. Include a mix of question types and provide the answer key.\n\nIf a question is high-visual, add a 10-word diagram visualPrompt; otherwise set it to null.";
+        "You are a strict examiner. Generate a realistic mock test. If an Exam Analysis is provided, aggressively test the topics marked as 'Very High' likelihood. Include a mix of question types and provide the answer key.\n\nIf a question is structural, include mermaidCode. RULES: start with graph TD or graph LR; use simple alphanumeric IDs; avoid special characters unless quoted. If not structural, set mermaidCode to null.";
     } else if (requestType === 'eli5') {
       schema = eli5Schema;
       systemInstructions =
         `You are an incredibly empathetic tutor known for breaking down complex topics. The user wants you to explain the concept of '${
           specificTopic || 'the most complex topic in the notes'
-        }'. Explain it using brilliant, relatable everyday analogies. ZERO jargon.\n\nIf the concept is high-visual, add a 10-word diagram visualPrompt; otherwise set it to null.`;
+        }'. Explain it using brilliant, relatable everyday analogies. ZERO jargon.\n\nIf the concept is structural, include mermaidCode. RULES: start with graph TD or graph LR; use simple alphanumeric IDs; avoid special characters unless quoted. If not structural, set mermaidCode to null.`;
     } else {
       throw new Error('Invalid request type');
     }

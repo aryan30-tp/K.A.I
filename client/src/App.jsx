@@ -690,6 +690,7 @@ function App() {
                   <div style={{ fontWeight: 700, marginBottom: 6 }}>
                     Q{question.questionNumber}: {question.questionText}
                   </div>
+                  <VisualAid code={question.questionMermaidCode} />
                   {Array.isArray(question.options) && question.options.length > 0 && (
                     <ul style={{ marginTop: 0, paddingLeft: 18 }}>
                       {question.options.map((option, optIdx) => (
@@ -699,7 +700,7 @@ function App() {
                   )}
                   <div style={{ marginBottom: 6 }}>Answer: {question.correctAnswer}</div>
                   <div style={{ marginBottom: 6 }}>{question.explanation}</div>
-                  <VisualAid code={question.mermaidCode} />
+                  <VisualAid code={question.explanationMermaidCode} />
                 </div>
               ))}
             </div>

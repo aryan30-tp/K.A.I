@@ -81,6 +81,11 @@ const mockTestSchema = z.object({
       z.object({
         questionNumber: z.number(),
         questionText: z.string(),
+        questionMermaidCode: z
+          .string()
+          .nullable()
+          .optional()
+          .describe('Mermaid diagram shown with the question prompt.'),
         questionType: z.enum(['Multiple Choice']),
         options: z
           .array(z.string())
@@ -88,11 +93,11 @@ const mockTestSchema = z.object({
           .describe('Provide exactly 4 options for every question.'),
         correctAnswer: z.string().describe('The exact answer key.'),
         explanation: z.string().describe('Brief explanation of why the answer is correct.'),
-        mermaidCode: z
+        explanationMermaidCode: z
           .string()
           .nullable()
           .optional()
-          .describe('Mermaid diagram code for structural concepts, else null.'),
+          .describe('Mermaid diagram shown with the explanation.'),
       })
     )
     .describe("A realistic practice exam heavily weighted toward 'Very High' likelihood topics from the past papers."),
@@ -155,7 +160,7 @@ export async function generateOutput(
     } else if (requestType === 'mock_test') {
       schema = mockTestSchema;
       systemInstructions =
-        "You are a strict examiner. Generate a realistic mock test. If an Exam Analysis is provided, aggressively test the topics marked as 'Very High' likelihood. Provide the answer key.\n\nCRITICAL RULES FOR MOCK TEST JSON:\n1. EVERY question MUST be Multiple Choice.\n2. The \"options\" key MUST ALWAYS be an array of exactly 4 strings.\n3. You are STRICTLY FORBIDDEN from returning null for \"options\".\n\nRULES FOR MERMAID (VISUAL DIAGRAMS):\nYou can generate Mermaid code for ANY subject if the concept involves a process, hierarchy, cycle, or relationship.\n1. Syntax: Start with \"graph TD\" (top-down) or \"graph LR\" (left-right).\n2. Clean Nodes: Use simple alphanumeric IDs (e.g., A[Photosynthesis] --> B[Oxygen]). NEVER use special characters like () or {} inside node text unless wrapped in quotes.\n3. Universal Application:\n   - Biology: Food chains, Cell division phases, Anatomy hierarchies.\n   - CS: Algorithms, Architecture, Data Structures.\n   - Business/Econ: Supply chains, Org charts, Market cycles.\n4. Highlighting: Use the \"style\" command to color specific nodes if you need to draw attention to a specific part of the diagram (e.g., style B fill:#f9f,stroke:#333).\n5. If the concept is purely abstract and cannot be mapped as a flowchart or tree, set \"mermaidCode\" to null.\n\nCRITICAL: Return JSON with this exact structure and do not omit keys:\n{\n  \"testTitle\": \"String\",\n  \"timeLimitMinutes\": Number,\n  \"questions\": [\n    {\n      \"questionNumber\": Number,\n      \"questionText\": \"String\",\n      \"questionType\": \"Multiple Choice\",\n      \"options\": [\"Option A\", \"Option B\", \"Option C\", \"Option D\"],\n      \"correctAnswer\": \"Option B\",\n      \"explanation\": \"Because...\",\n      \"mermaidCode\": \"String (Mermaid) or null\"\n    }\n  ]\n}";
+        "You are a strict examiner. Generate a realistic mock test. If an Exam Analysis is provided, aggressively test the topics marked as 'Very High' likelihood. Provide the answer key.\n\nCRITICAL RULES FOR MOCK TEST JSON:\n1. EVERY question MUST be Multiple Choice.\n2. The \"options\" key MUST ALWAYS be an array of exactly 4 strings.\n3. You are STRICTLY FORBIDDEN from returning null for \"options\".\n\nCRITICAL RULES FOR VISUALS IN MOCK TESTS:\n1. If the student needs a diagram to SOLVE the question, put Mermaid in \"questionMermaidCode\".\n2. If the diagram is for EXPLANATION after the answer, put Mermaid in \"explanationMermaidCode\".\n3. Set them to null when not needed.\n\nRULES FOR MERMAID (VISUAL DIAGRAMS):\nYou can generate Mermaid code for ANY subject if the concept involves a process, hierarchy, cycle, or relationship.\n1. Syntax: Start with \"graph TD\" (top-down) or \"graph LR\" (left-right).\n2. Clean Nodes: Use simple alphanumeric IDs (e.g., A[Photosynthesis] --> B[Oxygen]). NEVER use special characters like () or {} inside node text unless wrapped in quotes.\n3. Universal Application:\n   - Biology: Food chains, Cell division phases, Anatomy hierarchies.\n   - CS: Algorithms, Architecture, Data Structures.\n   - Business/Econ: Supply chains, Org charts, Market cycles.\n4. Highlighting: Use the \"style\" command to color specific nodes if you need to draw attention to a specific part of the diagram (e.g., style B fill:#f9f,stroke:#333).\n5. If the concept is purely abstract and cannot be mapped as a flowchart or tree, set \"questionMermaidCode\" and \"explanationMermaidCode\" to null.\n\nCRITICAL: Return JSON with this exact structure and do not omit keys:\n{\n  \"testTitle\": \"String\",\n  \"timeLimitMinutes\": Number,\n  \"questions\": [\n    {\n      \"questionNumber\": Number,\n      \"questionText\": \"String\",\n      \"questionType\": \"Multiple Choice\",\n      \"questionMermaidCode\": \"String (Mermaid) or null\",\n      \"options\": [\"Option A\", \"Option B\", \"Option C\", \"Option D\"],\n      \"correctAnswer\": \"Option B\",\n      \"explanation\": \"Because...\",\n      \"explanationMermaidCode\": \"String (Mermaid) or null\"\n    }\n  ]\n}";
     } else if (requestType === 'eli5') {
       schema = eli5Schema;
       systemInstructions =

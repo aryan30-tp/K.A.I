@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SocraticTutorTest from './components/SocraticTutorTest.jsx';
 import VisualAid from './components/VisualAid.jsx';
+import { useAuth } from './context/AuthContext.jsx';
 
 function App() {
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -34,6 +35,8 @@ function App() {
   const [survivalError, setSurvivalError] = useState('');
   const [survivalPlan, setSurvivalPlan] = useState(null);
 
+  const { currentUser, loadingAuth, signInWithGoogle, signOutUser } = useAuth();
+
   const heatmapStatusStyles = {
     Green: { backgroundColor: '#d6f5d6', color: '#1f7a1f' },
     Yellow: { backgroundColor: '#fff3bf', color: '#8a6d00' },
@@ -41,6 +44,12 @@ function App() {
   };
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
+
+  useEffect(() => {
+    if (currentUser?.uid) {
+      setWorkspaceId(currentUser.uid);
+    }
+  }, [currentUser]);
 
   async function parseResponse(res) {
     const raw = await res.text();
@@ -59,6 +68,10 @@ function App() {
     e.preventDefault();
     if (!youtubeUrl && !file) {
       setError('Please provide a YouTube URL or upload a file.');
+      return;
+    }
+    if (!currentUser?.uid) {
+      setError('Please sign in to continue.');
       return;
     }
     if (!workspaceId.trim()) {
@@ -103,6 +116,10 @@ function App() {
 
   async function handleAnalyze(e) {
     e.preventDefault();
+    if (!currentUser?.uid) {
+      setError('Please sign in to continue.');
+      return;
+    }
     if (!rawNotes.trim()) {
       setError('Please extract notes first.');
       return;
@@ -202,6 +219,10 @@ function App() {
 
   async function handleGenerateOutput(e) {
     e.preventDefault();
+    if (!currentUser?.uid) {
+      setError('Please sign in to continue.');
+      return;
+    }
     if (!uploadId) {
       setError('Please extract content first to get an uploadId.');
       return;
@@ -244,6 +265,10 @@ function App() {
 
   async function handleFetchHeatmap(e) {
     e.preventDefault();
+    if (!currentUser?.uid) {
+      setHeatmapError('Please sign in to continue.');
+      return;
+    }
     if (!workspaceId.trim()) {
       setHeatmapError('Please provide a workspaceId.');
       return;
@@ -269,6 +294,10 @@ function App() {
 
   async function handleSurvivalPlan(e) {
     e.preventDefault();
+    if (!currentUser?.uid) {
+      setSurvivalError('Please sign in to continue.');
+      return;
+    }
     const trimmedWorkspaceId = workspaceId.trim();
     const hoursValue = Number(hoursRemaining);
 
@@ -306,9 +335,41 @@ function App() {
   }
 
 
+  if (loadingAuth) {
+    return (
+      <div style={{ padding: 24, fontFamily: 'Arial, sans-serif' }}>
+        <h1>🤖 K.A.I. — Study Assistant</h1>
+        <p>Checking session...</p>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div style={{ padding: 24, fontFamily: 'Arial, sans-serif' }}>
+        <h1>🚨 K.A.I. Emergency Triage</h1>
+        <p>Sign in with Google to start your survival plan.</p>
+        <button
+          onClick={signInWithGoogle}
+          style={{ padding: '10px 16px', cursor: 'pointer', fontWeight: 600 }}
+        >
+          Sign in with Google
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: 20, fontFamily: 'Arial, sans-serif' }}>
       <h1>🤖 K.A.I. — Study Assistant</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: '#555' }}>
+          Signed in as {currentUser.email || currentUser.uid}
+        </div>
+        <button onClick={signOutUser} style={{ padding: '6px 12px', cursor: 'pointer' }}>
+          Sign out
+        </button>
+      </div>
       
       {/* Step 1: Extract */}
       <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
@@ -320,6 +381,7 @@ function App() {
               placeholder="Workspace ID"
               value={workspaceId}
               onChange={(e) => setWorkspaceId(e.target.value)}
+              readOnly
               style={{ width: '100%', padding: 8, marginBottom: 8, boxSizing: 'border-box' }}
             />
           </div>

@@ -158,6 +158,234 @@ function RandomMovingBox({ children }) {
   );
 }
 
+function FlashcardComponent({ card }) {
+  const [isFlipped, setIsFlipped] = useState(false);
+  const accentColor = '#B3FF00';
+
+  return (
+    <div 
+      onClick={() => setIsFlipped(!isFlipped)}
+      style={{
+        perspective: '1000px',
+        cursor: 'pointer',
+        marginBottom: 20,
+        width: '100%',
+        minHeight: 220
+      }}
+    >
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        transition: 'transform 0.6s',
+        transformStyle: 'preserve-3d',
+        transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0)',
+      }}>
+        {/* Front */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backfaceVisibility: 'hidden',
+          backgroundColor: 'rgba(34, 34, 34, 0.9)',
+          border: `1px solid ${accentColor}`,
+          borderRadius: 24,
+          padding: 24,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          minHeight: 220
+        }}>
+          <div style={{ color: accentColor, fontSize: 12, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1.5 }}>Question</div>
+          <div style={{ fontSize: 18, fontWeight: 600 }}>{card.front}</div>
+          <div style={{ marginTop: 20, fontSize: 12, opacity: 0.6 }}>Tap to flip</div>
+        </div>
+        {/* Back */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backfaceVisibility: 'hidden',
+          backgroundColor: 'rgba(50, 50, 50, 0.95)',
+          border: `1px solid ${accentColor}`,
+          borderRadius: 24,
+          padding: 24,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          transform: 'rotateY(180deg)',
+          minHeight: 220
+        }}>
+          <div style={{ color: accentColor, fontSize: 12, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1.5 }}>Answer</div>
+          <div style={{ fontSize: 16 }}>{card.back}</div>
+          {card.mermaidCode && <VisualAid code={card.mermaidCode} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MockTestComponent({ testData }) {
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [selectedOpt, setSelectedOpt] = useState(null);
+  const [showExplanation, setShowExplanation] = useState(false);
+  const accentColor = '#B3FF00';
+
+  if (!testData || !testData.questions) return null;
+  const question = testData.questions[currentIdx];
+
+  const handleNext = () => {
+    if (currentIdx < testData.questions.length - 1) {
+      setCurrentIdx(currentIdx + 1);
+      setSelectedOpt(null);
+      setShowExplanation(false);
+    }
+  };
+
+  const handleSelect = (opt) => {
+    if (selectedOpt !== null) return;
+    setSelectedOpt(opt);
+    setShowExplanation(true);
+  };
+
+  return (
+    <div style={{ backgroundColor: 'rgba(34, 34, 34, 0.84)', border: `1px solid ${accentColor}`, borderRadius: 30, padding: 30 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h4 style={{ margin: 0, color: accentColor }}>{testData.testTitle}</h4>
+        <div style={{ fontSize: 14, opacity: 0.8 }}>Question {currentIdx + 1} of {testData.questions.length}</div>
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>{question.questionText}</div>
+        <VisualAid code={question.questionMermaidCode} />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {question.options.map((opt, idx) => {
+          let bgColor = 'rgba(71, 71, 71, 0.72)';
+          let borderColor = 'rgba(255, 255, 255, 0.14)';
+          
+          if (selectedOpt !== null) {
+            if (opt === question.correctAnswer) {
+              bgColor = 'rgba(0, 255, 0, 0.15)';
+              borderColor = '#00ff00';
+            } else if (opt === selectedOpt) {
+              bgColor = 'rgba(255, 0, 0, 0.15)';
+              borderColor = '#ff0000';
+            }
+          }
+
+          return (
+            <button
+              key={idx}
+              onClick={() => handleSelect(opt)}
+              style={{
+                textAlign: 'left',
+                padding: '16px 20px',
+                borderRadius: 16,
+                backgroundColor: bgColor,
+                border: `1px solid ${borderColor}`,
+                color: '#F5F5F5',
+                cursor: selectedOpt === null ? 'pointer' : 'default',
+                transition: 'all 0.2s',
+              }}
+            >
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+
+      {showExplanation && (
+        <div style={{ marginTop: 24, padding: 20, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ fontWeight: 700, color: accentColor, marginBottom: 8 }}>Explanation</div>
+          <div style={{ marginBottom: 12 }}>{question.explanation}</div>
+          <VisualAid code={question.explanationMermaidCode} />
+          
+          {currentIdx < testData.questions.length - 1 && (
+            <button 
+              onClick={handleNext}
+              style={{
+                marginTop: 16,
+                padding: '10px 24px',
+                backgroundColor: accentColor,
+                color: '#000',
+                border: 'none',
+                borderRadius: 12,
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              Next Question →
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SummaryComponent({ data }) {
+  const accentColor = '#B3FF00';
+  return (
+    <div style={{ backgroundColor: 'rgba(34, 34, 34, 0.84)', border: `1px solid ${accentColor}`, borderRadius: 30, padding: 30 }}>
+      <h3 style={{ color: accentColor, marginTop: 0 }}>{data.title}</h3>
+      <p style={{ fontSize: 16, lineHeight: 1.6, opacity: 0.9 }}>{data.executiveSummary}</p>
+      
+      <div style={{ marginTop: 30, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {data.keyTakeaways.map((item, idx) => (
+          <div key={idx} style={{ padding: 20, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 10, color: accentColor }}>{item.topic}</div>
+            <div style={{ marginBottom: 15, lineHeight: 1.5 }}>{item.summary}</div>
+            {item.mnemonic && (
+              <div style={{ padding: '8px 16px', backgroundColor: 'rgba(179, 255, 0, 0.1)', borderRadius: 12, fontSize: 14, fontStyle: 'italic', display: 'inline-block' }}>
+                💡 Mnemonic: {item.mnemonic}
+              </div>
+            )}
+            <VisualAid code={item.mermaidCode} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ELI5Component({ data }) {
+  const accentColor = '#B3FF00';
+  return (
+    <div style={{ backgroundColor: 'rgba(34, 34, 34, 0.84)', border: `1px solid ${accentColor}`, borderRadius: 30, padding: 30 }}>
+      <h3 style={{ color: accentColor, marginTop: 0 }}>Explain Like I'm 5: {data.topic}</h3>
+      <div style={{ fontSize: 24, fontStyle: 'italic', marginBottom: 20, color: accentColor, opacity: 0.8 }}>"{data.theAnalogy}"</div>
+      <div style={{ fontSize: 18, lineHeight: 1.6, marginBottom: 24 }}>{data.simpleExplanation}</div>
+      <div style={{ padding: 20, backgroundColor: 'rgba(179, 255, 0, 0.05)', borderRadius: 20, border: `1px solid ${accentColor}` }}>
+        <div style={{ fontWeight: 700, marginBottom: 10 }}>Why it matters:</div>
+        <div>{data.whyItMatters}</div>
+      </div>
+      <VisualAid code={data.mermaidCode} />
+    </div>
+  );
+}
+
+function StudyPlanComponent({ planText }) {
+  const accentColor = '#B3FF00';
+  return (
+    <div style={{ backgroundColor: 'rgba(34, 34, 34, 0.84)', border: `1px solid ${accentColor}`, borderRadius: 30, padding: 30 }}>
+      <h3 style={{ color: accentColor, marginTop: 0 }}>📅 Your Study Plan</h3>
+      <div style={{ 
+        whiteSpace: 'pre-wrap', 
+        fontSize: 16, 
+        lineHeight: 1.6, 
+        fontFamily: 'inherit',
+        color: '#E8E8E8'
+      }}>
+        {planText}
+      </div>
+    </div>
+  );
+}
+
 function ScrollReveal({ children, isLocked }) {
   const [isVisible, setIsVisible] = useState(false);
   const domRef = React.useRef();
@@ -208,7 +436,14 @@ function ScrollReveal({ children, isLocked }) {
             padding: 20,
             border: '2px dashed rgba(179, 255, 0, 0.4)',
           }}>
-            <div style={{ backgroundColor: 'rgba(0,0,0,0.7)', padding: '15px 30px', borderRadius: 30, boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+            <div style={{ 
+              backgroundColor: 'rgba(0,0,0,0.85)', 
+              padding: '15px 30px', 
+              borderRadius: 30, 
+              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+              filter: 'none', // Prevent parent blur from affecting this
+              backdropFilter: 'none'
+            }}>
               🔒 Complete Step 1 to Unlock
             </div>
           </div>
@@ -986,110 +1221,68 @@ function App() {
         <div
           style={{
             color: '#000000',
-            marginBottom: 12,
-            padding: 12,
+            marginBottom: 24,
+            padding: '16px 24px',
             backgroundColor: '#B3FF00',
-            borderRadius: 18,
-            fontWeight: 600,
+            borderRadius: 20,
+            fontWeight: 700,
+            boxShadow: '0 10px 25px rgba(179, 255, 0, 0.2)',
           }}
         >
           {notice}
         </div>
       )}
 
-      {error && <div style={{ color: 'crimson', marginBottom: 12, padding: 12, backgroundColor: '#ffe6e6', borderRadius: 4 }}>❌ {error}</div>}
+      {error && (
+        <div style={{ 
+          color: '#ff4d4d', 
+          marginBottom: 24, 
+          padding: '16px 24px', 
+          backgroundColor: 'rgba(255, 77, 77, 0.1)', 
+          border: '1px solid #ff4d4d',
+          borderRadius: 20,
+          fontWeight: 600
+        }}>
+          ❌ {error}
+        </div>
+      )}
 
       {generatedData && (
-        <section
-          style={{
-            ...translucentPanelStyle,
-            border: '1px solid rgba(179, 255, 0, 0.65)',
-            backgroundColor: 'rgba(253, 247, 255, 0.76)',
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>🧠 Visual Outputs</h3>
+        <section style={{ marginBottom: 60 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+            <span style={{ fontSize: 24 }}>🧠</span>
+            <h2 style={{ margin: 0 }}>Visual Learning Lab</h2>
+          </div>
 
           {requestType === 'flashcards' && Array.isArray(generatedData.flashcards) && (
-            <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
               {generatedData.flashcards.map((card, idx) => (
-                <div key={`flashcard-${idx}`} style={{ padding: 12, marginBottom: 12, border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff' }}>
-                  <div style={{ fontWeight: 700, marginBottom: 6 }}>{card.front}</div>
-                  <div style={{ marginBottom: 8 }}>{card.back}</div>
-                  <VisualAid code={card.mermaidCode} />
-                </div>
+                <FlashcardComponent key={`flashcard-${idx}`} card={card} />
               ))}
             </div>
           )}
 
           {requestType === 'summary' && generatedData.keyTakeaways && (
-            <div>
-              <h4 style={{ marginBottom: 6 }}>{generatedData.title}</h4>
-              <p style={{ marginTop: 0 }}>{generatedData.executiveSummary}</p>
-              {generatedData.keyTakeaways.map((takeaway, idx) => (
-                <div key={`summary-${idx}`} style={{ padding: 12, marginBottom: 12, border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff' }}>
-                  <div style={{ fontWeight: 700 }}>{takeaway.topic}</div>
-                  <div style={{ marginBottom: 6 }}>{takeaway.summary}</div>
-                  {takeaway.mnemonic && (
-                    <div style={{ fontStyle: 'italic', marginBottom: 6 }}>Mnemonic: {takeaway.mnemonic}</div>
-                  )}
-                  <VisualAid code={takeaway.mermaidCode} />
-                </div>
-              ))}
-            </div>
+            <SummaryComponent data={generatedData} />
           )}
 
           {requestType === 'eli5' && generatedData.simpleExplanation && (
-            <div style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff' }}>
-              <div style={{ fontWeight: 700, marginBottom: 6 }}>{generatedData.topic}</div>
-              <div style={{ marginBottom: 6 }}>{generatedData.theAnalogy}</div>
-              <div style={{ marginBottom: 6 }}>{generatedData.simpleExplanation}</div>
-              <div style={{ marginBottom: 6 }}>{generatedData.whyItMatters}</div>
-              <VisualAid code={generatedData.mermaidCode} />
-            </div>
+            <ELI5Component data={generatedData} />
           )}
 
           {requestType === 'mock_test' && Array.isArray(generatedData.questions) && (
-            <div>
-              <h4 style={{ marginBottom: 6 }}>{generatedData.testTitle}</h4>
-              {generatedData.questions.map((question, idx) => (
-                <div key={`question-${idx}`} style={{ padding: 12, marginBottom: 12, border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff' }}>
-                  <div style={{ fontWeight: 700, marginBottom: 6 }}>
-                    Q{question.questionNumber}: {question.questionText}
-                  </div>
-                  <VisualAid code={question.questionMermaidCode} />
-                  {Array.isArray(question.options) && question.options.length > 0 && (
-                    <ul style={{ marginTop: 0, paddingLeft: 18 }}>
-                      {question.options.map((option, optIdx) => (
-                        <li key={`opt-${optIdx}`}>{option}</li>
-                      ))}
-                    </ul>
-                  )}
-                  <div style={{ marginBottom: 6 }}>Answer: {question.correctAnswer}</div>
-                  <div style={{ marginBottom: 6 }}>{question.explanation}</div>
-                  <VisualAid code={question.explanationMermaidCode} />
-                </div>
-              ))}
-            </div>
+            <MockTestComponent testData={generatedData} />
+          )}
+
+          {requestType === 'study_plan' && generatedData.plan && (
+            <StudyPlanComponent planText={generatedData.plan} />
           )}
         </section>
       )}
 
-      {result && (
-        <section
-          style={{
-            ...translucentPanelStyle,
-            border: '1px solid rgba(179, 255, 0, 0.65)',
-            backgroundColor: 'rgba(249, 249, 249, 0.76)',
-          }}
-        >
-          <h3>📊 Results {resultSource && `(${resultSource})`}</h3>
-          <pre style={{ whiteSpace: 'pre-wrap', maxHeight: '60vh', overflow: 'auto', padding: 12, backgroundColor: '#fff', borderRadius: 4 }}>{result}</pre>
-        </section>
-      )}
-
-      {/* Heatmap Test Panel */}
-      <section style={translucentPanelStyle}>
-        <h2>📈 Heatmap Analytics</h2>
+      {/* Analytics (Hidden or optional) */}
+      <section style={{ ...translucentPanelStyle, opacity: 0.8 }}>
+        <h2 style={{ color: accentColor }}>📈 Heatmap Analytics</h2>
         <form onSubmit={handleFetchHeatmap}>
           <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
             <input

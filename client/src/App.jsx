@@ -2,85 +2,6 @@ import React, { useEffect, useState } from 'react';
 import SocraticTutorTest from './components/SocraticTutorTest.jsx';
 import VisualAid from './components/VisualAid.jsx';
 import { useAuth } from './context/AuthContext.jsx';
-import kaiMascotSprite from './assets/Gemini_Generated_Image_lbwm0slbwm0slbwm.png';
-
-const MASCOT_FRAME_SEQUENCE = [0, 1, 2, 3, 7, 10, 8, 4, 5, 6];
-const MASCOT_FRAME_META = {
-  0: { x: '0%', y: '0%', tilt: -1, glideX: -8 },
-  1: { x: '33.333%', y: '0%', tilt: 3, glideX: 8 },
-  2: { x: '66.666%', y: '0%', tilt: 6, glideX: 18 },
-  3: { x: '100%', y: '0%', tilt: 2, glideX: 10 },
-  4: { x: '0%', y: '50%', tilt: -7, glideX: -22 },
-  5: { x: '33.333%', y: '50%', tilt: 0, glideX: 0 },
-  6: { x: '66.666%', y: '50%', tilt: 4, glideX: 14 },
-  7: { x: '100%', y: '50%', tilt: 7, glideX: 24 },
-  8: { x: '0%', y: '100%', tilt: -5, glideX: -16 },
-  10: { x: '66.666%', y: '100%', tilt: -1, glideX: 4 },
-};
-
-function getRandomMascotFrame(previousFrame) {
-  const availableFrames = MASCOT_FRAME_SEQUENCE.filter((frame) => frame !== previousFrame);
-  return availableFrames[Math.floor(Math.random() * availableFrames.length)];
-}
-
-function KaiMascot() {
-  const [currentFrame, setCurrentFrame] = useState(0);
-  const [previousFrame, setPreviousFrame] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-
-  useEffect(() => {
-    let transitionTimeoutId;
-    let nextMoveTimeoutId;
-
-    const scheduleNextMove = () => {
-      const delay = 3200 + Math.floor(Math.random() * 2800);
-      nextMoveTimeoutId = window.setTimeout(() => {
-        const nextFrame = getRandomMascotFrame(currentFrame);
-        setPreviousFrame(currentFrame);
-        setCurrentFrame(nextFrame);
-        setIsTransitioning(true);
-
-        transitionTimeoutId = window.setTimeout(() => {
-          setIsTransitioning(false);
-          scheduleNextMove();
-        }, 1050);
-      }, delay);
-    };
-
-    scheduleNextMove();
-
-    return () => {
-      window.clearTimeout(nextMoveTimeoutId);
-      window.clearTimeout(transitionTimeoutId);
-    };
-  }, [currentFrame]);
-
-  const currentMeta = MASCOT_FRAME_META[currentFrame] || MASCOT_FRAME_META[0];
-  const previousMeta = MASCOT_FRAME_META[previousFrame] || currentMeta;
-
-  return (
-    <div className="kai-mascot-stage" aria-hidden="true">
-      <div
-        className="kai-mascot-sprite kai-mascot-sprite-back"
-        style={{
-          backgroundImage: `url(${kaiMascotSprite})`,
-          backgroundPosition: `${previousMeta.x} ${previousMeta.y}`,
-          transform: `translateX(${previousMeta.glideX}px) rotate(${previousMeta.tilt}deg) translateY(2px)`,
-          opacity: isTransitioning ? 1 : 0,
-        }}
-      />
-      <div
-        className="kai-mascot-sprite kai-mascot-sprite-front"
-        style={{
-          backgroundImage: `url(${kaiMascotSprite})`,
-          backgroundPosition: `${currentMeta.x} ${currentMeta.y}`,
-          transform: `translateX(${currentMeta.glideX}px) rotate(${currentMeta.tilt}deg) translateY(0)`,
-          opacity: isTransitioning ? 0 : 1,
-        }}
-      />
-    </div>
-  );
-}
 
 function App() {
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -598,9 +519,7 @@ function App() {
       
       {/* Step 1: Extract */}
       <div className="step-one-shell">
-        <KaiMascot />
-        <section style={{ ...translucentPanelStyle, minHeight: 420, paddingTop: 68, paddingBottom: 38 }}>
-          <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 0 }}>Step 1: Extract Content</h2>
+        <section style={{ ...translucentPanelStyle, minHeight: 420, paddingTop: 68, paddingBottom: 38 }}>          <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 0 }}>Step 1: Extract Content</h2>
           <form onSubmit={handleExtract}>
           <div
             style={{

@@ -38,13 +38,23 @@ const systemPrompt = `You are an expert exam pattern analyst. Your objective is 
 RULES:
 1. Identify which topics from the syllabus appear most frequently in the past papers.
 2. Analyze the 'style' of the questions. Are they asking for definitions, or are they asking the student to apply concepts?
-3. Generate a highly probable predicted question for the most recurring topics.
+3. If the input text is messy or low-quality, try to extract the core concepts and assign a likelihood score based on partial matches. Never return empty arrays if there's any text provided.
 4. Output ONLY the requested structured JSON data.`;
 
 // --- 4. THE EXECUTOR FUNCTION ---
 export async function analyzePastPapers(syllabusText, pastPapersText) {
+  const fallbackResponse = {
+    recurringPatterns: [],
+    examinerNotes: "Not enough data to determine examiner style."
+  };
+
   try {
     console.log('Agent 3: Analyzing past exam patterns...');
+
+    // SANITY CHECK: If inputs are empty, don't waste the API call
+    if (!syllabusText?.trim() || !pastPapersText?.trim()) {
+      return fallbackResponse;
+    }
 
     const userPrompt = `SYLLABUS TEXT:
 ${syllabusText}
@@ -64,16 +74,27 @@ ${pastPapersText}`;
 
     const rawJson = completion.choices?.[0]?.message?.content || '';
     if (!rawJson.trim()) {
-      throw new Error('Groq returned empty JSON.');
+      return fallbackResponse;
     }
 
-    const parsed = JSON.parse(rawJson);
-    const result = examAnalysisSchema.parse(parsed);
+    let parsed;
+    try {
+      parsed = JSON.parse(rawJson);
+    } catch (parseErr) {
+      console.warn('Agent 3: Failed to parse JSON, returning fallback.', parseErr);
+      return fallbackResponse;
+    }
+
+    const validation = examAnalysisSchema.safeParse(parsed);
+    if (!validation.success) {
+      console.warn('Agent 3: Zod validation failed, returning fallback.', validation.error);
+      return fallbackResponse;
+    }
 
     console.log('Agent 3: Analysis complete!');
-    return result;
+    return validation.data;
   } catch (error) {
-    console.error('Error in Agent 3:', error);
-    throw new Error('Failed to analyze past papers.');
+    console.error('Error in Agent 3, returning fallback:', error);
+    return fallbackResponse;
   }
 }

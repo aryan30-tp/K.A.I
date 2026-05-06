@@ -31,9 +31,10 @@ const syllabusMappingSchema = z.object({
 const systemPrompt = `You are an expert academic curriculum analyzer. Your job is to cross-reference a course syllabus with a student's extracted study materials (notes, transcripts, PDFs).
 
 RULES:
-1. Be ruthless. If a topic is in the syllabus but barely mentioned in the notes, mark it as NOT covered (isCovered: false).
+1. Be objective. If a topic is in the syllabus but barely mentioned in the notes, mark it as NOT covered (isCovered: false).
 2. Determine the weightage (High/Medium/Low) based on how the syllabus describes it (e.g., if a topic has many subtopics or spans multiple weeks, it is High).
-3. Output ONLY the requested structured JSON data.`;
+3. If the input text is messy or low-quality, try to find the closest matching keywords from the syllabus. Never return empty arrays if there's any text provided.
+4. Output ONLY the requested structured JSON data.`;
 
 // --- 4. THE EXECUTOR FUNCTION ---
 /**
@@ -45,8 +46,18 @@ RULES:
  * @returns {Promise<Object>} - The structured JSON map
  */
 export async function mapSyllabusToNotes(syllabusText, extractedNotesText) {
+  const fallbackResponse = {
+    overallCoveragePercentage: 0,
+    mappedTopics: []
+  };
+
   try {
     console.log('Agent 2: Analyzing syllabus mapping...');
+
+    // SANITY CHECK: If inputs are empty, don't waste the API call
+    if (!syllabusText?.trim() || !extractedNotesText?.trim()) {
+      return fallbackResponse;
+    }
 
     const userPrompt = `SYLLABUS TEXT:
 ${syllabusText}
@@ -66,17 +77,27 @@ ${extractedNotesText}`;
 
     const rawJson = completion.choices?.[0]?.message?.content || '';
     if (!rawJson.trim()) {
-      throw new Error('Groq returned empty JSON.');
+      return fallbackResponse;
     }
 
-    const parsed = JSON.parse(rawJson);
-    const result = syllabusMappingSchema.parse(parsed);
+    let parsed;
+    try {
+      parsed = JSON.parse(rawJson);
+    } catch (parseErr) {
+      console.warn('Agent 2: Failed to parse JSON, returning fallback.', parseErr);
+      return fallbackResponse;
+    }
+
+    const validation = syllabusMappingSchema.safeParse(parsed);
+    if (!validation.success) {
+      console.warn('Agent 2: Zod validation failed, returning fallback.', validation.error);
+      return fallbackResponse;
+    }
 
     console.log('Agent 2: Mapping complete!');
-    return result;
+    return validation.data;
   } catch (error) {
-    console.error('Error in Agent 2:', error);
-    const message = error?.message || String(error);
-    throw new Error(`Failed to map syllabus to notes: ${message}`);
+    console.error('Error in Agent 2, returning fallback:', error);
+    return fallbackResponse;
   }
 }

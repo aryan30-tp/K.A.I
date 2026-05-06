@@ -204,13 +204,20 @@ app.post('/api/ocr/image', upload.single('image'), async (req, res) => {
       fs.unlinkSync(imagePathWithExt);
     }
 
-    return res.json({ ok: true, text: extractedText });
+    return res.json({ ok: true, text: extractedText || "" });
   } catch (error) {
     console.error('OCR Image Error:', error?.message || error);
     if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+      const imagePath = req.file.path;
+      const imageExt = (req.file.originalname || '').toLowerCase().includes('.') 
+        ? `.${(req.file.originalname || '').toLowerCase().split('.').pop()}` 
+        : '';
+      const imagePathWithExt = imageExt ? `${imagePath}${imageExt}` : imagePath;
+      
+      if (fs.existsSync(imagePathWithExt)) fs.unlinkSync(imagePathWithExt);
+      else if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
     }
-    return res.status(500).json({ ok: false, error: 'Failed to extract text from image.' });
+    return res.status(500).json({ ok: true, text: "", error: 'Failed to extract text from image.' });
   }
 });
 

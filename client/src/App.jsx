@@ -100,7 +100,7 @@ function RandomMovingBox({ children }) {
       if (Math.random() > 0.7) {
         setSparkles(prev => [
           ...prev, 
-          { x, y, id: Math.random(), opacity: 1, size: 4 + Math.random() * 6 }
+          { x, y, id: Math.random(), opacity: 1, size: 10 + Math.random() * 10 }
         ]);
       }
     }
@@ -137,8 +137,9 @@ function RandomMovingBox({ children }) {
             borderRadius: '50%',
             backgroundColor: '#B3FF00',
             opacity: s.opacity,
-            boxShadow: '0 0 10px #B3FF00',
-            pointerEvents: 'none'
+            boxShadow: '0 0 15px 2px #B3FF00',
+            pointerEvents: 'none',
+            transform: 'translate(-50%, -50%)'
           }}
         />
       ))}
@@ -687,7 +688,7 @@ function App() {
             }} 
           />
         </RandomMovingBox>
-        <section style={{ ...translucentPanelStyle, minHeight: 340, paddingTop: 55, paddingBottom: 28 }}>
+        <section style={{ ...translucentPanelStyle, minHeight: 280, paddingTop: 55, paddingBottom: 15 }}>
           <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 0 }}>Step 1: Extract Content</h2>
           <form onSubmit={handleExtract}>
           <div

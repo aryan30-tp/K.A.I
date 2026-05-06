@@ -162,6 +162,21 @@ function FlashcardComponent({ card }) {
   const [isFlipped, setIsFlipped] = useState(false);
   const accentColor = '#B3FF00';
 
+  const cardSideStyle = {
+    position: 'absolute',
+    inset: 0,
+    backfaceVisibility: 'hidden',
+    borderRadius: 24,
+    padding: 24,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    overflowY: 'auto',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+  };
+
   return (
     <div 
       onClick={() => setIsFlipped(!isFlipped)}
@@ -170,7 +185,7 @@ function FlashcardComponent({ card }) {
         cursor: 'pointer',
         marginBottom: 20,
         width: '100%',
-        minHeight: 220
+        height: 320, // Increased fixed height for better visibility
       }}
     >
       <div style={{
@@ -183,44 +198,25 @@ function FlashcardComponent({ card }) {
       }}>
         {/* Front */}
         <div style={{
-          position: 'absolute',
-          inset: 0,
-          backfaceVisibility: 'hidden',
-          backgroundColor: 'rgba(34, 34, 34, 0.9)',
+          ...cardSideStyle,
+          backgroundColor: 'rgba(34, 34, 34, 0.95)',
           border: `1px solid ${accentColor}`,
-          borderRadius: 24,
-          padding: 24,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          minHeight: 220
         }}>
-          <div style={{ color: accentColor, fontSize: 12, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1.5 }}>Question</div>
-          <div style={{ fontSize: 18, fontWeight: 600 }}>{card.front}</div>
-          <div style={{ marginTop: 20, fontSize: 12, opacity: 0.6 }}>Tap to flip</div>
+          <div style={{ color: accentColor, fontSize: 12, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 700 }}>Question</div>
+          <div style={{ fontSize: 20, fontWeight: 600, color: '#F5F5F5' }}>{card.front}</div>
+          <div style={{ position: 'absolute', bottom: 20, fontSize: 11, opacity: 0.5, letterSpacing: 1 }}>TAP TO FLIP</div>
         </div>
         {/* Back */}
         <div style={{
-          position: 'absolute',
-          inset: 0,
-          backfaceVisibility: 'hidden',
-          backgroundColor: 'rgba(50, 50, 50, 0.95)',
+          ...cardSideStyle,
+          backgroundColor: 'rgba(45, 45, 45, 0.98)',
           border: `1px solid ${accentColor}`,
-          borderRadius: 24,
-          padding: 24,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
           transform: 'rotateY(180deg)',
-          minHeight: 220
         }}>
-          <div style={{ color: accentColor, fontSize: 12, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1.5 }}>Answer</div>
-          <div style={{ fontSize: 16 }}>{card.back}</div>
+          <div style={{ color: accentColor, fontSize: 12, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 700 }}>Answer</div>
+          <div style={{ fontSize: 16, color: '#E8E8E8', marginBottom: 10, lineHeight: 1.5 }}>{card.back}</div>
           <VisualLabCard topic={card.front} mermaidCode={card.mermaidCode} />
+          <div style={{ position: 'absolute', bottom: 20, fontSize: 11, opacity: 0.5, letterSpacing: 1 }}>TAP TO REVERT</div>
         </div>
       </div>
     </div>

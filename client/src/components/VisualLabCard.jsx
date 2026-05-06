@@ -64,41 +64,28 @@ const VisualLabCard = ({ topic = "Concept", mermaidCode }) => {
   }, [mermaidCode, topic]);
 
   return (
-    <div className="visual-card-container" style={styles.card}>
-      {/* State 1: Trying to render Mermaid */}
-      {status === 'parsing' && (
-        <p style={styles.loadingText}>Analyzing Logic Diagram...</p>
-      )}
-
+    <>
       {/* State 2: Mermaid Success! */}
       {status === 'mermaid-ready' && (
-        <div 
-          dangerouslySetInnerHTML={{ __html: svgContent }} 
-          style={styles.diagramContainer}
-        />
-      )}
-
-      {/* State 3: Mermaid Failed, searching Wikipedia */}
-      {status === 'fetching-fallback' && (
-        <p style={styles.warningText}>
-          ⚠️ Logic Diagram Unavailable. Fetching Visual Database...
-        </p>
+        <div className="visual-card-container" style={styles.card}>
+          <div 
+            dangerouslySetInnerHTML={{ __html: svgContent }} 
+            style={styles.diagramContainer}
+          />
+        </div>
       )}
 
       {/* State 4: Wikipedia Image Found */}
       {status === 'fallback-ready' && (
-        <img 
-          src={fallbackImageUrl} 
-          alt={`Visual representation of ${topic}`} 
-          style={styles.fallbackImage} 
-        />
+        <div className="visual-card-container" style={styles.card}>
+          <img 
+            src={fallbackImageUrl} 
+            alt={`Visual representation of ${topic}`} 
+            style={styles.fallbackImage} 
+          />
+        </div>
       )}
-
-      {/* State 5: Complete Failure (No Mermaid, No Wiki Image) */}
-      {status === 'failed' && (
-        <p style={styles.errorText}>No visual data found for this concept.</p>
-      )}
-    </div>
+    </>
   );
 };
 

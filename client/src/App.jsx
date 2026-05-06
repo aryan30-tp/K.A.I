@@ -112,8 +112,8 @@ function App() {
   const fileCardStyle = {
     minWidth: 220,
     maxWidth: 220,
-    minHeight: 110,
-    padding: '16px 18px',
+    minHeight: 190,
+    padding: '18px 18px 16px',
     borderRadius: 22,
     border: '1px solid rgba(179, 255, 0, 0.45)',
     background: 'rgba(71, 71, 71, 0.78)',
@@ -125,6 +125,24 @@ function App() {
     justifyContent: 'space-between',
     boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 26px rgba(0, 0, 0, 0.2)',
   };
+
+  function getFileTypeMeta(fileName) {
+    const extension = fileName.split('.').pop()?.toLowerCase() || '';
+
+    if (extension === 'pdf') {
+      return { label: 'PDF', color: '#FF4D4D', accent: 'rgba(255, 77, 77, 0.24)' };
+    }
+
+    if (extension === 'docx' || extension === 'doc') {
+      return { label: 'WORD', color: '#2F80ED', accent: 'rgba(47, 128, 237, 0.24)' };
+    }
+
+    if (extension === 'pptx' || extension === 'ppt') {
+      return { label: 'PPT', color: '#FF7A1A', accent: 'rgba(255, 122, 26, 0.24)' };
+    }
+
+    return { label: extension.toUpperCase() || 'DOC', color: accentColor, accent: 'rgba(179, 255, 0, 0.2)' };
+  }
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
 
@@ -500,10 +518,10 @@ function App() {
           <div>
       
       {/* Step 1: Extract */}
-      <section style={{ ...translucentPanelStyle, minHeight: 380, paddingBottom: 34 }}>
-        <h2>Step 1: Extract Content</h2>
+      <section style={{ ...translucentPanelStyle, minHeight: 420, paddingBottom: 38 }}>
+        <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Step 1: Extract Content</h2>
         <form onSubmit={handleExtract}>
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom: 18, maxWidth: 980, marginInline: 'auto' }}>
             <input
               type="text"
               placeholder="YouTube URL (or leave blank for file upload)"
@@ -512,7 +530,7 @@ function App() {
               style={glassyInputStyle}
             />
           </div>
-          <div style={{ marginBottom: 22 }}>
+          <div style={{ marginBottom: 22, maxWidth: 980, marginInline: 'auto', textAlign: 'center' }}>
             <input
               id="study-material-upload"
               type="file"
@@ -521,7 +539,7 @@ function App() {
               onChange={(e) => setFiles(Array.from(e.target.files || []))}
               style={{ display: 'none' }}
             />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 14, flexWrap: 'wrap' }}>
               <label htmlFor="study-material-upload" style={uploadPickerButtonStyle}>
                 Choose Files
               </label>
@@ -530,12 +548,38 @@ function App() {
               </span>
             </div>
             {files.length > 0 && (
-              <div style={fileCarouselStyle}>
+              <div style={{ ...fileCarouselStyle, justifyContent: 'center' }}>
                 {files.map((selectedFile, index) => (
                   <div key={`${selectedFile.name}-${index}`} style={fileCardStyle}>
-                    <div style={{ color: accentColor, fontWeight: 700, fontSize: 13 }}>
-                      Document {index + 1}
-                    </div>
+                    {(() => {
+                      const fileType = getFileTypeMeta(selectedFile.name);
+                      return (
+                        <>
+                          <div
+                            style={{
+                              width: 86,
+                              height: 86,
+                              marginInline: 'auto',
+                              borderRadius: 24,
+                              background: `linear-gradient(135deg, ${fileType.color} 0%, ${fileType.color} 62%, ${fileType.accent} 62%, ${fileType.accent} 100%)`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#FFFFFF',
+                              fontWeight: 800,
+                              fontSize: fileType.label.length > 3 ? 18 : 24,
+                              letterSpacing: 0.6,
+                              boxShadow: `0 10px 24px ${fileType.accent}`,
+                            }}
+                          >
+                            {fileType.label}
+                          </div>
+                          <div style={{ color: accentColor, fontWeight: 700, fontSize: 13, textAlign: 'center', marginTop: 14 }}>
+                            Document {index + 1}
+                          </div>
+                        </>
+                      );
+                    })()}
                     <div
                       style={{
                         fontWeight: 600,
@@ -545,11 +589,12 @@ function App() {
                         WebkitLineClamp: 3,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
+                        textAlign: 'center',
                       }}
                     >
                       {selectedFile.name}
                     </div>
-                    <div style={{ color: '#BDBDBD', fontSize: 12 }}>
+                    <div style={{ color: '#BDBDBD', fontSize: 12, textAlign: 'center' }}>
                       {Math.max(1, Math.round(selectedFile.size / 1024))} KB
                     </div>
                   </div>
@@ -557,7 +602,7 @@ function App() {
               </div>
             )}
           </div>
-          <label style={{ display: 'block', marginBottom: 18 }}>
+          <label style={{ display: 'block', marginBottom: 22, textAlign: 'center' }}>
             <input
               type="checkbox"
               checked={forceWhisper}
@@ -566,10 +611,12 @@ function App() {
             />
             Force Groq Whisper (skip RapidAPI)
           </label>
-          <button type="submit" disabled={loading || (!youtubeUrl && files.length === 0)} style={getActionButtonStyle(loading || (!youtubeUrl && files.length === 0))}>
-            {loading ? '⏳ Extracting…' : '📤 Extract Content'}
-          </button>
-          {uploadId && <p style={{ color: 'green', marginTop: 8 }}>✅ Extracted! Upload ID: {uploadId.slice(0, 8)}...</p>}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <button type="submit" disabled={loading || (!youtubeUrl && files.length === 0)} style={getActionButtonStyle(loading || (!youtubeUrl && files.length === 0))}>
+              {loading ? '⏳ Extracting…' : '📤 Extract Content'}
+            </button>
+            {uploadId && <p style={{ color: 'green', marginTop: 8, textAlign: 'center' }}>✅ Extracted! Upload ID: {uploadId.slice(0, 8)}...</p>}
+          </div>
         </form>
       </section>
 

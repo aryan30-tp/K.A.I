@@ -7,43 +7,57 @@ import chatbotVideo from './assets/Live chatbot.webm';
 function RandomMovingBox({ children }) {
   const [position, setPosition] = useState({ x: 50, y: 50 });
   const [velocity, setVelocity] = useState({ x: (Math.random() - 0.5) * 0.1, y: (Math.random() - 0.5) * 0.1 });
+  const [mousePos, setMousePos] = useState(null);
+  const containerRef = React.useRef(null);
 
   useEffect(() => {
     let animationFrameId;
     
     const update = () => {
       setPosition(prev => {
-        let nextX = prev.x + velocity.x;
-        let nextY = prev.y + velocity.y;
         let nextVelX = velocity.x;
         let nextVelY = velocity.y;
 
-        // Bounce off walls (percentages)
-        if (nextX <= 15 || nextX >= 85) {
-          nextVelX *= -1;
-          nextX = prev.x + nextVelX;
-        }
-        if (nextY <= 15 || nextY >= 85) {
-          nextVelY *= -1;
-          nextY = prev.y + nextVelY;
+        if (mousePos) {
+          // Attract to mouse
+          const dx = mousePos.x - prev.x;
+          const dy = mousePos.y - prev.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > 1) {
+            nextVelX += (dx / dist) * 0.02;
+            nextVelY += (dy / dist) * 0.02;
+          }
+        } else {
+          // Randomly nudge velocity for unpredictability (lower frequency)
+          if (Math.random() < 0.005) {
+            nextVelX += (Math.random() - 0.5) * 0.05;
+            nextVelY += (Math.random() - 0.5) * 0.05;
+          }
         }
 
-        // Randomly nudge velocity for unpredictability (lower frequency)
-        if (Math.random() < 0.005) {
-          nextVelX += (Math.random() - 0.5) * 0.05;
-          nextVelY += (Math.random() - 0.5) * 0.05;
-          
-          // Clamp speed (much lower)
-          const speed = Math.sqrt(nextVelX ** 2 + nextVelY ** 2);
-          const maxSpeed = 0.12;
-          const minSpeed = 0.04;
-          if (speed > maxSpeed) {
-            nextVelX = (nextVelX / speed) * maxSpeed;
-            nextVelY = (nextVelY / speed) * maxSpeed;
-          } else if (speed < minSpeed) {
-            nextVelX = (nextVelX / speed) * minSpeed;
-            nextVelY = (nextVelY / speed) * minSpeed;
-          }
+        // Clamp speed
+        const speed = Math.sqrt(nextVelX ** 2 + nextVelY ** 2);
+        const maxSpeed = mousePos ? 0.25 : 0.12;
+        const minSpeed = 0.04;
+        if (speed > maxSpeed) {
+          nextVelX = (nextVelX / speed) * maxSpeed;
+          nextVelY = (nextVelY / speed) * maxSpeed;
+        } else if (speed < minSpeed) {
+          nextVelX = (nextVelX / speed) * minSpeed;
+          nextVelY = (nextVelY / speed) * minSpeed;
+        }
+
+        let nextX = prev.x + nextVelX;
+        let nextY = prev.y + nextVelY;
+
+        // Bounce off walls (percentages)
+        if (nextX <= 10 || nextX >= 90) {
+          nextVelX *= -0.8; // Dampened bounce
+          nextX = prev.x + nextVelX;
+        }
+        if (nextY <= 10 || nextY >= 90) {
+          nextVelY *= -0.8;
+          nextY = prev.y + nextVelY;
         }
 
         setVelocity({ x: nextVelX, y: nextVelY });
@@ -55,23 +69,42 @@ function RandomMovingBox({ children }) {
 
     animationFrameId = requestAnimationFrame(update);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [velocity]);
+  }, [velocity, mousePos]);
+
+  const handleMouseMove = (e) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      setMousePos({ x, y });
+    }
+  };
 
   return (
-    <div style={{
-      width: '100%',
-      height: '450px',
-      position: 'relative',
-      overflow: 'hidden',
-      marginBottom: '20px', 
-      pointerEvents: 'none'
-    }}>
+    <div 
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setMousePos(null)}
+      style={{
+        width: '100%',
+        height: '400px',
+        position: 'relative',
+        overflow: 'hidden',
+        marginBottom: '30px', 
+        borderRadius: '30px',
+        border: '1px solid rgba(179, 255, 0, 0.3)',
+        background: 'rgba(179, 255, 0, 0.02)',
+        boxShadow: 'inset 0 0 20px rgba(179, 255, 0, 0.05)',
+        cursor: 'none'
+      }}
+    >
       <div style={{
         position: 'absolute',
         left: `${position.x}%`,
         top: `${position.y}%`,
         transform: 'translate(-50%, -50%)',
         transition: 'none', 
+        pointerEvents: 'none'
       }}>
         {children}
       </div>
@@ -594,7 +627,7 @@ function App() {
           <div>
       
       {/* Step 1: Extract */}
-      <div className="step-one-shell" style={{ marginTop: 20 }}>
+      <div className="step-one-shell" style={{ marginTop: 35 }}>
         <RandomMovingBox>
           <video 
             src={chatbotVideo} 
@@ -603,8 +636,8 @@ function App() {
             muted 
             playsInline 
             style={{ 
-              width: '320px', 
-              height: '320px',
+              width: '280px', 
+              height: '280px',
               filter: 'drop-shadow(0 0 30px rgba(179, 255, 0, 0.4))'
             }} 
           />

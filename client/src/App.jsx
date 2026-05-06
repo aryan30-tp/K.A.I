@@ -162,7 +162,7 @@ function FlashcardSwiper({ cards, onReachEndThreshold }) {
   const [currentIndex, setCurrentIdx] = useState(0);
 
   useEffect(() => {
-    // If we're at card #7 (out of 10), trigger the fetch
+    // If we're at the last pair or near, trigger the fetch
     if (currentIndex >= cards.length - 4) { 
       onReachEndThreshold();
     }
@@ -170,12 +170,25 @@ function FlashcardSwiper({ cards, onReachEndThreshold }) {
 
   if (!cards || cards.length === 0) return null;
 
+  // We show 2 cards at a time. currentIndex represents the first card in the pair.
+  const handleNext = () => {
+    if (currentIndex + 2 < cards.length) {
+      setCurrentIdx(prev => prev + 2);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex - 2 >= 0) {
+      setCurrentIdx(prev => prev - 2);
+    }
+  };
+
   return (
-    <div style={{ width: '100%', maxWidth: '600px', marginInline: 'auto' }}>
+    <div style={{ width: '100%', maxWidth: '1000px', marginInline: 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <button 
           disabled={currentIndex === 0}
-          onClick={() => setCurrentIdx(prev => prev - 1)}
+          onClick={handlePrev}
           style={{ 
             background: 'none', 
             border: `1px solid #B3FF00`, 
@@ -189,18 +202,20 @@ function FlashcardSwiper({ cards, onReachEndThreshold }) {
         >
           ← Prev
         </button>
-        <div style={{ fontWeight: 800, fontSize: 20, color: '#B3FF00' }}>{currentIndex + 1} / {cards.length}</div>
+        <div style={{ fontWeight: 800, fontSize: 20, color: '#B3FF00' }}>
+          {cards[currentIndex + 1] ? `Cards ${currentIndex + 1} & ${currentIndex + 2}` : `Card ${currentIndex + 1}`}
+        </div>
         <button 
-          disabled={currentIndex === cards.length - 1}
-          onClick={() => setCurrentIdx(prev => prev + 1)}
+          disabled={currentIndex + 1 >= cards.length - 1}
+          onClick={handleNext}
           style={{ 
             background: 'none', 
             border: `1px solid #B3FF00`, 
             color: '#B3FF00', 
             padding: '10px 20px', 
             borderRadius: 15, 
-            cursor: currentIndex === cards.length - 1 ? 'default' : 'pointer', 
-            opacity: currentIndex === cards.length - 1 ? 0.3 : 1,
+            cursor: currentIndex + 1 >= cards.length - 1 ? 'default' : 'pointer', 
+            opacity: currentIndex + 1 >= cards.length - 1 ? 0.3 : 1,
             fontWeight: 700
           }}
         >
@@ -208,12 +223,11 @@ function FlashcardSwiper({ cards, onReachEndThreshold }) {
         </button>
       </div>
       
-      <div style={{ position: 'relative', minHeight: 340 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, position: 'relative', minHeight: 340 }}>
         <FlashcardComponent card={cards[currentIndex]} key={`fc-${currentIndex}`} />
-      </div>
-
-      <div style={{ textAlign: 'center', marginTop: 30, fontSize: 13, opacity: 0.6, fontStyle: 'italic' }}>
-        {cards.length < 100 ? "⚡ Smart-generation active: New cards are being added in the background." : "You've mastered all cards!"}
+        {cards[currentIndex + 1] && (
+          <FlashcardComponent card={cards[currentIndex + 1]} key={`fc-${currentIndex + 1}`} />
+        )}
       </div>
     </div>
   );

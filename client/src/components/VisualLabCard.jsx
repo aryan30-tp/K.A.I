@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import mermaid from 'mermaid';
 
 // Initialize mermaid with a dark theme to match your Coal Grey UI
@@ -69,6 +70,34 @@ const VisualLabCard = ({ topic = "Concept", mermaidCode }) => {
     setIsExpanded(!isExpanded);
   };
 
+  const ExpandedModal = () => {
+    if (!isExpanded) return null;
+    return ReactDOM.createPortal(
+      <div 
+        style={styles.modalOverlay}
+        onClick={toggleExpand}
+      >
+        <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
+          <button style={styles.closeButton} onClick={toggleExpand}>✕</button>
+          <h3 style={{ color: '#B3FF00', marginBottom: 20, fontSize: '24px', fontWeight: 700 }}>{topic}</h3>
+          {status === 'mermaid-ready' ? (
+            <div 
+              dangerouslySetInnerHTML={{ __html: svgContent }} 
+              style={styles.expandedDiagram}
+            />
+          ) : (
+            <img 
+              src={fallbackImageUrl} 
+              alt={topic} 
+              style={styles.expandedImage} 
+            />
+          )}
+        </div>
+      </div>,
+      document.body
+    );
+  };
+
   return (
     <>
       {/* State 2: Mermaid Success! */}
@@ -100,30 +129,7 @@ const VisualLabCard = ({ topic = "Concept", mermaidCode }) => {
         </div>
       )}
 
-      {/* Expanded Modal */}
-      {isExpanded && (
-        <div 
-          style={styles.modalOverlay}
-          onClick={toggleExpand}
-        >
-          <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
-            <button style={styles.closeButton} onClick={toggleExpand}>✕</button>
-            <h3 style={{ color: '#B3FF00', marginBottom: 20 }}>{topic}</h3>
-            {status === 'mermaid-ready' ? (
-              <div 
-                dangerouslySetInnerHTML={{ __html: svgContent }} 
-                style={styles.expandedDiagram}
-              />
-            ) : (
-              <img 
-                src={fallbackImageUrl} 
-                alt={topic} 
-                style={styles.expandedImage} 
-              />
-            )}
-          </div>
-        </div>
-      )}
+      <ExpandedModal />
     </>
   );
 };
@@ -176,49 +182,60 @@ const styles = {
   modalOverlay: {
     position: 'fixed',
     inset: 0,
-    backgroundColor: 'rgba(0,0,0,0.9)',
-    zIndex: 9999,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    zIndex: 99999,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '40px',
-    cursor: 'zoom-out'
+    padding: '20px',
+    cursor: 'zoom-out',
+    backdropFilter: 'blur(8px)',
   },
   modalContent: {
     position: 'relative',
     backgroundColor: '#1a1a1a',
     padding: '40px',
-    borderRadius: '30px',
-    border: '1px solid #B3FF00',
-    maxWidth: '90vw',
-    maxHeight: '90vh',
+    borderRadius: '35px',
+    border: '1px solid rgba(179, 255, 0, 0.5)',
+    maxWidth: '95vw',
+    maxHeight: '95vh',
     overflow: 'auto',
     cursor: 'default',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center'
+    alignItems: 'center',
+    boxShadow: '0 0 50px rgba(179, 255, 0, 0.15)',
   },
   closeButton: {
     position: 'absolute',
-    top: '20px',
-    right: '20px',
-    background: 'none',
-    border: 'none',
+    top: '25px',
+    right: '25px',
+    background: 'rgba(179, 255, 0, 0.1)',
+    border: '1px solid rgba(179, 255, 0, 0.3)',
     color: '#B3FF00',
-    fontSize: '24px',
-    cursor: 'pointer'
+    fontSize: '20px',
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
   },
   expandedImage: {
     maxWidth: '100%',
-    height: 'auto',
-    borderRadius: '15px',
-    boxShadow: '0 0 40px rgba(179, 255, 0, 0.2)'
+    maxHeight: '80vh',
+    objectFit: 'contain',
+    borderRadius: '20px',
+    boxShadow: '0 0 40px rgba(0,0,0,0.5), 0 0 20px rgba(179, 255, 0, 0.2)'
   },
   expandedDiagram: {
     width: '100%',
     display: 'flex',
     justifyContent: 'center',
     padding: '20px',
+    minWidth: '60vw',
   }
 };
 

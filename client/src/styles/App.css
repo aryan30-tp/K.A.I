@@ -112,6 +112,32 @@ body {
   background: #d4ff5e;
 }
 
+.stars-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -2;
+  background: radial-gradient(circle at center, #111 0%, #000 100%);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.star {
+  position: absolute;
+  background: #FFF;
+  border-radius: 50%;
+  opacity: 0.5;
+  filter: blur(1px);
+  animation: twinkle var(--duration) infinite ease-in-out;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 0.8; transform: scale(1.2); }
+}
+
 .fade-in {
   animation: fadeIn 0.8s ease-out forwards;
 }

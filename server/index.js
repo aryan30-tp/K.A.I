@@ -298,6 +298,60 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
+// --- ANALYTICS & PERFORMANCE ---
+app.post('/api/analytics/record-test', async (req, res) => {
+  try {
+    const { workspaceId, topic, score, missingConcepts = [] } = req.body;
+
+    if (!workspaceId || !topic || typeof score !== 'number') {
+      return res.status(400).json({ ok: false, error: 'Missing required analytics parameters' });
+    }
+
+    await db.collection('exam_results').add({
+      workspaceId,
+      topic,
+      score,
+      missingConcepts,
+      timestamp: Timestamp.now(),
+    });
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Record Test Error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to record test result.' });
+  }
+});
+
+app.post('/api/analytics/onboard-flashcards', async (req, res) => {
+  try {
+    const { workspaceId, flashcards } = req.body;
+
+    if (!workspaceId || !Array.isArray(flashcards)) {
+      return res.status(400).json({ ok: false, error: 'Missing workspaceId or flashcards array' });
+    }
+
+    const batch = db.batch();
+    flashcards.forEach((card) => {
+      const cardRef = db.collection('flashcards').doc();
+      batch.set(cardRef, {
+        ...card,
+        workspaceId,
+        repetitionCount: 0,
+        easeFactor: 2.5,
+        intervalDays: 0,
+        nextReviewDate: Timestamp.now(),
+        createdAt: Timestamp.now(),
+      });
+    });
+
+    await batch.commit();
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Onboard Flashcards Error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to onboard flashcards.' });
+  }
+});
+
 // --- EXAM ENGINE ---
 app.post('/api/exam/generate', async (req, res) => {
   try {
@@ -414,6 +468,17 @@ app.post('/api/socratic/turn', upload.single('audioFile'), async (req, res) => {
     );
 
     fs.unlinkSync(audioPathWithExt);
+
+    if (tutorResponse.isConceptMastered) {
+      await db.collection('exam_results').add({
+        workspaceId,
+        topic,
+        score: 100,
+        missingConcepts: [],
+        timestamp: Timestamp.now(),
+        source: 'socratic'
+      });
+    }
 
     return res.json({
       ok: true,

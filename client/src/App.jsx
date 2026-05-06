@@ -364,10 +364,27 @@ function MockTestComponent({ testData }) {
     }
   };
 
-  const handleSelect = (opt) => {
+  const handleSelect = async (opt) => {
     if (selectedOpt !== null) return;
     setSelectedOpt(opt);
     setShowExplanation(true);
+
+    // Record performance for heatmap
+    try {
+      const isCorrect = opt === question.correctAnswer;
+      await fetch(`${apiBase}/api/analytics/record-test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId: workspaceId.trim(),
+          topic: testData.testTitle || 'General',
+          score: isCorrect ? 100 : 0,
+          missingConcepts: isCorrect ? [] : [question.questionText]
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to record test result", err);
+    }
   };
 
   return (
@@ -683,6 +700,19 @@ function App() {
       const data = await parseResponse(res);
       if (data.ok && data.data && data.data.flashcards) {
         setFlashcards(prev => [...prev, ...data.data.flashcards]);
+        // Onboard for analytics
+        try {
+          await fetch(`${apiBase}/api/analytics/onboard-flashcards`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              workspaceId: workspaceId.trim(),
+              flashcards: data.data.flashcards
+            }),
+          });
+        } catch (onboardErr) {
+          console.warn("Failed to onboard additional flashcards", onboardErr);
+        }
       }
     } catch (err) {
       console.error("Failed to fetch more flashcards", err);
@@ -1030,6 +1060,19 @@ function App() {
 
       if (requestType === 'flashcards' && data.data.flashcards) {
         setFlashcards(data.data.flashcards);
+        // Onboard for analytics
+        try {
+          await fetch(`${apiBase}/api/analytics/onboard-flashcards`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              workspaceId: workspaceId.trim(),
+              flashcards: data.data.flashcards
+            }),
+          });
+        } catch (onboardErr) {
+          console.warn("Failed to onboard flashcards for analytics", onboardErr);
+        }
       } else {
         setFlashcards([]);
       }

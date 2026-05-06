@@ -4,6 +4,81 @@ import VisualAid from './components/VisualAid.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import chatbotVideo from './assets/Live chatbot.webm';
 
+function RandomMovingBox({ children }) {
+  const [position, setPosition] = useState({ x: 50, y: 50 });
+  const [velocity, setVelocity] = useState({ x: (Math.random() - 0.5) * 0.4, y: (Math.random() - 0.5) * 0.4 });
+
+  useEffect(() => {
+    let animationFrameId;
+    
+    const update = () => {
+      setPosition(prev => {
+        let nextX = prev.x + velocity.x;
+        let nextY = prev.y + velocity.y;
+        let nextVelX = velocity.x;
+        let nextVelY = velocity.y;
+
+        // Bounce off walls (percentages)
+        if (nextX <= 10 || nextX >= 90) {
+          nextVelX *= -1;
+          nextX = prev.x + nextVelX;
+        }
+        if (nextY <= 10 || nextY >= 90) {
+          nextVelY *= -1;
+          nextY = prev.y + nextVelY;
+        }
+
+        // Randomly nudge velocity for unpredictability
+        if (Math.random() < 0.02) {
+          nextVelX += (Math.random() - 0.5) * 0.1;
+          nextVelY += (Math.random() - 0.5) * 0.1;
+          
+          // Clamp speed
+          const speed = Math.sqrt(nextVelX ** 2 + nextVelY ** 2);
+          const maxSpeed = 0.6;
+          const minSpeed = 0.2;
+          if (speed > maxSpeed) {
+            nextVelX = (nextVelX / speed) * maxSpeed;
+            nextVelY = (nextVelY / speed) * maxSpeed;
+          } else if (speed < minSpeed) {
+            nextVelX = (nextVelX / speed) * minSpeed;
+            nextVelY = (nextVelY / speed) * minSpeed;
+          }
+        }
+
+        setVelocity({ x: nextVelX, y: nextVelY });
+        return { x: nextX, y: nextY };
+      });
+
+      animationFrameId = requestAnimationFrame(update);
+    };
+
+    animationFrameId = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [velocity]);
+
+  return (
+    <div style={{
+      width: '100%',
+      height: '300px',
+      position: 'relative',
+      overflow: 'hidden',
+      marginBottom: '-80px', // Pull content slightly up into the "zone"
+      pointerEvents: 'none'
+    }}>
+      <div style={{
+        position: 'absolute',
+        left: `${position.x}%`,
+        top: `${position.y}%`,
+        transform: 'translate(-50%, -50%)',
+        transition: 'none', // Smoothness comes from requestAnimationFrame
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [files, setFiles] = useState([]);
@@ -519,8 +594,8 @@ function App() {
           <div>
       
       {/* Step 1: Extract */}
-      <div className="step-one-shell">
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: -45, position: 'relative', zIndex: 10 }}>
+      <div className="step-one-shell" style={{ marginTop: 20 }}>
+        <RandomMovingBox>
           <video 
             src={chatbotVideo} 
             autoPlay 
@@ -530,11 +605,11 @@ function App() {
             style={{ 
               width: '180px', 
               height: '180px',
-              pointerEvents: 'none'
+              filter: 'drop-shadow(0 0 20px rgba(179, 255, 0, 0.3))'
             }} 
           />
-        </div>
-        <section style={{ ...translucentPanelStyle, minHeight: 340, paddingTop: 50, paddingBottom: 28 }}>
+        </RandomMovingBox>
+        <section style={{ ...translucentPanelStyle, minHeight: 340, paddingTop: 40, paddingBottom: 28, position: 'relative', zIndex: 1 }}>
           <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 0 }}>Step 1: Extract Content</h2>
           <form onSubmit={handleExtract}>
           <div

@@ -521,14 +521,49 @@ function App() {
       <section style={{ ...translucentPanelStyle, minHeight: 420, paddingBottom: 38 }}>
         <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Step 1: Extract Content</h2>
         <form onSubmit={handleExtract}>
-          <div style={{ marginBottom: 18, maxWidth: 980, marginInline: 'auto' }}>
-            <input
-              type="text"
-              placeholder="YouTube URL (or leave blank for file upload)"
-              value={youtubeUrl}
-              onChange={(e) => setYoutubeUrl(e.target.value)}
-              style={glassyInputStyle}
-            />
+          <div
+            style={{
+              marginBottom: 18,
+              maxWidth: 980,
+              marginInline: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 16,
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ flex: '1 1 640px', minWidth: 320 }}>
+              <input
+                type="text"
+                placeholder="YouTube URL (or leave blank for file upload)"
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                style={glassyInputStyle}
+              />
+            </div>
+            <label
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                minHeight: 56,
+                padding: '0 18px',
+                borderRadius: 18,
+                background: 'rgba(71, 71, 71, 0.72)',
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+                color: '#E8E8E8',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={forceWhisper}
+                onChange={(e) => setForceWhisper(e.target.checked)}
+              />
+              Force Groq Whisper
+            </label>
           </div>
           <div style={{ marginBottom: 22, width: '100%', textAlign: 'center' }}>
             <input
@@ -602,15 +637,6 @@ function App() {
               </div>
             )}
           </div>
-          <label style={{ display: 'block', marginBottom: 22, textAlign: 'center' }}>
-            <input
-              type="checkbox"
-              checked={forceWhisper}
-              onChange={(e) => setForceWhisper(e.target.checked)}
-              style={{ marginRight: 8 }}
-            />
-            Force Groq Whisper (skip RapidAPI)
-          </label>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <button type="submit" disabled={loading || (!youtubeUrl && files.length === 0)} style={getActionButtonStyle(loading || (!youtubeUrl && files.length === 0))}>
               {loading ? '⏳ Extracting…' : '📤 Extract Content'}

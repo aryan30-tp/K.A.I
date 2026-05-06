@@ -112,33 +112,35 @@ body {
 
 .step-one-shell {
   position: relative;
-  margin-top: 210px;
+  margin-top: 250px;
 }
 
 .kai-mascot-stage {
   position: absolute;
-  top: -170px;
+  top: -206px;
   left: 50%;
   transform: translateX(-50%);
-  width: min(290px, 52vw);
-  height: min(290px, 52vw);
+  width: min(320px, 54vw);
+  height: min(320px, 54vw);
   z-index: 2;
   pointer-events: none;
-  filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.42));
-  animation: kaiMascotBob 4.9s ease-in-out infinite;
-  overflow: hidden;
-  border-radius: 28px;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.38));
+  animation: kaiMascotBob 5.6s ease-in-out infinite;
 }
 
 .kai-mascot-sprite {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   background-repeat: no-repeat;
   background-size: 400% 300%;
-  background-position: 0 0;
-  animation: kaiMascotFrames 8.8s steps(1, end) infinite;
-  will-change: background-position, transform;
-  transform-origin: center bottom;
+  background-position: 0 0%;
+  background-color: transparent;
+  background-blend-mode: normal;
+  will-change: opacity, transform;
+  transform-origin: center 72%;
+  transition: opacity 520ms ease, transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes kaiMascotBob {
@@ -147,81 +149,23 @@ body {
     transform: translateX(-50%) translateY(0);
   }
 
-  50% {
-    transform: translateX(-50%) translateY(6px);
-  }
-}
-
-@keyframes kaiMascotFrames {
-  0% {
-    background-position: 0% 0%;
+  45% {
+    transform: translateX(-50%) translateY(4px);
   }
 
-  7% {
-    background-position: 0% 0%;
-  }
-
-  14% {
-    background-position: 33.333% 0%;
-  }
-
-  22% {
-    background-position: 66.666% 0%;
-  }
-
-  29% {
-    background-position: 66.666% 0%;
-  }
-
-  38% {
-    background-position: 100% 0%;
-  }
-
-  46% {
-    background-position: 100% 50%;
-  }
-
-  58% {
-    background-position: 100% 100%;
-  }
-
-  66% {
-    background-position: 66.666% 100%;
-  }
-
-  71% {
-    background-position: 66.666% 50%;
-  }
-
-  79% {
-    background-position: 0% 100%;
-  }
-
-  86% {
-    background-position: 0% 50%;
-  }
-
-  92% {
-    background-position: 33.333% 50%;
-  }
-
-  96% {
-    background-position: 33.333% 100%;
-  }
-
-  100% {
-    background-position: 0% 0%;
+  72% {
+    transform: translateX(-50%) translateY(1px);
   }
 }
 
 @media (max-width: 768px) {
   .step-one-shell {
-    margin-top: 150px;
+    margin-top: 188px;
   }
 
   .kai-mascot-stage {
-    top: -128px;
-    width: min(220px, 64vw);
-    height: min(220px, 64vw);
+    top: -152px;
+    width: min(255px, 68vw);
+    height: min(255px, 68vw);
   }
 }

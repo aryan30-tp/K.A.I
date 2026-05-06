@@ -348,7 +348,7 @@ function FlashcardComponent({ card }) {
   );
 }
 
-function MockTestComponent({ testData }) {
+function MockTestComponent({ testData, workspaceId, apiBase }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedOpt, setSelectedOpt] = useState(null);
   const [showExplanation, setShowExplanation] = useState(false);
@@ -658,17 +658,22 @@ function App() {
   const [examAnalysis, setExamAnalysis] = useState(null);
   const [requestType, setRequestType] = useState('flashcards');
   const [specificTopic, setSpecificTopic] = useState('');
-  const [loading, setLoading] = useState(false);
+  
+  // Decoupled Loading States
+  const [extractLoading, setExtractLoading] = useState(false);
+  const [analyzeLoading, setAnalyzeLoading] = useState(false);
+  const [generateLoading, setGenerateLoading] = useState(false);
+  const [heatmapLoading, setHeatmapLoading] = useState(false);
+  const [survivalLoading, setSurvivalLoading] = useState(false);
+
   const [result, setResult] = useState('');
   const [resultSource, setResultSource] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [generatedData, setGeneratedData] = useState(null);
-  const [heatmapLoading, setHeatmapLoading] = useState(false);
   const [heatmapError, setHeatmapError] = useState('');
   const [heatmapResult, setHeatmapResult] = useState(null);
   const [hoursRemaining, setHoursRemaining] = useState('6');
-  const [survivalLoading, setSurvivalLoading] = useState(false);
   const [survivalError, setSurvivalError] = useState('');
   const [survivalPlan, setSurvivalPlan] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
@@ -874,7 +879,7 @@ function App() {
       return;
     }
 
-    setLoading(true);
+    setExtractLoading(true);
     setError('');
     setNotice('');
     setResult('');
@@ -909,7 +914,7 @@ function App() {
     } catch (err) {
       setError(err.message || String(err));
     } finally {
-      setLoading(false);
+      setExtractLoading(false);
     }
   }
 
@@ -930,7 +935,7 @@ function App() {
       return;
     }
 
-    setLoading(true);
+    setAnalyzeLoading(true);
     setError('');
     setResult('');
     try {
@@ -955,7 +960,7 @@ function App() {
     } catch (err) {
       setError(err.message || String(err));
     } finally {
-      setLoading(false);
+      setAnalyzeLoading(false);
     }
   }
 
@@ -1033,7 +1038,7 @@ function App() {
       return;
     }
 
-    setLoading(true);
+    setGenerateLoading(true);
     setError('');
     setResult('');
     try {
@@ -1080,7 +1085,7 @@ function App() {
     } catch (err) {
       setError(err.message || String(err));
     } finally {
-      setLoading(false);
+      setGenerateLoading(false);
     }
   }
 
@@ -1369,10 +1374,10 @@ function App() {
             )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <button type="submit" disabled={loading || (!youtubeUrl && files.length === 0)} style={getActionButtonStyle(loading || (!youtubeUrl && files.length === 0))}>
-              {loading ? 'Extracting…' : 'Extract Content'}
+            <button type="submit" disabled={extractLoading || (!youtubeUrl && files.length === 0)} style={getActionButtonStyle(extractLoading || (!youtubeUrl && files.length === 0))}>
+              {extractLoading ? 'Extracting…' : 'Extract Content'}
             </button>
-            <LoadingProgressBar loading={loading && resultSource === ''} label="Extracting Content" />
+            <LoadingProgressBar loading={extractLoading} label="Extracting Content" />
             {uploadId && <p style={{ color: 'green', marginTop: 8, textAlign: 'center' }}>✅ Extracted! Upload ID: {uploadId.slice(0, 8)}...</p>}
           </div>
           </form>
@@ -1458,10 +1463,10 @@ function App() {
                 style={{ ...glassyTextAreaStyle, flex: 1 }}
               />
             </div>
-            <button type="submit" disabled={loading || !rawNotes.trim()} style={getActionButtonStyle(loading || !rawNotes.trim())}>
-              {loading ? 'Analyzing…' : 'Analyze Content'}
+            <button type="submit" disabled={analyzeLoading || !rawNotes.trim() || !syllabusText.trim()} style={getActionButtonStyle(analyzeLoading || !rawNotes.trim() || !syllabusText.trim())}>
+              {analyzeLoading ? 'Analyzing…' : 'Analyze Content'}
             </button>
-            <LoadingProgressBar loading={loading && resultSource === 'extracted'} label="Analyzing Context" />
+            <LoadingProgressBar loading={analyzeLoading} label="Analyzing Context" />
             {syllabusAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Syllabus mapped!</p>}
             {examAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Exam patterns analyzed!</p>}
           </form>
@@ -1492,10 +1497,10 @@ function App() {
                 style={{ ...glassyInputStyle, flex: 1 }}
               />
             </div>
-            <button type="submit" disabled={loading || !uploadId} style={getActionButtonStyle(loading || !uploadId)}>
-              {loading ? 'Generating…' : 'Generate Output'}
+            <button type="submit" disabled={generateLoading || !uploadId} style={getActionButtonStyle(generateLoading || !uploadId)}>
+              {generateLoading ? 'Generating…' : 'Generate Output'}
             </button>
-            <LoadingProgressBar loading={loading && (resultSource === 'analyzed' || resultSource === 'extracted')} label={`Generating ${requestType.replace('_', ' ')}`} />
+            <LoadingProgressBar loading={generateLoading} label={`Generating ${requestType.replace('_', ' ')}`} />
           </form>
         </section>
       </ScrollReveal>
@@ -1553,7 +1558,7 @@ function App() {
           )}
 
           {requestType === 'mock_test' && Array.isArray(generatedData.questions) && (
-            <MockTestComponent testData={generatedData} />
+            <MockTestComponent testData={generatedData} workspaceId={workspaceId} apiBase={apiBase} />
           )}
 
           {requestType === 'study_plan' && generatedData.tasks && (
@@ -1562,9 +1567,9 @@ function App() {
         </section>
       )}
 
-      {/* Analytics (Hidden or optional) */}
-      <section style={{ ...translucentPanelStyle, opacity: 0.8 }}>
-        <h2 style={{ color: accentColor }}>Heatmap Analytics</h2>
+      {/* Analytics */}
+      <section style={translucentPanelStyle}>
+        <h2 style={{ color: accentColor }}>Performance Heatmap</h2>
         <form onSubmit={handleFetchHeatmap}>
           <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
             <input
@@ -1582,16 +1587,19 @@ function App() {
               {heatmapLoading ? 'Fetching…' : 'Fetch Heatmap'}
             </button>
           </div>
+          <LoadingProgressBar loading={heatmapLoading} label="Compiling Analytics" />
         </form>
 
         {heatmapError && (
           <div
             style={{
-              color: 'crimson',
+              color: '#ff4d4d',
               marginBottom: 12,
-              padding: 12,
-              backgroundColor: '#ffe6e6',
-              borderRadius: 4,
+              padding: 16,
+              backgroundColor: 'rgba(255, 77, 77, 0.1)',
+              borderRadius: 20,
+              border: '1px solid #ff4d4d',
+              fontWeight: 600
             }}
           >
             Error: {heatmapError}
@@ -1599,56 +1607,57 @@ function App() {
         )}
 
         {heatmapResult && (
-          <div style={{ backgroundColor: '#f7f7f7', padding: 12, borderRadius: 4 }}>
-            <h3 style={{ marginTop: 0 }}>Overview</h3>
-            <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 12 }}>
-              {JSON.stringify(heatmapResult.overview, null, 2)}
-            </pre>
-            <h3 style={{ marginTop: 0 }}>Heatmap</h3>
+          <div style={{ marginTop: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+               <div style={{ padding: 24, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 30, border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ color: accentColor, fontSize: 13, textTransform: 'uppercase', fontWeight: 800, marginBottom: 8 }}>Memory Retention</div>
+                  <div style={{ fontSize: 36, fontWeight: 800 }}>{heatmapResult.overview.memoryRetentionRate}%</div>
+               </div>
+               <div style={{ padding: 24, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 30, border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ color: accentColor, fontSize: 13, textTransform: 'uppercase', fontWeight: 800, marginBottom: 8 }}>Mastered Facts</div>
+                  <div style={{ fontSize: 36, fontWeight: 800 }}>{heatmapResult.overview.totalCards} total</div>
+               </div>
+            </div>
+
+            <div style={{ padding: 24, backgroundColor: 'rgba(179, 255, 0, 0.08)', borderRadius: 30, border: `1px solid ${accentColor}`, marginBottom: 30 }}>
+               <div style={{ fontWeight: 800, color: accentColor, marginBottom: 10 }}>AI Action Plan</div>
+               <div style={{ lineHeight: 1.6 }}>{heatmapResult.overview.aiActionPlan}</div>
+            </div>
+
             {Array.isArray(heatmapResult.heatmap) && heatmapResult.heatmap.length > 0 ? (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
+              <div style={{ overflowX: 'auto', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'rgba(34,34,34,0.6)' }}>
                   <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Topic</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Avg Score</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Status</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Missed</th>
+                    <tr style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                      <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Topic</th>
+                      <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Score</th>
+                      <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Status</th>
+                      <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Weak Concepts</th>
                     </tr>
                   </thead>
                   <tbody>
                     {heatmapResult.heatmap.map((row, idx) => {
-                      const heatmapStatusStyles = {
-                        Green: { backgroundColor: '#d6f5d6', color: '#1f7a1f' },
-                        Yellow: { backgroundColor: '#fff3bf', color: '#8a6d00' },
-                        Red: { backgroundColor: '#ffe3e3', color: '#a61e1e' },
-                      };
-                      const statusStyle = heatmapStatusStyles[row.status] || {
+                      const rowStatusStyle = heatmapStatusStyles[row.status] || {
                         backgroundColor: '#f0f0f0',
                         color: '#333',
                       };
                       return (
-                        <tr key={`${row.topic}-${idx}`}>
-                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.topic}</td>
-                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
-                            {typeof row.avgScore === 'number' ? `${row.avgScore}%` : row.avgScore}
-                          </td>
-                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                padding: '4px 10px',
-                                borderRadius: 12,
-                                fontWeight: 600,
-                                ...statusStyle,
-                              }}
-                            >
+                        <tr key={`${row.topic}-${idx}`} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '16px 20px', fontWeight: 600 }}>{row.topic}</td>
+                          <td style={{ padding: '16px 20px' }}>{row.avgScore}%</td>
+                          <td style={{ padding: '16px 20px' }}>
+                            <span style={{ 
+                                padding: '6px 12px', 
+                                borderRadius: 12, 
+                                fontSize: 11, 
+                                fontWeight: 800, 
+                                ...rowStatusStyle,
+                                textTransform: 'uppercase'
+                            }}>
                               {row.status}
                             </span>
                           </td>
-                          <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
-                            {row.missed || '—'}
-                          </td>
+                          <td style={{ padding: '16px 20px', fontSize: 13, opacity: 0.7 }}>{row.missed || '—'}</td>
                         </tr>
                       );
                     })}
@@ -1656,7 +1665,9 @@ function App() {
                 </table>
               </div>
             ) : (
-              <p style={{ margin: 0 }}>No heatmap data yet. Grade at least one exam with a topic.</p>
+              <div style={{ textAlign: 'center', padding: 40, opacity: 0.5 }}>
+                No detailed topic data yet. Solve a test to see your heatmap.
+              </div>
             )}
           </div>
         )}

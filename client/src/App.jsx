@@ -164,7 +164,9 @@ function ScrollReveal({ children, isLocked }) {
 
   useEffect(() => {
     const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => setIsVisible(entry.isIntersecting));
+      entries.forEach(entry => {
+        if (entry.isIntersecting) setIsVisible(true);
+      });
     }, { threshold: 0.1 });
     if (domRef.current) observer.observe(domRef.current);
     return () => {
@@ -176,14 +178,15 @@ function ScrollReveal({ children, isLocked }) {
     <div
       ref={domRef}
       style={{
-        opacity: isVisible && !isLocked ? 1 : 0,
-        transform: isVisible && !isLocked ? 'translateY(0)' : 'translateY(40px)',
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(40px)',
         transition: 'opacity 0.8s ease-out, transform 0.8s ease-out, filter 0.5s ease',
         pointerEvents: isLocked ? 'none' : 'auto',
         filter: isLocked ? 'blur(8px) grayscale(90%)' : 'none',
         marginInline: 'auto',
-        maxWidth: '1000px',
+        width: '100%',
         marginBottom: 40,
+        position: 'relative'
       }}
     >
       <div style={{ position: 'relative' }}>
@@ -195,16 +198,19 @@ function ScrollReveal({ children, isLocked }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.4)',
+            backgroundColor: 'rgba(0,0,0,0.3)',
             borderRadius: 50,
-            backdropFilter: 'blur(4px)',
+            backdropFilter: 'blur(2px)',
             color: '#B3FF00',
             fontWeight: 700,
-            fontSize: 20,
+            fontSize: 22,
             textAlign: 'center',
-            padding: 20
+            padding: 20,
+            border: '2px dashed rgba(179, 255, 0, 0.4)',
           }}>
-            🔒 Complete Step 1 to Unlock
+            <div style={{ backgroundColor: 'rgba(0,0,0,0.7)', padding: '15px 30px', borderRadius: 30, boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+              🔒 Complete Step 1 to Unlock
+            </div>
           </div>
         )}
         {children}

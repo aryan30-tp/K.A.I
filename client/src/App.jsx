@@ -158,6 +158,61 @@ function RandomMovingBox({ children }) {
   );
 }
 
+function ScrollReveal({ children, isLocked }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const domRef = React.useRef();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => setIsVisible(entry.isIntersecting));
+    }, { threshold: 0.1 });
+    if (domRef.current) observer.observe(domRef.current);
+    return () => {
+      if (domRef.current) observer.unobserve(domRef.current);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={domRef}
+      style={{
+        opacity: isVisible && !isLocked ? 1 : 0,
+        transform: isVisible && !isLocked ? 'translateY(0)' : 'translateY(40px)',
+        transition: 'opacity 0.8s ease-out, transform 0.8s ease-out, filter 0.5s ease',
+        pointerEvents: isLocked ? 'none' : 'auto',
+        filter: isLocked ? 'blur(8px) grayscale(90%)' : 'none',
+        marginInline: 'auto',
+        maxWidth: '1000px',
+        marginBottom: 40,
+      }}
+    >
+      <div style={{ position: 'relative' }}>
+        {isLocked && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            borderRadius: 50,
+            backdropFilter: 'blur(4px)',
+            color: '#B3FF00',
+            fontWeight: 700,
+            fontSize: 20,
+            textAlign: 'center',
+            padding: 20
+          }}>
+            🔒 Complete Step 1 to Unlock
+          </div>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [files, setFiles] = useState([]);
@@ -818,103 +873,107 @@ function App() {
       </div>
 
       {/* Step 2: Analyze */}
-      <section style={translucentPanelStyle}>
-        <h2>Step 2: Analyze (Optional)</h2>
-        <form onSubmit={handleAnalyze}>
-          <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexWrap: 'wrap' }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 10 }}>Syllabus Image (optional)</label>
-              <input
-                type="file"
-                accept=".png,.jpg,.jpeg,.webp"
-                onChange={(e) => setSyllabusImage(e.target.files?.[0] || null)}
-                style={{ marginBottom: 8 }}
-              />
-              <button
-                type="button"
-                onClick={() => handleOcrImage('syllabus')}
-                disabled={syllabusImageLoading}
-                style={getActionButtonStyle(syllabusImageLoading)}
-              >
-                {syllabusImageLoading ? '⏳ OCR Syllabus…' : '🖼️ OCR Syllabus'}
-              </button>
-              {syllabusImageError && (
-                <div style={{ color: 'crimson', marginTop: 8 }}>{syllabusImageError}</div>
-              )}
+      <ScrollReveal isLocked={!uploadId}>
+        <section style={translucentPanelStyle}>
+          <h2>Step 2: Analyze (Optional)</h2>
+          <form onSubmit={handleAnalyze}>
+            <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: 10 }}>Syllabus Image (optional)</label>
+                <input
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.webp"
+                  onChange={(e) => setSyllabusImage(e.target.files?.[0] || null)}
+                  style={{ marginBottom: 8 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleOcrImage('syllabus')}
+                  disabled={syllabusImageLoading}
+                  style={getActionButtonStyle(syllabusImageLoading)}
+                >
+                  {syllabusImageLoading ? '⏳ OCR Syllabus…' : '🖼️ OCR Syllabus'}
+                </button>
+                {syllabusImageError && (
+                  <div style={{ color: 'crimson', marginTop: 8 }}>{syllabusImageError}</div>
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: 10 }}>Notes Image (optional)</label>
+                <input
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.webp"
+                  onChange={(e) => setNotesImage(e.target.files?.[0] || null)}
+                  style={{ marginBottom: 8 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleOcrImage('notes')}
+                  disabled={notesImageLoading}
+                  style={getActionButtonStyle(notesImageLoading)}
+                >
+                  {notesImageLoading ? '⏳ OCR Notes…' : '🖼️ OCR Notes'}
+                </button>
+                {notesImageError && (
+                  <div style={{ color: 'crimson', marginTop: 8 }}>{notesImageError}</div>
+                )}
+              </div>
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 10 }}>Notes Image (optional)</label>
-              <input
-                type="file"
-                accept=".png,.jpg,.jpeg,.webp"
-                onChange={(e) => setNotesImage(e.target.files?.[0] || null)}
-                style={{ marginBottom: 8 }}
+            <div style={{ display: 'flex', gap: 20, marginBottom: 18, flexWrap: 'wrap' }}>
+              <textarea
+                placeholder="Paste syllabus text here (required)"
+                value={syllabusText}
+                onChange={(e) => setSyllabusText(e.target.value)}
+                rows={4}
+                style={{ ...glassyTextAreaStyle, flex: 1 }}
               />
-              <button
-                type="button"
-                onClick={() => handleOcrImage('notes')}
-                disabled={notesImageLoading}
-                style={getActionButtonStyle(notesImageLoading)}
-              >
-                {notesImageLoading ? '⏳ OCR Notes…' : '🖼️ OCR Notes'}
-              </button>
-              {notesImageError && (
-                <div style={{ color: 'crimson', marginTop: 8 }}>{notesImageError}</div>
-              )}
+              <textarea
+                placeholder="Paste past exam papers (optional)"
+                value={pastPapersText}
+                onChange={(e) => setPastPapersText(e.target.value)}
+                rows={4}
+                style={{ ...glassyTextAreaStyle, flex: 1 }}
+              />
             </div>
-          </div>
-          <div style={{ display: 'flex', gap: 20, marginBottom: 18, flexWrap: 'wrap' }}>
-            <textarea
-              placeholder="Paste syllabus text here (required)"
-              value={syllabusText}
-              onChange={(e) => setSyllabusText(e.target.value)}
-              rows={4}
-              style={{ ...glassyTextAreaStyle, flex: 1 }}
-            />
-            <textarea
-              placeholder="Paste past exam papers (optional)"
-              value={pastPapersText}
-              onChange={(e) => setPastPapersText(e.target.value)}
-              rows={4}
-              style={{ ...glassyTextAreaStyle, flex: 1 }}
-            />
-          </div>
-          <button type="submit" disabled={loading || !rawNotes.trim()} style={getActionButtonStyle(loading || !rawNotes.trim())}>
-            {loading ? '⏳ Analyzing…' : '🔍 Analyze Content'}
-          </button>
-          {syllabusAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Syllabus mapped!</p>}
-          {examAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Exam patterns analyzed!</p>}
-        </form>
-      </section>
+            <button type="submit" disabled={loading || !rawNotes.trim()} style={getActionButtonStyle(loading || !rawNotes.trim())}>
+              {loading ? '⏳ Analyzing…' : '🔍 Analyze Content'}
+            </button>
+            {syllabusAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Syllabus mapped!</p>}
+            {examAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Exam patterns analyzed!</p>}
+          </form>
+        </section>
+      </ScrollReveal>
 
       {/* Step 3: Generate */}
-      <section style={translucentPanelStyle}>
-        <h2>Step 3: Generate Output</h2>
-        <form onSubmit={handleGenerateOutput}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
-            <label>
-              Output Type:{' '}
-              <select value={requestType} onChange={(e) => setRequestType(e.target.value)} style={glassySelectStyle}>
-                <option value="flashcards">📇 Flashcards</option>
-                <option value="study_plan">📋 Study Plan</option>
-                <option value="summary">📝 Summary</option>
-                <option value="mock_test">❓ Mock Test</option>
-                <option value="eli5">🧒 ELI5</option>
-              </select>
-            </label>
-            <input
-              type="text"
-              placeholder="Specific topic for ELI5 (optional)"
-              value={specificTopic}
-              onChange={(e) => setSpecificTopic(e.target.value)}
-              style={{ ...glassyInputStyle, flex: 1 }}
-            />
-          </div>
-          <button type="submit" disabled={loading || !uploadId} style={getActionButtonStyle(loading || !uploadId)}>
-            {loading ? '⏳ Generating…' : '✨ Generate Output'}
-          </button>
-        </form>
-      </section>
+      <ScrollReveal isLocked={!uploadId}>
+        <section style={translucentPanelStyle}>
+          <h2>Step 3: Generate Output</h2>
+          <form onSubmit={handleGenerateOutput}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
+              <label>
+                Output Type:{' '}
+                <select value={requestType} onChange={(e) => setRequestType(e.target.value)} style={glassySelectStyle}>
+                  <option value="flashcards">📇 Flashcards</option>
+                  <option value="study_plan">📋 Study Plan</option>
+                  <option value="summary">📝 Summary</option>
+                  <option value="mock_test">❓ Mock Test</option>
+                  <option value="eli5">🧒 ELI5</option>
+                </select>
+              </label>
+              <input
+                type="text"
+                placeholder="Specific topic for ELI5 (optional)"
+                value={specificTopic}
+                onChange={(e) => setSpecificTopic(e.target.value)}
+                style={{ ...glassyInputStyle, flex: 1 }}
+              />
+            </div>
+            <button type="submit" disabled={loading || !uploadId} style={getActionButtonStyle(loading || !uploadId)}>
+              {loading ? '⏳ Generating…' : '✨ Generate Output'}
+            </button>
+          </form>
+        </section>
+      </ScrollReveal>
 
       {/* Results */}
       {notice && (

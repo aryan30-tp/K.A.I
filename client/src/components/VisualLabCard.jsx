@@ -13,6 +13,7 @@ const VisualLabCard = ({ topic = "Concept", mermaidCode }) => {
   const [status, setStatus] = useState('parsing');
   const [svgContent, setSvgContent] = useState('');
   const [fallbackImageUrl, setFallbackImageUrl] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // A unique ID for the mermaid render instance
   const renderId = `mermaid-${topic.replace(/[^a-zA-Z0-9]/g, '')}-${Math.floor(Math.random() * 1000000)}`;
@@ -63,11 +64,20 @@ const VisualLabCard = ({ topic = "Concept", mermaidCode }) => {
     generateVisual();
   }, [mermaidCode, topic]);
 
+  const toggleExpand = (e) => {
+    e.stopPropagation(); // Prevent flashcard flip
+    setIsExpanded(!isExpanded);
+  };
+
   return (
     <>
       {/* State 2: Mermaid Success! */}
       {status === 'mermaid-ready' && (
-        <div className="visual-card-container" style={styles.card}>
+        <div 
+          className="visual-card-container" 
+          style={styles.card} 
+          onClick={toggleExpand}
+        >
           <div 
             dangerouslySetInnerHTML={{ __html: svgContent }} 
             style={styles.diagramContainer}
@@ -77,12 +87,41 @@ const VisualLabCard = ({ topic = "Concept", mermaidCode }) => {
 
       {/* State 4: Wikipedia Image Found */}
       {status === 'fallback-ready' && (
-        <div className="visual-card-container" style={styles.card}>
+        <div 
+          className="visual-card-container" 
+          style={styles.card} 
+          onClick={toggleExpand}
+        >
           <img 
             src={fallbackImageUrl} 
             alt={`Visual representation of ${topic}`} 
             style={styles.fallbackImage} 
           />
+        </div>
+      )}
+
+      {/* Expanded Modal */}
+      {isExpanded && (
+        <div 
+          style={styles.modalOverlay}
+          onClick={toggleExpand}
+        >
+          <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <button style={styles.closeButton} onClick={toggleExpand}>✕</button>
+            <h3 style={{ color: '#B3FF00', marginBottom: 20 }}>{topic}</h3>
+            {status === 'mermaid-ready' ? (
+              <div 
+                dangerouslySetInnerHTML={{ __html: svgContent }} 
+                style={styles.expandedDiagram}
+              />
+            ) : (
+              <img 
+                src={fallbackImageUrl} 
+                alt={topic} 
+                style={styles.expandedImage} 
+              />
+            )}
+          </div>
         </div>
       )}
     </>
@@ -103,7 +142,9 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    cursor: 'zoom-in',
+    transition: 'transform 0.2s',
   },
   loadingText: {
     color: '#B3FF00',
@@ -131,6 +172,53 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     overflowX: 'auto'
+  },
+  modalOverlay: {
+    position: 'fixed',
+    inset: 0,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    zIndex: 9999,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '40px',
+    cursor: 'zoom-out'
+  },
+  modalContent: {
+    position: 'relative',
+    backgroundColor: '#1a1a1a',
+    padding: '40px',
+    borderRadius: '30px',
+    border: '1px solid #B3FF00',
+    maxWidth: '90vw',
+    maxHeight: '90vh',
+    overflow: 'auto',
+    cursor: 'default',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center'
+  },
+  closeButton: {
+    position: 'absolute',
+    top: '20px',
+    right: '20px',
+    background: 'none',
+    border: 'none',
+    color: '#B3FF00',
+    fontSize: '24px',
+    cursor: 'pointer'
+  },
+  expandedImage: {
+    maxWidth: '100%',
+    height: 'auto',
+    borderRadius: '15px',
+    boxShadow: '0 0 40px rgba(179, 255, 0, 0.2)'
+  },
+  expandedDiagram: {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    padding: '20px',
   }
 };
 

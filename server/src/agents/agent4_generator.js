@@ -130,13 +130,15 @@ const eli5Schema = z.object({
  * @param {Object} syllabusAnalysis - The JSON output from Agent 2 (optional)
  * @param {Object} examAnalysis - The JSON output from Agent 3 (optional)
  * @param {string} specificTopic - (Optional) Only used for ELI5 to specify what to explain
+ * @param {Array<string>} excludeTopics - (Optional) Topics to skip for flashcards
  */
 export async function generateOutput(
   requestType,
   rawNotes,
   syllabusAnalysis = null,
   examAnalysis = null,
-  specificTopic = null
+  specificTopic = null,
+  excludeTopics = []
 ) {
   try {
     console.log(`Agent 4: Generating ${requestType}...`);
@@ -148,7 +150,12 @@ export async function generateOutput(
     if (requestType === 'flashcards') {
       schema = flashcardSchema;
       systemInstructions =
-        "You are an expert tutor creating highly effective flashcards. Use the provided notes to extract key concepts. Keep the 'back' of the card concise and easy to memorize.\n\nRULES FOR MERMAID (VISUAL DIAGRAMS):\nYou can generate Mermaid code for ANY subject if the concept involves a process, hierarchy, cycle, or relationship.\n1. Syntax: Start with \"graph TD\" (top-down) or \"graph LR\" (left-right).\n2. Clean Nodes: Use simple alphanumeric IDs (e.g., A[Photosynthesis] --> B[Oxygen]). NEVER use special characters like () or {} inside node text unless wrapped in quotes.\n3. Universal Application:\n   - Biology: Food chains, Cell division phases, Anatomy hierarchies.\n   - CS: Algorithms, Architecture, Data Structures.\n   - Business/Econ: Supply chains, Org charts, Market cycles.\n4. Highlighting: Use the \"style\" command to color specific nodes if you need to draw attention to a specific part of the diagram (e.g., style B fill:#f9f,stroke:#333).\n5. If the concept is purely abstract and cannot be mapped as a flowchart or tree, set \"mermaidCode\" to null.\n\nCRITICAL: Return JSON with this exact structure and do not omit keys:\n{\n  \"flashcards\": [\n    {\n      \"front\": \"String\",\n      \"back\": \"String\",\n      \"mermaidCode\": \"String (Mermaid) or null\"\n    }\n  ]\n}";
+        `You are an expert tutor creating exactly 10 highly effective flashcards. 
+         DO NOT generate flashcards for the following topics as they already exist: ${excludeTopics.join(', ') || 'None'}.
+         Use the provided notes to extract NEW key concepts. Keep the 'back' of the card concise and easy to memorize.
+         
+         RULES FOR MERMAID (VISUAL DIAGRAMS):` + 
+        "\nYou can generate Mermaid code for ANY subject if the concept involves a process, hierarchy, cycle, or relationship.\n1. Syntax: Start with \"graph TD\" (top-down) or \"graph LR\" (left-right).\n2. Clean Nodes: Use simple alphanumeric IDs (e.g., A[Photosynthesis] --> B[Oxygen]). NEVER use special characters like () or {} inside node text unless wrapped in quotes.\n3. Universal Application:\n   - Biology: Food chains, Cell division phases, Anatomy hierarchies.\n   - CS: Algorithms, Architecture, Data Structures.\n   - Business/Econ: Supply chains, Org charts, Market cycles.\n4. Highlighting: Use the \"style\" command to color specific nodes if you need to draw attention to a specific part of the diagram (e.g., style B fill:#f9f,stroke:#333).\n5. If the concept is purely abstract and cannot be mapped as a flowchart or tree, set \"mermaidCode\" to null.\n\nCRITICAL: Return JSON with this exact structure and do not omit keys:\n{\n  \"flashcards\": [\n    {\n      \"front\": \"String\",\n      \"back\": \"String\",\n      \"mermaidCode\": \"String (Mermaid) or null\"\n    }\n  ]\n}";
     } else if (requestType === 'study_plan') {
       schema = studyPlanSchema;
       systemInstructions =

@@ -248,12 +248,19 @@ app.post('/api/generate', async (req, res) => {
       specificTopic,
       workspaceId,
       userId,
+      excludeTopics = [],
     } = req.body;
 
     // 1. Check Firebase first! 
-    const cachedData = await getCachedOutput(uploadId, requestType);
-    if (cachedData) {
-      return res.json({ ok: true, source: "cache", data: cachedData });
+    // If it's a batch request (excludeTopics present), we skip cache for now
+    // to ensure we get fresh cards.
+    const isBatchRequest = requestType === 'flashcards' && excludeTopics && excludeTopics.length > 0;
+
+    if (!isBatchRequest) {
+      const cachedData = await getCachedOutput(uploadId, requestType);
+      if (cachedData) {
+        return res.json({ ok: true, source: "cache", data: cachedData });
+      }
     }
 
     // 2. If not in cache, call Agent 4 (Gemini API)
@@ -262,14 +269,18 @@ app.post('/api/generate', async (req, res) => {
       rawNotes, 
       syllabusAnalysis, 
       examAnalysis, 
-      specificTopic
+      specificTopic,
+      excludeTopics
     );
 
-    // 3. Save it to Firebase so we never pay for it again
-    await saveCachedOutput(uploadId, requestType, generatedData, {
-      userId: userId || workspaceId,
-      workspaceId,
-    });
+    // 3. Save it to Firebase only if it's NOT a batch request
+    // (Or we could handle batch caching, but let's keep it simple for now)
+    if (!isBatchRequest) {
+      await saveCachedOutput(uploadId, requestType, generatedData, {
+        userId: userId || workspaceId,
+        workspaceId,
+      });
+    }
 
     // 4. Send back to React
     res.json({ ok: true, source: "ai", data: generatedData });

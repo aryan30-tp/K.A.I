@@ -158,6 +158,67 @@ function RandomMovingBox({ children }) {
   );
 }
 
+function FlashcardSwiper({ cards, onReachEndThreshold }) {
+  const [currentIndex, setCurrentIdx] = useState(0);
+
+  useEffect(() => {
+    // If we're at card #7 (out of 10), trigger the fetch
+    if (currentIndex >= cards.length - 4) { 
+      onReachEndThreshold();
+    }
+  }, [currentIndex, cards.length, onReachEndThreshold]);
+
+  if (!cards || cards.length === 0) return null;
+
+  return (
+    <div style={{ width: '100%', maxWidth: '600px', marginInline: 'auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <button 
+          disabled={currentIndex === 0}
+          onClick={() => setCurrentIdx(prev => prev - 1)}
+          style={{ 
+            background: 'none', 
+            border: `1px solid #B3FF00`, 
+            color: '#B3FF00', 
+            padding: '10px 20px', 
+            borderRadius: 15, 
+            cursor: currentIndex === 0 ? 'default' : 'pointer', 
+            opacity: currentIndex === 0 ? 0.3 : 1,
+            fontWeight: 700
+          }}
+        >
+          ← Prev
+        </button>
+        <div style={{ fontWeight: 800, fontSize: 20, color: '#B3FF00' }}>{currentIndex + 1} / {cards.length}</div>
+        <button 
+          disabled={currentIndex === cards.length - 1}
+          onClick={() => setCurrentIdx(prev => prev + 1)}
+          style={{ 
+            background: 'none', 
+            border: `1px solid #B3FF00`, 
+            color: '#B3FF00', 
+            padding: '10px 20px', 
+            borderRadius: 15, 
+            cursor: currentIndex === cards.length - 1 ? 'default' : 'pointer', 
+            opacity: currentIndex === cards.length - 1 ? 0.3 : 1,
+            fontWeight: 700
+          }}
+        >
+          Next →
+        </button>
+      </div>
+      
+      <div style={{ position: 'relative', minHeight: 340 }}>
+        <FlashcardComponent card={cards[currentIndex]} key={`fc-${currentIndex}`} />
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: 30, fontSize: 13, opacity: 0.6, fontStyle: 'italic' }}>
+        {cards.length < 100 ? "⚡ Smart-generation active: New cards are being added in the background." : "You've mastered all cards!"}
+      </div>
+    </div>
+  );
+}
+
 function FlashcardComponent({ card }) {
   const [isFlipped, setIsFlipped] = useState(false);
   const accentColor = '#B3FF00';
@@ -530,8 +591,42 @@ function App() {
   const [survivalError, setSurvivalError] = useState('');
   const [survivalPlan, setSurvivalPlan] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
+  const [flashcards, setFlashcards] = useState([]);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
   const { currentUser, loadingAuth, signInWithGoogle, signOutUser } = useAuth();
+
+  const apiBase = import.meta.env.VITE_API_URL ?? '';
+
+  const fetchMoreFlashcards = React.useCallback(async () => {
+    if (isFetchingMore || !uploadId || !rawNotes || !currentUser) return;
+    setIsFetchingMore(true);
+    try {
+      const excludeTopics = flashcards.map(f => f.front);
+      const res = await fetch(`${apiBase}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uploadId,
+          requestType: 'flashcards',
+          rawNotes,
+          syllabusAnalysis,
+          examAnalysis,
+          workspaceId: workspaceId.trim(),
+          userId: currentUser.uid,
+          excludeTopics
+        }),
+      });
+      const data = await parseResponse(res);
+      if (data.ok && data.data && data.data.flashcards) {
+        setFlashcards(prev => [...prev, ...data.data.flashcards]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch more flashcards", err);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [isFetchingMore, uploadId, rawNotes, currentUser, flashcards, apiBase, syllabusAnalysis, examAnalysis, workspaceId]);
 
   const heatmapStatusStyles = {
     Green: { backgroundColor: '#d6f5d6', color: '#1f7a1f' },
@@ -637,8 +732,6 @@ function App() {
 
     return { label: extension.toUpperCase() || 'DOC', color: accentColor, accent: 'rgba(179, 255, 0, 0.2)' };
   }
-
-  const apiBase = import.meta.env.VITE_API_URL ?? '';
 
   useEffect(() => {
     if (currentUser?.uid) {
@@ -858,6 +951,12 @@ function App() {
       setResult(JSON.stringify(data.data, null, 2));
       setResultSource(`generated (from ${data.source})`);
       setGeneratedData(data.data);
+
+      if (requestType === 'flashcards' && data.data.flashcards) {
+        setFlashcards(data.data.flashcards);
+      } else {
+        setFlashcards([]);
+      }
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -1297,12 +1396,11 @@ function App() {
             <h2 style={{ margin: 0 }}>Visual Learning Lab</h2>
           </div>
 
-          {requestType === 'flashcards' && Array.isArray(generatedData.flashcards) && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
-              {generatedData.flashcards.map((card, idx) => (
-                <FlashcardComponent key={`flashcard-${idx}`} card={card} />
-              ))}
-            </div>
+          {requestType === 'flashcards' && flashcards.length > 0 && (
+            <FlashcardSwiper 
+              cards={flashcards} 
+              onReachEndThreshold={fetchMoreFlashcards} 
+            />
           )}
 
           {requestType === 'summary' && generatedData.keyTakeaways && (

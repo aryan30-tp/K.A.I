@@ -367,7 +367,17 @@ function App() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#2C2E2A' }}>
       {/* Header */}
       <div className="app-header">
-        <div style={{ fontSize: 28, cursor: 'pointer' }}>👤</div>
+        <div style={{ 
+          fontSize: 28, 
+          cursor: 'pointer',
+          width: 48,
+          height: 48,
+          backgroundColor: '#444',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>👤</div>
         <div className="app-header-user">
           <span>{currentUser.email || currentUser.uid}</span>
           <button onClick={signOutUser}>Sign out</button>

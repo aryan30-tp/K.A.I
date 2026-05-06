@@ -1081,7 +1081,7 @@ function App() {
   if (loadingAuth) {
     return (
       <div style={{ padding: 24, fontFamily: 'Arial, sans-serif' }}>
-        <h1>🤖 K.A.I. — Study Assistant</h1>
+        <h1>K.A.I. — Study Assistant</h1>
         <p>Checking session...</p>
       </div>
     );
@@ -1090,7 +1090,7 @@ function App() {
   if (!currentUser) {
     return (
       <div style={{ padding: 24, fontFamily: 'Arial, sans-serif', textAlign: 'center' }}>
-        <h1 style={{ color: '#B3FF00' }}>🚨 K.A.I. Emergency Triage</h1>
+        <h1 style={{ color: '#B3FF00' }}>K.A.I. Emergency Triage</h1>
         <p style={{ color: '#E8E8E8' }}>Sign in with Google to start your survival plan.</p>
         <button
           onClick={signInWithGoogle}
@@ -1107,7 +1107,7 @@ function App() {
       {/* Header */}
       <div className="app-header">
         <div style={{ 
-          fontSize: 28, 
+          fontSize: 24, 
           cursor: 'pointer',
           width: 48,
           height: 48,
@@ -1116,8 +1116,10 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          marginLeft: 'auto'
-        }}>👤</div>
+          marginLeft: 'auto',
+          color: '#B3FF00',
+          fontWeight: 800
+        }}>K</div>
         {/* <div className="app-header-user">
           <span>{currentUser.email || currentUser.uid}</span>
           <button onClick={signOutUser}>Sign out</button>
@@ -1130,19 +1132,19 @@ function App() {
           className={`tab-button ${activeTab === 0 ? 'active' : ''}`}
           onClick={() => setActiveTab(0)}
         >
-          📚 Build
+          Build
         </button>
         <button
           className={`tab-button ${activeTab === 1 ? 'active' : ''}`}
           onClick={() => setActiveTab(1)}
         >
-          🎙️ Study Lab
+          Study Lab
         </button>
         <button
           className={`tab-button ${activeTab === 2 ? 'active' : ''}`}
           onClick={() => setActiveTab(2)}
         >
-          🚨 Survival Mode
+          Survival Mode
         </button>
       </div>
 
@@ -1289,7 +1291,7 @@ function App() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <button type="submit" disabled={loading || (!youtubeUrl && files.length === 0)} style={getActionButtonStyle(loading || (!youtubeUrl && files.length === 0))}>
-              {loading ? '⏳ Extracting…' : '📤 Extract Content'}
+              {loading ? 'Extracting…' : 'Extract Content'}
             </button>
             <LoadingProgressBar loading={loading && resultSource === ''} label="Extracting Content" />
             {uploadId && <p style={{ color: 'green', marginTop: 8, textAlign: 'center' }}>✅ Extracted! Upload ID: {uploadId.slice(0, 8)}...</p>}
@@ -1315,7 +1317,7 @@ function App() {
                     style={{ display: 'none' }}
                   />
                   <label htmlFor="syllabus-image-upload" style={uploadPickerButtonStyle}>
-                    {syllabusImage ? '✅ Selected' : '🖼️ Choose Image'}
+                    {syllabusImage ? '✅ Selected' : 'Choose Image'}
                   </label>
                   <button
                     type="button"
@@ -1323,10 +1325,11 @@ function App() {
                     disabled={syllabusImageLoading || !syllabusImage}
                     style={getActionButtonStyle(syllabusImageLoading || !syllabusImage)}
                   >
-                    {syllabusImageLoading ? '⏳ Extracting…' : '📄 Extract from image'}
+                    {syllabusImageLoading ? 'Extracting…' : 'Extract from image'}
                   </button>
                   {syllabusImage && <span style={{ fontSize: 12, opacity: 0.7, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{syllabusImage.name}</span>}
                 </div>
+                <LoadingProgressBar loading={syllabusImageLoading} label="OCR Syllabus" />
                 {syllabusImageError && (
                   <div style={{ color: 'crimson', marginTop: 8 }}>{syllabusImageError}</div>
                 )}
@@ -1342,7 +1345,7 @@ function App() {
                     style={{ display: 'none' }}
                   />
                   <label htmlFor="notes-image-upload" style={uploadPickerButtonStyle}>
-                    {notesImage ? '✅ Selected' : '🖼️ Choose Image'}
+                    {notesImage ? '✅ Selected' : 'Choose Image'}
                   </label>
                   <button
                     type="button"
@@ -1350,10 +1353,11 @@ function App() {
                     disabled={notesImageLoading || !notesImage}
                     style={getActionButtonStyle(notesImageLoading || !notesImage)}
                   >
-                    {notesImageLoading ? '⏳ Extracting…' : '📄 Extract from image'}
+                    {notesImageLoading ? 'Extracting…' : 'Extract from image'}
                   </button>
                   {notesImage && <span style={{ fontSize: 12, opacity: 0.7, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notesImage.name}</span>}
                 </div>
+                <LoadingProgressBar loading={notesImageLoading} label="OCR Past Papers" />
                 {notesImageError && (
                   <div style={{ color: 'crimson', marginTop: 8 }}>{notesImageError}</div>
                 )}
@@ -1376,7 +1380,7 @@ function App() {
               />
             </div>
             <button type="submit" disabled={loading || !rawNotes.trim()} style={getActionButtonStyle(loading || !rawNotes.trim())}>
-              {loading ? '⏳ Analyzing…' : '🔍 Analyze Content'}
+              {loading ? 'Analyzing…' : 'Analyze Content'}
             </button>
             <LoadingProgressBar loading={loading && resultSource === 'extracted'} label="Analyzing Context" />
             {syllabusAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Syllabus mapped!</p>}
@@ -1394,11 +1398,11 @@ function App() {
               <label>
                 Output Type:{' '}
                 <select value={requestType} onChange={(e) => setRequestType(e.target.value)} style={glassySelectStyle}>
-                  <option value="flashcards">📇 Flashcards</option>
-                  <option value="study_plan">📋 Study Plan</option>
-                  <option value="summary">📝 Summary</option>
-                  <option value="mock_test">❓ Mock Test</option>
-                  <option value="eli5">🧒 ELI5</option>
+                  <option value="flashcards">Flashcards</option>
+                  <option value="study_plan">Study Plan</option>
+                  <option value="summary">Summary</option>
+                  <option value="mock_test">Mock Test</option>
+                  <option value="eli5">ELI5</option>
                 </select>
               </label>
               <input
@@ -1410,7 +1414,7 @@ function App() {
               />
             </div>
             <button type="submit" disabled={loading || !uploadId} style={getActionButtonStyle(loading || !uploadId)}>
-              {loading ? '⏳ Generating…' : '✨ Generate Output'}
+              {loading ? 'Generating…' : 'Generate Output'}
             </button>
             <LoadingProgressBar loading={loading && (resultSource === 'analyzed' || resultSource === 'extracted')} label={`Generating ${requestType.replace('_', ' ')}`} />
           </form>
@@ -1444,14 +1448,13 @@ function App() {
           borderRadius: 20,
           fontWeight: 600
         }}>
-          ❌ {error}
+          Error: {error}
         </div>
       )}
 
       {generatedData && (
         <section className="fade-in" style={{ marginBottom: 60 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-            <span style={{ fontSize: 24 }}>🧠</span>
             <h2 style={{ margin: 0 }}>Visual Learning Lab</h2>
           </div>
 
@@ -1482,7 +1485,7 @@ function App() {
 
       {/* Analytics (Hidden or optional) */}
       <section style={{ ...translucentPanelStyle, opacity: 0.8 }}>
-        <h2 style={{ color: accentColor }}>📈 Heatmap Analytics</h2>
+        <h2 style={{ color: accentColor }}>Heatmap Analytics</h2>
         <form onSubmit={handleFetchHeatmap}>
           <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
             <input
@@ -1497,7 +1500,7 @@ function App() {
               disabled={heatmapLoading || !workspaceId.trim()}
               style={getActionButtonStyle(heatmapLoading || !workspaceId.trim())}
             >
-              {heatmapLoading ? '⏳ Fetching…' : '📈 Fetch Heatmap'}
+              {heatmapLoading ? 'Fetching…' : 'Fetch Heatmap'}
             </button>
           </div>
         </form>
@@ -1512,7 +1515,7 @@ function App() {
               borderRadius: 4,
             }}
           >
-            ❌ {heatmapError}
+            Error: {heatmapError}
           </div>
         )}
 

@@ -530,7 +530,7 @@ function App() {
               style={glassyInputStyle}
             />
           </div>
-          <div style={{ marginBottom: 22, maxWidth: 980, marginInline: 'auto', textAlign: 'center' }}>
+          <div style={{ marginBottom: 22, width: '100%', textAlign: 'center' }}>
             <input
               id="study-material-upload"
               type="file"
@@ -548,7 +548,7 @@ function App() {
               </span>
             </div>
             {files.length > 0 && (
-              <div style={{ ...fileCarouselStyle, justifyContent: 'center' }}>
+              <div className="file-carousel" style={fileCarouselStyle}>
                 {files.map((selectedFile, index) => (
                   <div key={`${selectedFile.name}-${index}`} style={fileCardStyle}>
                     {(() => {

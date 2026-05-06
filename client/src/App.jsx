@@ -46,11 +46,11 @@ function App() {
   const translucentPanelStyle = {
     marginBottom: 24,
     padding: 12,
-    border: '1px solid rgba(255, 255, 255, 0.6)',
+    border: '1px solid rgba(179, 255, 0, 0.75)',
     borderRadius: 50,
     backgroundColor: 'rgba(44, 46, 42, 0.72)',
     backdropFilter: 'blur(4px)',
-    boxShadow: '0 0 0 1px rgba(179, 255, 0, 0.18), 0 18px 40px rgba(0, 0, 0, 0.22)',
+    boxShadow: '0 0 0 1px rgba(179, 255, 0, 0.34), 0 0 22px rgba(179, 255, 0, 0.16), 0 18px 40px rgba(0, 0, 0, 0.22)',
   };
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
@@ -579,7 +579,7 @@ function App() {
         <section
           style={{
             ...translucentPanelStyle,
-            border: '1px solid rgba(255, 255, 255, 0.35)',
+            border: '1px solid rgba(179, 255, 0, 0.65)',
             backgroundColor: 'rgba(253, 247, 255, 0.76)',
           }}
         >
@@ -654,7 +654,7 @@ function App() {
         <section
           style={{
             ...translucentPanelStyle,
-            border: '1px solid rgba(255, 255, 255, 0.35)',
+            border: '1px solid rgba(179, 255, 0, 0.65)',
             backgroundColor: 'rgba(249, 249, 249, 0.76)',
           }}
         >

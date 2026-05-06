@@ -88,6 +88,43 @@ function App() {
     opacity: disabled ? 0.45 : 1,
     boxShadow: disabled ? 'none' : '0 10px 24px rgba(179, 255, 0, 0.22)',
   });
+  const uploadPickerButtonStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+    padding: '0 20px',
+    backgroundColor: accentColor,
+    color: '#000000',
+    borderRadius: 18,
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 10px 24px rgba(179, 255, 0, 0.22)',
+  };
+  const fileCarouselStyle = {
+    display: 'flex',
+    gap: 14,
+    overflowX: 'auto',
+    paddingBottom: 8,
+    WebkitOverflowScrolling: 'touch',
+    scrollSnapType: 'x proximity',
+  };
+  const fileCardStyle = {
+    minWidth: 220,
+    maxWidth: 220,
+    minHeight: 110,
+    padding: '16px 18px',
+    borderRadius: 22,
+    border: '1px solid rgba(179, 255, 0, 0.45)',
+    background: 'rgba(71, 71, 71, 0.78)',
+    color: '#F5F5F5',
+    boxSizing: 'border-box',
+    scrollSnapAlign: 'start',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 26px rgba(0, 0, 0, 0.2)',
+  };
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
 
@@ -463,19 +500,9 @@ function App() {
           <div>
       
       {/* Step 1: Extract */}
-      <section style={translucentPanelStyle}>
+      <section style={{ ...translucentPanelStyle, minHeight: 380, paddingBottom: 34 }}>
         <h2>Step 1: Extract Content</h2>
         <form onSubmit={handleExtract}>
-          <div style={{ marginBottom: 18 }}>
-            <input
-              type="text"
-              placeholder="Workspace ID"
-              value={workspaceId}
-              onChange={(e) => setWorkspaceId(e.target.value)}
-              readOnly
-              style={glassyInputStyle}
-            />
-          </div>
           <div style={{ marginBottom: 18 }}>
             <input
               type="text"
@@ -485,21 +512,50 @@ function App() {
               style={glassyInputStyle}
             />
           </div>
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom: 22 }}>
             <input
+              id="study-material-upload"
               type="file"
               accept=".pdf,.docx,.pptx"
               multiple
               onChange={(e) => setFiles(Array.from(e.target.files || []))}
-              style={{ marginBottom: 8 }}
+              style={{ display: 'none' }}
             />
-            <small style={{ color: '#D6D6D6' }}>
-              {files.length > 0
-                ? `Selected ${files.length} file${files.length === 1 ? '' : 's'}: ${files
-                    .map((selectedFile) => selectedFile.name)
-                    .join(', ')}`
-                : 'Or upload PDF/DOCX/PPTX'}
-            </small>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14, flexWrap: 'wrap' }}>
+              <label htmlFor="study-material-upload" style={uploadPickerButtonStyle}>
+                Choose Files
+              </label>
+              <span style={{ color: '#D6D6D6', fontWeight: 600 }}>
+                {files.length > 0 ? `${files.length} file${files.length === 1 ? '' : 's'} ready` : 'Upload PDF, DOCX, or PPTX'}
+              </span>
+            </div>
+            {files.length > 0 && (
+              <div style={fileCarouselStyle}>
+                {files.map((selectedFile, index) => (
+                  <div key={`${selectedFile.name}-${index}`} style={fileCardStyle}>
+                    <div style={{ color: accentColor, fontWeight: 700, fontSize: 13 }}>
+                      Document {index + 1}
+                    </div>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        lineHeight: 1.35,
+                        wordBreak: 'break-word',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {selectedFile.name}
+                    </div>
+                    <div style={{ color: '#BDBDBD', fontSize: 12 }}>
+                      {Math.max(1, Math.round(selectedFile.size / 1024))} KB
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <label style={{ display: 'block', marginBottom: 18 }}>
             <input

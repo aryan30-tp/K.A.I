@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import SocraticTutorTest from './components/SocraticTutorTest.jsx';
-import VisualAid from './components/VisualAid.jsx';
+import VisualLabCard from './components/VisualLabCard.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import chatbotVideo from './assets/Live chatbot.webm';
 
@@ -220,7 +220,7 @@ function FlashcardComponent({ card }) {
         }}>
           <div style={{ color: accentColor, fontSize: 12, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1.5 }}>Answer</div>
           <div style={{ fontSize: 16 }}>{card.back}</div>
-          {card.mermaidCode && <VisualAid code={card.mermaidCode} />}
+          <VisualLabCard topic={card.front} mermaidCode={card.mermaidCode} />
         </div>
       </div>
     </div>
@@ -259,7 +259,7 @@ function MockTestComponent({ testData }) {
 
       <div style={{ marginBottom: 24 }}>
         <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>{question.questionText}</div>
-        <VisualAid code={question.questionMermaidCode} />
+        <VisualLabCard topic={question.questionText} mermaidCode={question.questionMermaidCode} />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -302,7 +302,7 @@ function MockTestComponent({ testData }) {
         <div style={{ marginTop: 24, padding: 20, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)' }}>
           <div style={{ fontWeight: 700, color: accentColor, marginBottom: 8 }}>Explanation</div>
           <div style={{ marginBottom: 12 }}>{question.explanation}</div>
-          <VisualAid code={question.explanationMermaidCode} />
+          <VisualLabCard topic={`Explanation: ${question.questionText}`} mermaidCode={question.explanationMermaidCode} />
           
           {currentIdx < testData.questions.length - 1 && (
             <button 
@@ -344,7 +344,7 @@ function SummaryComponent({ data }) {
                 💡 Mnemonic: {item.mnemonic}
               </div>
             )}
-            <VisualAid code={item.mermaidCode} />
+            <VisualLabCard topic={item.topic} mermaidCode={item.mermaidCode} />
           </div>
         ))}
       </div>
@@ -363,7 +363,7 @@ function ELI5Component({ data }) {
         <div style={{ fontWeight: 700, marginBottom: 10 }}>Why it matters:</div>
         <div>{data.whyItMatters}</div>
       </div>
-      <VisualAid code={data.mermaidCode} />
+      <VisualLabCard topic={data.topic} mermaidCode={data.mermaidCode} />
     </div>
   );
 }

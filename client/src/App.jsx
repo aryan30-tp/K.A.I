@@ -43,6 +43,14 @@ function App() {
     Yellow: { backgroundColor: '#fff3bf', color: '#8a6d00' },
     Red: { backgroundColor: '#ffe3e3', color: '#a61e1e' },
   };
+  const translucentPanelStyle = {
+    marginBottom: 24,
+    padding: 12,
+    border: '1px solid rgba(255, 255, 255, 0.45)',
+    borderRadius: 4,
+    backgroundColor: 'rgba(44, 46, 42, 0.72)',
+    backdropFilter: 'blur(4px)',
+  };
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
 
@@ -414,7 +422,7 @@ function App() {
           <div>
       
       {/* Step 1: Extract */}
-      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+      <section style={translucentPanelStyle}>
         <h2>Step 1: Extract Content</h2>
         <form onSubmit={handleExtract}>
           <div style={{ marginBottom: 12 }}>
@@ -465,7 +473,7 @@ function App() {
       </section>
 
       {/* Step 2: Analyze */}
-      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+      <section style={translucentPanelStyle}>
         <h2>Step 2: Analyze (Optional)</h2>
         <form onSubmit={handleAnalyze}>
           <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
@@ -535,7 +543,7 @@ function App() {
       </section>
 
       {/* Step 3: Generate */}
-      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+      <section style={translucentPanelStyle}>
         <h2>Step 3: Generate Output</h2>
         <form onSubmit={handleGenerateOutput}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
@@ -567,7 +575,13 @@ function App() {
       {error && <div style={{ color: 'crimson', marginBottom: 12, padding: 12, backgroundColor: '#ffe6e6', borderRadius: 4 }}>❌ {error}</div>}
 
       {generatedData && (
-        <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ddd', borderRadius: 4, backgroundColor: '#fdf7ff' }}>
+        <section
+          style={{
+            ...translucentPanelStyle,
+            border: '1px solid rgba(255, 255, 255, 0.35)',
+            backgroundColor: 'rgba(253, 247, 255, 0.76)',
+          }}
+        >
           <h3 style={{ marginTop: 0 }}>🧠 Visual Outputs</h3>
 
           {requestType === 'flashcards' && Array.isArray(generatedData.flashcards) && (
@@ -636,14 +650,20 @@ function App() {
       )}
 
       {result && (
-        <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ddd', borderRadius: 4, backgroundColor: '#f9f9f9' }}>
+        <section
+          style={{
+            ...translucentPanelStyle,
+            border: '1px solid rgba(255, 255, 255, 0.35)',
+            backgroundColor: 'rgba(249, 249, 249, 0.76)',
+          }}
+        >
           <h3>📊 Results {resultSource && `(${resultSource})`}</h3>
           <pre style={{ whiteSpace: 'pre-wrap', maxHeight: '60vh', overflow: 'auto', padding: 12, backgroundColor: '#fff', borderRadius: 4 }}>{result}</pre>
         </section>
       )}
 
       {/* Heatmap Test Panel */}
-      <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
+      <section style={translucentPanelStyle}>
         <h2>📈 Heatmap Analytics</h2>
         <form onSubmit={handleFetchHeatmap}>
           <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>

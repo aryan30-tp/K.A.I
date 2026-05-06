@@ -86,6 +86,38 @@ body {
   overflow: visible;
 }
 
+/* Interactive Elements Pop-out Effect */
+button, 
+.tab-button, 
+.app-header button, 
+input, 
+textarea, 
+select, 
+.visual-card-container,
+[style*="borderRadius"], 
+[style*="border-radius"] {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+button:hover:not(:disabled), 
+.tab-button:hover, 
+.visual-card-container:hover,
+.interactive-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  filter: brightness(1.1);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(179, 255, 0, 0.1);
+  cursor: pointer;
+}
+
+input:focus, 
+textarea:focus, 
+select:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(179, 255, 0, 0.15);
+  border-color: #B3FF00 !important;
+  outline: none;
+}
+
 /* Global Styled Scrollbars */
 * {
   scrollbar-width: thin;

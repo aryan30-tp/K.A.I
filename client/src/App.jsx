@@ -304,12 +304,13 @@ function FlashcardComponent({ card }) {
   return (
     <div 
       onClick={() => setIsFlipped(!isFlipped)}
+      className="interactive-card"
       style={{
         perspective: '1000px',
         cursor: 'pointer',
         marginBottom: 20,
         width: '100%',
-        height: 320, // Increased fixed height for better visibility
+        height: 320,
       }}
     >
       <div style={{

@@ -1277,19 +1277,26 @@ function App() {
             <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexWrap: 'wrap' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', marginBottom: 10 }}>Syllabus Image (optional)</label>
-                <input
-                  type="file"
-                  accept=".png,.jpg,.jpeg,.webp"
-                  onChange={(e) => setSyllabusImage(e.target.files?.[0] || null)}
-                  style={{ marginBottom: 8 }}
-                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                  <input
+                    id="syllabus-image-upload"
+                    type="file"
+                    accept=".png,.jpg,.jpeg,.webp"
+                    onChange={(e) => setSyllabusImage(e.target.files?.[0] || null)}
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="syllabus-image-upload" style={uploadPickerButtonStyle}>
+                    {syllabusImage ? '✅ Selected' : '🖼️ Choose Image'}
+                  </label>
+                  {syllabusImage && <span style={{ fontSize: 12, opacity: 0.7, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{syllabusImage.name}</span>}
+                </div>
                 <button
                   type="button"
                   onClick={() => handleOcrImage('syllabus')}
-                  disabled={syllabusImageLoading}
-                  style={getActionButtonStyle(syllabusImageLoading)}
+                  disabled={syllabusImageLoading || !syllabusImage}
+                  style={getActionButtonStyle(syllabusImageLoading || !syllabusImage)}
                 >
-                  {syllabusImageLoading ? '⏳ OCR Syllabus…' : '🖼️ OCR Syllabus'}
+                  {syllabusImageLoading ? '⏳ Extracting…' : '📄 Extract from image'}
                 </button>
                 {syllabusImageError && (
                   <div style={{ color: 'crimson', marginTop: 8 }}>{syllabusImageError}</div>
@@ -1297,19 +1304,26 @@ function App() {
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', marginBottom: 10 }}>Notes Image (optional)</label>
-                <input
-                  type="file"
-                  accept=".png,.jpg,.jpeg,.webp"
-                  onChange={(e) => setNotesImage(e.target.files?.[0] || null)}
-                  style={{ marginBottom: 8 }}
-                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                  <input
+                    id="notes-image-upload"
+                    type="file"
+                    accept=".png,.jpg,.jpeg,.webp"
+                    onChange={(e) => setNotesImage(e.target.files?.[0] || null)}
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="notes-image-upload" style={uploadPickerButtonStyle}>
+                    {notesImage ? '✅ Selected' : '🖼️ Choose Image'}
+                  </label>
+                  {notesImage && <span style={{ fontSize: 12, opacity: 0.7, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notesImage.name}</span>}
+                </div>
                 <button
                   type="button"
                   onClick={() => handleOcrImage('notes')}
-                  disabled={notesImageLoading}
-                  style={getActionButtonStyle(notesImageLoading)}
+                  disabled={notesImageLoading || !notesImage}
+                  style={getActionButtonStyle(notesImageLoading || !notesImage)}
                 >
-                  {notesImageLoading ? '⏳ OCR Notes…' : '🖼️ OCR Notes'}
+                  {notesImageLoading ? '⏳ Extracting…' : '📄 Extract from image'}
                 </button>
                 {notesImageError && (
                   <div style={{ color: 'crimson', marginTop: 8 }}>{notesImageError}</div>
@@ -1404,7 +1418,7 @@ function App() {
       )}
 
       {generatedData && (
-        <section style={{ marginBottom: 60 }}>
+        <section className="fade-in" style={{ marginBottom: 60 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
             <span style={{ fontSize: 24 }}>🧠</span>
             <h2 style={{ margin: 0 }}>Visual Learning Lab</h2>

@@ -2,20 +2,20 @@ import React, { useEffect, useState } from 'react';
 import SocraticTutorTest from './components/SocraticTutorTest.jsx';
 import VisualAid from './components/VisualAid.jsx';
 import { useAuth } from './context/AuthContext.jsx';
-import kaiMascotSprite from './assets/transparent.png';
+import kaiMascotSprite from './assets/Gemini_Generated_Image_lbwm0slbwm0slbwm.png';
 
 const MASCOT_FRAME_SEQUENCE = [0, 1, 2, 3, 7, 10, 8, 4, 5, 6];
 const MASCOT_FRAME_META = {
-  0: { x: '0%', y: '0%', tilt: -1 },
-  1: { x: '33.333%', y: '0%', tilt: 5 },
-  2: { x: '66.666%', y: '0%', tilt: 9 },
-  3: { x: '100%', y: '0%', tilt: 3 },
-  4: { x: '0%', y: '50%', tilt: -11 },
-  5: { x: '33.333%', y: '50%', tilt: 0 },
-  6: { x: '66.666%', y: '50%', tilt: 6 },
-  7: { x: '100%', y: '50%', tilt: 10 },
-  8: { x: '0%', y: '100%', tilt: -8 },
-  10: { x: '66.666%', y: '100%', tilt: -2 },
+  0: { x: '0%', y: '0%', tilt: -1, glideX: -8 },
+  1: { x: '33.333%', y: '0%', tilt: 3, glideX: 8 },
+  2: { x: '66.666%', y: '0%', tilt: 6, glideX: 18 },
+  3: { x: '100%', y: '0%', tilt: 2, glideX: 10 },
+  4: { x: '0%', y: '50%', tilt: -7, glideX: -22 },
+  5: { x: '33.333%', y: '50%', tilt: 0, glideX: 0 },
+  6: { x: '66.666%', y: '50%', tilt: 4, glideX: 14 },
+  7: { x: '100%', y: '50%', tilt: 7, glideX: 24 },
+  8: { x: '0%', y: '100%', tilt: -5, glideX: -16 },
+  10: { x: '66.666%', y: '100%', tilt: -1, glideX: 4 },
 };
 
 function getRandomMascotFrame(previousFrame) {
@@ -33,7 +33,7 @@ function KaiMascot() {
     let nextMoveTimeoutId;
 
     const scheduleNextMove = () => {
-      const delay = 1800 + Math.floor(Math.random() * 2200);
+      const delay = 3200 + Math.floor(Math.random() * 2800);
       nextMoveTimeoutId = window.setTimeout(() => {
         const nextFrame = getRandomMascotFrame(currentFrame);
         setPreviousFrame(currentFrame);
@@ -43,7 +43,7 @@ function KaiMascot() {
         transitionTimeoutId = window.setTimeout(() => {
           setIsTransitioning(false);
           scheduleNextMove();
-        }, 520);
+        }, 1050);
       }, delay);
     };
 
@@ -65,7 +65,7 @@ function KaiMascot() {
         style={{
           backgroundImage: `url(${kaiMascotSprite})`,
           backgroundPosition: `${previousMeta.x} ${previousMeta.y}`,
-          transform: `rotate(${previousMeta.tilt}deg) translateY(2px)`,
+          transform: `translateX(${previousMeta.glideX}px) rotate(${previousMeta.tilt}deg) translateY(2px)`,
           opacity: isTransitioning ? 1 : 0,
         }}
       />
@@ -74,7 +74,7 @@ function KaiMascot() {
         style={{
           backgroundImage: `url(${kaiMascotSprite})`,
           backgroundPosition: `${currentMeta.x} ${currentMeta.y}`,
-          transform: `rotate(${currentMeta.tilt}deg) translateY(0)`,
+          transform: `translateX(${currentMeta.glideX}px) rotate(${currentMeta.tilt}deg) translateY(0)`,
           opacity: isTransitioning ? 0 : 1,
         }}
       />
@@ -599,7 +599,7 @@ function App() {
       {/* Step 1: Extract */}
       <div className="step-one-shell">
         <KaiMascot />
-        <section style={{ ...translucentPanelStyle, minHeight: 420, paddingTop: 235, paddingBottom: 38 }}>
+        <section style={{ ...translucentPanelStyle, minHeight: 420, paddingTop: 68, paddingBottom: 38 }}>
           <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 0 }}>Step 1: Extract Content</h2>
           <form onSubmit={handleExtract}>
           <div

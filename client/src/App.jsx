@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import SocraticTutorTest from './components/SocraticTutorTest.jsx';
 import VisualAid from './components/VisualAid.jsx';
 import { useAuth } from './context/AuthContext.jsx';
+import chatbotVideo from './assets/Live chatbot.webm';
 
 function App() {
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -519,7 +520,22 @@ function App() {
       
       {/* Step 1: Extract */}
       <div className="step-one-shell">
-        <section style={{ ...translucentPanelStyle, minHeight: 420, paddingTop: 68, paddingBottom: 38 }}>          <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 0 }}>Step 1: Extract Content</h2>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: -45, position: 'relative', zIndex: 10 }}>
+          <video 
+            src={chatbotVideo} 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            style={{ 
+              width: '180px', 
+              height: '180px',
+              pointerEvents: 'none'
+            }} 
+          />
+        </div>
+        <section style={{ ...translucentPanelStyle, minHeight: 340, paddingTop: 50, paddingBottom: 28 }}>
+          <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 0 }}>Step 1: Extract Content</h2>
           <form onSubmit={handleExtract}>
           <div
             style={{

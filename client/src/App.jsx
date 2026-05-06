@@ -872,7 +872,7 @@ function App() {
       if (target === 'syllabus') {
         setSyllabusImageError('Please select a syllabus image.');
       } else {
-        setNotesImageError('Please select a notes image.');
+        setNotesImageError('Please select a past papers image.');
       }
       return;
     }
@@ -903,7 +903,7 @@ function App() {
           return prev ? `${prev}\n\n${trimmed}` : trimmed;
         });
       } else {
-        setRawNotes((prev) => {
+        setPastPapersText((prev) => {
           const trimmed = (data.text || '').trim();
           if (!trimmed) return prev;
           return prev ? `${prev}\n\n${trimmed}` : trimmed;
@@ -1303,7 +1303,7 @@ function App() {
                 )}
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', marginBottom: 10 }}>Notes Image (optional)</label>
+                <label style={{ display: 'block', marginBottom: 10 }}>Past Papers Image (optional)</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
                   <input
                     id="notes-image-upload"

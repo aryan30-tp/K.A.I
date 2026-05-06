@@ -43,15 +43,50 @@ function App() {
     Yellow: { backgroundColor: '#fff3bf', color: '#8a6d00' },
     Red: { backgroundColor: '#ffe3e3', color: '#a61e1e' },
   };
+  const accentColor = '#B3FF00';
   const translucentPanelStyle = {
-    marginBottom: 24,
-    padding: 12,
+    marginBottom: 36,
+    padding: '30px 28px 26px',
     border: '1px solid rgba(179, 255, 0, 0.75)',
     borderRadius: 50,
-    backgroundColor: 'rgba(44, 46, 42, 0.72)',
-    backdropFilter: 'blur(4px)',
+    backgroundColor: 'rgba(34, 34, 34, 0.84)',
+    backdropFilter: 'blur(10px)',
     boxShadow: '0 0 0 1px rgba(179, 255, 0, 0.34), 0 0 22px rgba(179, 255, 0, 0.16), 0 18px 40px rgba(0, 0, 0, 0.22)',
   };
+  const glassyInputStyle = {
+    width: '100%',
+    minHeight: 56,
+    padding: '16px 18px',
+    boxSizing: 'border-box',
+    border: '1px solid rgba(255, 255, 255, 0.14)',
+    borderRadius: 20,
+    background: 'rgba(71, 71, 71, 0.72)',
+    color: '#F5F5F5',
+    backdropFilter: 'blur(10px)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 24px rgba(0, 0, 0, 0.18)',
+  };
+  const glassyTextAreaStyle = {
+    ...glassyInputStyle,
+    minHeight: 148,
+    resize: 'vertical',
+  };
+  const glassySelectStyle = {
+    ...glassyInputStyle,
+    width: 'auto',
+    minWidth: 180,
+    padding: '12px 16px',
+  };
+  const getActionButtonStyle = (disabled = false) => ({
+    padding: '14px 22px',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontWeight: 700,
+    backgroundColor: accentColor,
+    color: '#000000',
+    border: 'none',
+    borderRadius: 18,
+    opacity: disabled ? 0.45 : 1,
+    boxShadow: disabled ? 'none' : '0 10px 24px rgba(179, 255, 0, 0.22)',
+  });
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
 
@@ -426,26 +461,26 @@ function App() {
       <section style={translucentPanelStyle}>
         <h2>Step 1: Extract Content</h2>
         <form onSubmit={handleExtract}>
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 18 }}>
             <input
               type="text"
               placeholder="Workspace ID"
               value={workspaceId}
               onChange={(e) => setWorkspaceId(e.target.value)}
               readOnly
-              style={{ width: '100%', padding: 8, marginBottom: 8, boxSizing: 'border-box' }}
+              style={glassyInputStyle}
             />
           </div>
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 18 }}>
             <input
               type="text"
               placeholder="YouTube URL (or leave blank for file upload)"
               value={youtubeUrl}
               onChange={(e) => setYoutubeUrl(e.target.value)}
-              style={{ width: '100%', padding: 8, marginBottom: 8, boxSizing: 'border-box' }}
+              style={glassyInputStyle}
             />
           </div>
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 18 }}>
             <input
               type="file"
               accept=".pdf,.docx,.pptx"
@@ -453,11 +488,11 @@ function App() {
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               style={{ marginBottom: 8 }}
             />
-            <small>
+            <small style={{ color: '#D6D6D6' }}>
               {file ? `Selected: ${file.name}` : 'Or upload PDF/DOCX/PPTX'}
             </small>
           </div>
-          <label style={{ display: 'block', marginBottom: 12 }}>
+          <label style={{ display: 'block', marginBottom: 18 }}>
             <input
               type="checkbox"
               checked={forceWhisper}
@@ -466,7 +501,7 @@ function App() {
             />
             Force Groq Whisper (skip RapidAPI)
           </label>
-          <button type="submit" disabled={loading || (!youtubeUrl && !file)} style={{ padding: '10px 16px', cursor: 'pointer' }}>
+          <button type="submit" disabled={loading || (!youtubeUrl && !file)} style={getActionButtonStyle(loading || (!youtubeUrl && !file))}>
             {loading ? '⏳ Extracting…' : '📤 Extract Content'}
           </button>
           {uploadId && <p style={{ color: 'green', marginTop: 8 }}>✅ Extracted! Upload ID: {uploadId.slice(0, 8)}...</p>}
@@ -477,9 +512,9 @@ function App() {
       <section style={translucentPanelStyle}>
         <h2>Step 2: Analyze (Optional)</h2>
         <form onSubmit={handleAnalyze}>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+          <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexWrap: 'wrap' }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6 }}>Syllabus Image (optional)</label>
+              <label style={{ display: 'block', marginBottom: 10 }}>Syllabus Image (optional)</label>
               <input
                 type="file"
                 accept=".png,.jpg,.jpeg,.webp"
@@ -490,7 +525,7 @@ function App() {
                 type="button"
                 onClick={() => handleOcrImage('syllabus')}
                 disabled={syllabusImageLoading}
-                style={{ padding: '8px 12px', cursor: 'pointer' }}
+                style={getActionButtonStyle(syllabusImageLoading)}
               >
                 {syllabusImageLoading ? '⏳ OCR Syllabus…' : '🖼️ OCR Syllabus'}
               </button>
@@ -499,7 +534,7 @@ function App() {
               )}
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6 }}>Notes Image (optional)</label>
+              <label style={{ display: 'block', marginBottom: 10 }}>Notes Image (optional)</label>
               <input
                 type="file"
                 accept=".png,.jpg,.jpeg,.webp"
@@ -510,7 +545,7 @@ function App() {
                 type="button"
                 onClick={() => handleOcrImage('notes')}
                 disabled={notesImageLoading}
-                style={{ padding: '8px 12px', cursor: 'pointer' }}
+                style={getActionButtonStyle(notesImageLoading)}
               >
                 {notesImageLoading ? '⏳ OCR Notes…' : '🖼️ OCR Notes'}
               </button>
@@ -519,23 +554,23 @@ function App() {
               )}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
+          <div style={{ display: 'flex', gap: 20, marginBottom: 18, flexWrap: 'wrap' }}>
             <textarea
               placeholder="Paste syllabus text here (required)"
               value={syllabusText}
               onChange={(e) => setSyllabusText(e.target.value)}
               rows={4}
-              style={{ flex: 1, padding: 8 }}
+              style={{ ...glassyTextAreaStyle, flex: 1 }}
             />
             <textarea
               placeholder="Paste past exam papers (optional)"
               value={pastPapersText}
               onChange={(e) => setPastPapersText(e.target.value)}
               rows={4}
-              style={{ flex: 1, padding: 8 }}
+              style={{ ...glassyTextAreaStyle, flex: 1 }}
             />
           </div>
-          <button type="submit" disabled={loading || !rawNotes.trim()} style={{ padding: '10px 16px', cursor: 'pointer' }}>
+          <button type="submit" disabled={loading || !rawNotes.trim()} style={getActionButtonStyle(loading || !rawNotes.trim())}>
             {loading ? '⏳ Analyzing…' : '🔍 Analyze Content'}
           </button>
           {syllabusAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Syllabus mapped!</p>}
@@ -547,10 +582,10 @@ function App() {
       <section style={translucentPanelStyle}>
         <h2>Step 3: Generate Output</h2>
         <form onSubmit={handleGenerateOutput}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
             <label>
               Output Type:{' '}
-              <select value={requestType} onChange={(e) => setRequestType(e.target.value)} style={{ padding: 6 }}>
+              <select value={requestType} onChange={(e) => setRequestType(e.target.value)} style={glassySelectStyle}>
                 <option value="flashcards">📇 Flashcards</option>
                 <option value="study_plan">📋 Study Plan</option>
                 <option value="summary">📝 Summary</option>
@@ -563,10 +598,10 @@ function App() {
               placeholder="Specific topic for ELI5 (optional)"
               value={specificTopic}
               onChange={(e) => setSpecificTopic(e.target.value)}
-              style={{ flex: 1, padding: 6 }}
+              style={{ ...glassyInputStyle, flex: 1 }}
             />
           </div>
-          <button type="submit" disabled={loading || !uploadId} style={{ padding: '10px 16px', cursor: 'pointer' }}>
+          <button type="submit" disabled={loading || !uploadId} style={getActionButtonStyle(loading || !uploadId)}>
             {loading ? '⏳ Generating…' : '✨ Generate Output'}
           </button>
         </form>
@@ -673,12 +708,12 @@ function App() {
               value={workspaceId}
               onChange={(e) => setWorkspaceId(e.target.value)}
               placeholder="Workspace ID"
-              style={{ flex: 1, padding: 8 }}
+              style={{ ...glassyInputStyle, flex: 1 }}
             />
             <button
               type="submit"
               disabled={heatmapLoading || !workspaceId.trim()}
-              style={{ padding: '10px 16px', cursor: 'pointer' }}
+              style={getActionButtonStyle(heatmapLoading || !workspaceId.trim())}
             >
               {heatmapLoading ? '⏳ Fetching…' : '📈 Fetch Heatmap'}
             </button>

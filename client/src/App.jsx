@@ -8,36 +8,55 @@ function RandomMovingBox({ children }) {
   const [position, setPosition] = useState({ x: 50, y: 50 });
   const [velocity, setVelocity] = useState({ x: (Math.random() - 0.5) * 0.1, y: (Math.random() - 0.5) * 0.1 });
   const [mousePos, setMousePos] = useState(null);
+  const [sparkles, setSparkles] = useState([]);
   const containerRef = React.useRef(null);
 
   useEffect(() => {
     let animationFrameId;
     
     const update = () => {
+      // Update Sparkles (fade them out)
+      setSparkles(prev => prev.map(s => ({ ...s, opacity: s.opacity - 0.01 })).filter(s => s.opacity > 0));
+
       setPosition(prev => {
         let nextVelX = velocity.x;
         let nextVelY = velocity.y;
 
-        if (mousePos) {
-          // Attract to mouse
-          const dx = mousePos.x - prev.x;
-          const dy = mousePos.y - prev.y;
+        // Target: Mouse or nearest sparkle
+        let target = mousePos;
+        if (!target && sparkles.length > 0) {
+          // Find closest sparkle
+          target = sparkles.reduce((prevS, currS) => {
+            const dPrev = Math.sqrt((prevS.x - prev.x)**2 + (prevS.y - prev.y)**2);
+            const dCurr = Math.sqrt((currS.x - prev.x)**2 + (currS.y - prev.y)**2);
+            return dCurr < dPrev ? currS : prevS;
+          });
+        }
+
+        if (target) {
+          const dx = target.x - prev.x;
+          const dy = target.y - prev.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
+          
           if (dist > 1) {
-            nextVelX += (dx / dist) * 0.02;
-            nextVelY += (dy / dist) * 0.02;
+            const pull = target === mousePos ? 0.02 : 0.015;
+            nextVelX += (dx / dist) * pull;
+            nextVelY += (dy / dist) * pull;
+          }
+
+          // "Collect" sparkles if robot is very close
+          if (dist < 5 && target !== mousePos) {
+            setSparkles(prevS => prevS.filter(s => s.id !== target.id));
           }
         } else {
-          // Randomly nudge velocity for unpredictability (lower frequency)
           if (Math.random() < 0.005) {
             nextVelX += (Math.random() - 0.5) * 0.05;
             nextVelY += (Math.random() - 0.5) * 0.05;
           }
         }
 
-        // Clamp speed
         const speed = Math.sqrt(nextVelX ** 2 + nextVelY ** 2);
-        const maxSpeed = mousePos ? 0.25 : 0.12;
+        const maxSpeed = (mousePos || sparkles.length > 0) ? 0.25 : 0.12;
         const minSpeed = 0.04;
         if (speed > maxSpeed) {
           nextVelX = (nextVelX / speed) * maxSpeed;
@@ -50,9 +69,8 @@ function RandomMovingBox({ children }) {
         let nextX = prev.x + nextVelX;
         let nextY = prev.y + nextVelY;
 
-        // Bounce off walls (percentages)
         if (nextX <= 10 || nextX >= 90) {
-          nextVelX *= -0.8; // Dampened bounce
+          nextVelX *= -0.8;
           nextX = prev.x + nextVelX;
         }
         if (nextY <= 10 || nextY >= 90) {
@@ -69,7 +87,7 @@ function RandomMovingBox({ children }) {
 
     animationFrameId = requestAnimationFrame(update);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [velocity, mousePos]);
+  }, [velocity, mousePos, sparkles]);
 
   const handleMouseMove = (e) => {
     if (containerRef.current) {
@@ -77,6 +95,14 @@ function RandomMovingBox({ children }) {
       const x = ((e.clientX - rect.left) / rect.width) * 100;
       const y = ((e.clientY - rect.top) / rect.height) * 100;
       setMousePos({ x, y });
+      
+      // Add sparkle
+      if (Math.random() > 0.7) {
+        setSparkles(prev => [
+          ...prev, 
+          { x, y, id: Math.random(), opacity: 1, size: 4 + Math.random() * 6 }
+        ]);
+      }
     }
   };
 
@@ -87,17 +113,36 @@ function RandomMovingBox({ children }) {
       onMouseLeave={() => setMousePos(null)}
       style={{
         width: '100%',
-        height: '400px',
+        height: '500px',
         position: 'relative',
         overflow: 'hidden',
-        marginBottom: '30px', 
-        borderRadius: '30px',
-        border: '1px solid rgba(179, 255, 0, 0.3)',
-        background: 'rgba(179, 255, 0, 0.02)',
-        boxShadow: 'inset 0 0 20px rgba(179, 255, 0, 0.05)',
+        marginBottom: '40px', 
+        borderRadius: '35px',
+        border: '1px solid rgba(179, 255, 0, 0.35)',
+        background: 'rgba(179, 255, 0, 0.03)',
+        boxShadow: 'inset 0 0 30px rgba(179, 255, 0, 0.07)',
         cursor: 'none'
       }}
     >
+      {/* Sparkles */}
+      {sparkles.map(s => (
+        <div 
+          key={s.id}
+          style={{
+            position: 'absolute',
+            left: `${s.x}%`,
+            top: `${s.y}%`,
+            width: s.size,
+            height: s.size,
+            borderRadius: '50%',
+            backgroundColor: '#B3FF00',
+            opacity: s.opacity,
+            boxShadow: '0 0 10px #B3FF00',
+            pointerEvents: 'none'
+          }}
+        />
+      ))}
+
       <div style={{
         position: 'absolute',
         left: `${position.x}%`,
@@ -627,7 +672,7 @@ function App() {
           <div>
       
       {/* Step 1: Extract */}
-      <div className="step-one-shell" style={{ marginTop: 35 }}>
+      <div className="step-one-shell" style={{ marginTop: 50 }}>
         <RandomMovingBox>
           <video 
             src={chatbotVideo} 
@@ -642,7 +687,7 @@ function App() {
             }} 
           />
         </RandomMovingBox>
-        <section style={{ ...translucentPanelStyle, minHeight: 340, paddingTop: 40, paddingBottom: 28 }}>
+        <section style={{ ...translucentPanelStyle, minHeight: 340, paddingTop: 55, paddingBottom: 28 }}>
           <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 0 }}>Step 1: Extract Content</h2>
           <form onSubmit={handleExtract}>
           <div

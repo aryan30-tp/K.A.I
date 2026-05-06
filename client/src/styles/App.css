@@ -112,12 +112,12 @@ body {
 
 .step-one-shell {
   position: relative;
-  margin-top: 148px;
+  margin-top: 210px;
 }
 
 .kai-mascot-stage {
   position: absolute;
-  top: -138px;
+  top: -170px;
   left: 50%;
   transform: translateX(-50%);
   width: min(290px, 52vw);
@@ -125,7 +125,7 @@ body {
   z-index: 2;
   pointer-events: none;
   filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.42));
-  animation: kaiMascotBob 3.2s ease-in-out infinite;
+  animation: kaiMascotBob 4.9s ease-in-out infinite;
   overflow: hidden;
   border-radius: 28px;
 }
@@ -136,7 +136,7 @@ body {
   background-repeat: no-repeat;
   background-size: 400% 300%;
   background-position: 0 0;
-  animation: kaiMascotFrames 2.6s steps(1, end) infinite;
+  animation: kaiMascotFrames 8.8s steps(1, end) infinite;
   will-change: background-position, transform;
   transform-origin: center bottom;
 }
@@ -157,62 +157,70 @@ body {
     background-position: 0% 0%;
   }
 
-  8.33% {
+  7% {
+    background-position: 0% 0%;
+  }
+
+  14% {
     background-position: 33.333% 0%;
   }
 
-  16.66% {
+  22% {
     background-position: 66.666% 0%;
   }
 
-  25% {
+  29% {
+    background-position: 66.666% 0%;
+  }
+
+  38% {
     background-position: 100% 0%;
   }
 
-  33.33% {
+  46% {
     background-position: 100% 50%;
   }
 
-  41.66% {
+  58% {
     background-position: 100% 100%;
   }
 
-  50% {
+  66% {
     background-position: 66.666% 100%;
   }
 
-  58.33% {
-    background-position: 33.333% 100%;
-  }
-
-  66.66% {
-    background-position: 0% 100%;
-  }
-
-  75% {
-    background-position: 0% 50%;
-  }
-
-  83.33% {
-    background-position: 33.333% 50%;
-  }
-
-  91.66% {
+  71% {
     background-position: 66.666% 50%;
   }
 
+  79% {
+    background-position: 0% 100%;
+  }
+
+  86% {
+    background-position: 0% 50%;
+  }
+
+  92% {
+    background-position: 33.333% 50%;
+  }
+
+  96% {
+    background-position: 33.333% 100%;
+  }
+
   100% {
-    background-position: 66.666% 0%;
+    background-position: 0% 0%;
   }
 }
 
 @media (max-width: 768px) {
   .step-one-shell {
-    margin-top: 110px;
+    margin-top: 150px;
   }
 
   .kai-mascot-stage {
-    top: -98px;
+    top: -128px;
     width: min(220px, 64vw);
     height: min(220px, 64vw);
   }

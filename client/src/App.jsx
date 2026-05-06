@@ -528,8 +528,8 @@ function App() {
             }}
           />
         </div>
-        <section style={{ ...translucentPanelStyle, minHeight: 420, paddingTop: 120, paddingBottom: 38 }}>
-          <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Step 1: Extract Content</h2>
+        <section style={{ ...translucentPanelStyle, minHeight: 420, paddingTop: 190, paddingBottom: 38 }}>
+          <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 8 }}>Step 1: Extract Content</h2>
           <form onSubmit={handleExtract}>
           <div
             style={{

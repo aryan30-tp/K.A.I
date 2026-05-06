@@ -372,7 +372,7 @@ function App() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#2C2E2A' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'transparent' }}>
       {/* Header */}
       <div className="app-header">
         <div style={{ 
@@ -416,7 +416,7 @@ function App() {
       </div>
 
       {/* Tab Content */}
-      <div className="tab-content" style={{ overflowY: 'auto', flex: 1 }}>
+      <div className="tab-content" style={{ flex: 1 }}>
         {/* Tab 0: Build */}
         {activeTab === 0 && (
           <div>

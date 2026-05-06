@@ -408,47 +408,56 @@ function ScrollReveal({ children, isLocked }) {
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? 'translateY(0)' : 'translateY(40px)',
-        transition: 'opacity 0.8s ease-out, transform 0.8s ease-out, filter 0.5s ease',
-        pointerEvents: isLocked ? 'none' : 'auto',
-        filter: isLocked ? 'blur(8px) grayscale(90%)' : 'none',
+        transition: 'opacity 0.8s ease-out, transform 0.8s ease-out',
         marginInline: 'auto',
         width: '100%',
-        marginBottom: 40,
-        position: 'relative'
+        marginBottom: isLocked ? 20 : 40,
+        position: 'relative',
+        minHeight: isLocked ? '120px' : 'auto'
       }}
     >
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', width: '100%' }}>
+        {/* The content that gets blurred */}
+        <div style={{
+          filter: isLocked ? 'blur(10px) grayscale(100%)' : 'none',
+          pointerEvents: isLocked ? 'none' : 'auto',
+          transition: 'filter 0.5s ease',
+          opacity: isLocked ? 0.4 : 1
+        }}>
+          {children}
+        </div>
+
+        {/* The Lock Overlay - Outside the blur filter */}
         {isLocked && (
           <div style={{
             position: 'absolute',
             inset: 0,
-            zIndex: 10,
+            zIndex: 20,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.3)',
             borderRadius: 50,
-            backdropFilter: 'blur(2px)',
-            color: '#B3FF00',
-            fontWeight: 700,
-            fontSize: 22,
-            textAlign: 'center',
-            padding: 20,
-            border: '2px dashed rgba(179, 255, 0, 0.4)',
+            pointerEvents: 'none'
           }}>
             <div style={{ 
               backgroundColor: 'rgba(0,0,0,0.85)', 
+              color: '#B3FF00',
               padding: '15px 30px', 
               borderRadius: 30, 
-              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-              filter: 'none', // Prevent parent blur from affecting this
-              backdropFilter: 'none'
+              boxShadow: '0 10px 40px rgba(0,0,0,0.8), 0 0 20px rgba(179, 255, 0, 0.2)',
+              fontWeight: 700,
+              fontSize: 20,
+              border: '1px solid rgba(179, 255, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              pointerEvents: 'none',
+              transform: 'translateY(-10px)'
             }}>
-              🔒 Complete Step 1 to Unlock
+              <span style={{ fontSize: 24 }}>🔒</span> Step 1 Completion Required
             </div>
           </div>
         )}
-        {children}
       </div>
     </div>
   );
@@ -1274,8 +1283,8 @@ function App() {
             <MockTestComponent testData={generatedData} />
           )}
 
-          {requestType === 'study_plan' && generatedData.plan && (
-            <StudyPlanComponent planText={generatedData.plan} />
+          {requestType === 'study_plan' && (generatedData.plan || generatedData.studyPlan) && (
+            <StudyPlanComponent planText={generatedData.plan || generatedData.studyPlan} />
           )}
         </section>
       )}

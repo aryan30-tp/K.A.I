@@ -46,10 +46,11 @@ function App() {
   const translucentPanelStyle = {
     marginBottom: 24,
     padding: 12,
-    border: '1px solid rgba(255, 255, 255, 0.45)',
-    borderRadius: 4,
+    border: '1px solid rgba(255, 255, 255, 0.6)',
+    borderRadius: 50,
     backgroundColor: 'rgba(44, 46, 42, 0.72)',
     backdropFilter: 'blur(4px)',
+    boxShadow: '0 0 0 1px rgba(179, 255, 0, 0.18), 0 18px 40px rgba(0, 0, 0, 0.22)',
   };
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';

@@ -332,9 +332,13 @@ app.post('/api/analytics/onboard-flashcards', async (req, res) => {
 
     const batch = db.batch();
     flashcards.forEach((card) => {
-      const cardRef = db.collection('flashcards').doc();
+      // Use provided ID or generate a new one
+      const cardId = card.id || uuidv4();
+      const cardRef = db.collection('flashcards').doc(cardId);
       batch.set(cardRef, {
-        ...card,
+        front: card.front,
+        back: card.back,
+        mermaidCode: card.mermaidCode || null,
         workspaceId,
         repetitionCount: 0,
         easeFactor: 2.5,

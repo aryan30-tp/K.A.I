@@ -207,7 +207,7 @@ function RandomMovingBox({ children }) {
   );
 }
 
-function FlashcardSwiper({ cards, onReachEndThreshold }) {
+function FlashcardSwiper({ cards, onReachEndThreshold, apiBase }) {
   const [currentIndex, setCurrentIdx] = useState(0);
 
   useEffect(() => {
@@ -273,18 +273,34 @@ function FlashcardSwiper({ cards, onReachEndThreshold }) {
       </div>
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, position: 'relative', minHeight: 340 }}>
-        <FlashcardComponent card={cards[currentIndex]} key={`fc-${currentIndex}`} />
+        <FlashcardComponent card={cards[currentIndex]} key={`fc-${currentIndex}`} apiBase={apiBase} />
         {cards[currentIndex + 1] && (
-          <FlashcardComponent card={cards[currentIndex + 1]} key={`fc-${currentIndex + 1}`} />
+          <FlashcardComponent card={cards[currentIndex + 1]} key={`fc-${currentIndex + 1}`} apiBase={apiBase} />
         )}
       </div>
     </div>
   );
 }
 
-function FlashcardComponent({ card }) {
+function FlashcardComponent({ card, apiBase }) {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isReviewed, setIsReviewed] = useState(false);
   const accentColor = '#B3FF00';
+
+  const handleReview = async (e, qualityScore) => {
+    e.stopPropagation();
+    if (!card.id) return;
+    setIsReviewed(true);
+    try {
+      await fetch(`${apiBase}/api/flashcards/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardId: card.id, qualityScore }),
+      });
+    } catch (err) {
+      console.error("SRS review failed", err);
+    }
+  };
 
   const cardSideStyle = {
     position: 'absolute',
@@ -341,6 +357,34 @@ function FlashcardComponent({ card }) {
           <div style={{ color: accentColor, fontSize: 12, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 700 }}>Answer</div>
           <div style={{ fontSize: 16, color: '#E8E8E8', marginBottom: 10, lineHeight: 1.5 }}>{card.back}</div>
           <VisualLabCard topic={card.front} mermaidCode={card.mermaidCode} />
+          
+          {!isReviewed ? (
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <button 
+                onClick={(e) => handleReview(e, 1)}
+                style={{ padding: '8px 12px', fontSize: 11, backgroundColor: '#ff4d4d', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700 }}
+              >
+                HARD
+              </button>
+              <button 
+                onClick={(e) => handleReview(e, 3)}
+                style={{ padding: '8px 12px', fontSize: 11, backgroundColor: '#ffb800', color: '#000', border: 'none', borderRadius: 8, fontWeight: 700 }}
+              >
+                GOOD
+              </button>
+              <button 
+                onClick={(e) => handleReview(e, 5)}
+                style={{ padding: '8px 12px', fontSize: 11, backgroundColor: '#00ff00', color: '#000', border: 'none', borderRadius: 8, fontWeight: 700 }}
+              >
+                EASY
+              </button>
+            </div>
+          ) : (
+            <div style={{ marginTop: 20, fontSize: 12, color: accentColor, fontWeight: 700 }}>
+              ✅ MASTERED
+            </div>
+          )}
+
           <div style={{ position: 'absolute', bottom: 20, fontSize: 11, opacity: 0.5, letterSpacing: 1 }}>TAP TO REVERT</div>
         </div>
       </div>
@@ -705,7 +749,13 @@ function App() {
       });
       const data = await parseResponse(res);
       if (data.ok && data.data && data.data.flashcards) {
-        setFlashcards(prev => [...prev, ...data.data.flashcards]);
+        // Assign local IDs
+        const newCards = data.data.flashcards.map(c => ({
+          ...c,
+          id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
+        }));
+
+        setFlashcards(prev => [...prev, ...newCards]);
         // Onboard for analytics
         try {
           await fetch(`${apiBase}/api/analytics/onboard-flashcards`, {
@@ -713,7 +763,7 @@ function App() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               workspaceId: workspaceId.trim(),
-              flashcards: data.data.flashcards
+              flashcards: newCards
             }),
           });
         } catch (onboardErr) {
@@ -1065,7 +1115,13 @@ function App() {
       setGeneratedData(data.data);
 
       if (requestType === 'flashcards' && data.data.flashcards) {
-        setFlashcards(data.data.flashcards);
+        // Assign local IDs
+        const newCards = data.data.flashcards.map(c => ({
+          ...c,
+          id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
+        }));
+        
+        setFlashcards(newCards);
         // Onboard for analytics
         try {
           await fetch(`${apiBase}/api/analytics/onboard-flashcards`, {
@@ -1073,7 +1129,7 @@ function App() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               workspaceId: workspaceId.trim(),
-              flashcards: data.data.flashcards
+              flashcards: newCards
             }),
           });
         } catch (onboardErr) {
@@ -1546,6 +1602,7 @@ function App() {
             <FlashcardSwiper 
               cards={flashcards} 
               onReachEndThreshold={fetchMoreFlashcards} 
+              apiBase={apiBase}
             />
           )}
 

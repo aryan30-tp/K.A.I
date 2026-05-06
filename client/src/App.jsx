@@ -37,7 +37,6 @@ function App() {
   const [survivalError, setSurvivalError] = useState('');
   const [survivalPlan, setSurvivalPlan] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
-  const [mascotFrameIndex, setMascotFrameIndex] = useState(0);
 
   const { currentUser, loadingAuth, signInWithGoogle, signOutUser } = useAuth();
 
@@ -147,24 +146,12 @@ function App() {
   }
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
-  const mascotFrameSequence = [0, 1, 2, 3, 7, 11, 10, 9, 8, 4, 0, 5, 6, 2];
-  const activeMascotFrame = mascotFrameSequence[mascotFrameIndex];
-  const mascotFrameColumn = activeMascotFrame % 4;
-  const mascotFrameRow = Math.floor(activeMascotFrame / 4);
 
   useEffect(() => {
     if (currentUser?.uid) {
       setWorkspaceId(currentUser.uid);
     }
   }, [currentUser]);
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setMascotFrameIndex((currentIndex) => (currentIndex + 1) % mascotFrameSequence.length);
-    }, 260);
-
-    return () => window.clearInterval(intervalId);
-  }, [mascotFrameSequence.length]);
 
   async function parseResponse(res) {
     const raw = await res.text();
@@ -538,7 +525,6 @@ function App() {
             className="kai-mascot-sprite"
             style={{
               backgroundImage: `url(${kaiMascotSprite})`,
-              backgroundPosition: `${mascotFrameColumn * 33.333333}% ${mascotFrameRow * 50}%`,
             }}
           />
         </div>

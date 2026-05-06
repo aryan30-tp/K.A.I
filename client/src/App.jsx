@@ -368,19 +368,57 @@ function ELI5Component({ data }) {
   );
 }
 
-function StudyPlanComponent({ planText }) {
+function StudyPlanComponent({ planData }) {
   const accentColor = '#B3FF00';
+  if (!planData || !planData.tasks) return null;
+
   return (
     <div style={{ backgroundColor: 'rgba(34, 34, 34, 0.84)', border: `1px solid ${accentColor}`, borderRadius: 30, padding: 30 }}>
-      <h3 style={{ color: accentColor, marginTop: 0 }}>📅 Your Study Plan</h3>
-      <div style={{ 
-        whiteSpace: 'pre-wrap', 
-        fontSize: 16, 
-        lineHeight: 1.6, 
-        fontFamily: 'inherit',
-        color: '#E8E8E8'
-      }}>
-        {planText}
+      <h3 style={{ color: accentColor, marginTop: 0 }}>📅 {planData.planTitle || 'Your Study Plan'}</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {planData.tasks.sort((a, b) => a.order - b.order).map((task, idx) => (
+          <div key={idx} style={{ 
+            display: 'flex', 
+            gap: 20, 
+            padding: 20, 
+            backgroundColor: 'rgba(255, 255, 255, 0.03)', 
+            borderRadius: 20,
+            border: '1px solid rgba(255,255,255,0.05)'
+          }}>
+            <div style={{ 
+              width: 40, 
+              height: 40, 
+              borderRadius: '50%', 
+              backgroundColor: accentColor, 
+              color: '#000', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              fontWeight: 800,
+              fontSize: 18,
+              flexShrink: 0
+            }}>
+              {task.order}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, flexWrap: 'wrap', gap: 10 }}>
+                <div style={{ fontWeight: 700, fontSize: 18, color: accentColor }}>{task.topic}</div>
+                <div style={{ 
+                  fontSize: 12, 
+                  padding: '4px 12px', 
+                  borderRadius: 12, 
+                  backgroundColor: task.priority.includes('Critical') ? 'rgba(255,0,0,0.2)' : 'rgba(179,255,0,0.1)',
+                  color: task.priority.includes('Critical') ? '#ff4d4d' : accentColor,
+                  border: `1px solid ${task.priority.includes('Critical') ? '#ff4d4d' : accentColor}`
+                }}>
+                  {task.priority}
+                </div>
+              </div>
+              <div style={{ marginBottom: 12, opacity: 0.9, lineHeight: 1.5 }}>{task.actionableAdvice}</div>
+              <div style={{ fontSize: 13, opacity: 0.6 }}>⏱️ Estimated time: {task.estimatedMinutes} mins</div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -1283,8 +1321,8 @@ function App() {
             <MockTestComponent testData={generatedData} />
           )}
 
-          {requestType === 'study_plan' && (generatedData.plan || generatedData.studyPlan) && (
-            <StudyPlanComponent planText={generatedData.plan || generatedData.studyPlan} />
+          {requestType === 'study_plan' && generatedData.tasks && (
+            <StudyPlanComponent planData={generatedData} />
           )}
         </section>
       )}

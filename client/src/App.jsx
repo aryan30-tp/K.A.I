@@ -753,6 +753,19 @@ function App() {
     }
   }, [currentUser]);
 
+  // Reset downstream state when Step 1 inputs change to "lock" Step 2 & 3
+  useEffect(() => {
+    setUploadId(null);
+    setRawNotes('');
+    setSyllabusAnalysis(null);
+    setExamAnalysis(null);
+    setGeneratedData(null);
+    setFlashcards([]);
+    setResult('');
+    setResultSource('');
+    setNotice('');
+  }, [youtubeUrl, files]);
+
   async function parseResponse(res) {
     const raw = await res.text();
     let data;

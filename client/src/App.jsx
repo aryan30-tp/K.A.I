@@ -4,6 +4,21 @@ import VisualLabCard from './components/VisualLabCard.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import chatbotVideo from './assets/Live chatbot.webm';
 
+function LoadingProgressBar({ loading, label }) {
+  if (!loading) return null;
+  return (
+    <div style={{ width: '100%', marginTop: 24, maxWidth: 600, marginInline: 'auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: 13, fontWeight: 700, color: '#B3FF00', textTransform: 'uppercase', letterSpacing: 1 }}>
+        <span>{label}</span>
+        <span className="pulse">AI Processing...</span>
+      </div>
+      <div style={{ width: '100%', height: 4, backgroundColor: 'rgba(179, 255, 0, 0.1)', borderRadius: 2, overflow: 'hidden' }}>
+        <div className="loading-bar-fill" />
+      </div>
+    </div>
+  );
+}
+
 function RandomMovingBox({ children }) {
   const [position, setPosition] = useState({ x: 50, y: 50 });
   const [velocity, setVelocity] = useState({ x: (Math.random() - 0.5) * 0.1, y: (Math.random() - 0.5) * 0.1 });
@@ -1276,6 +1291,7 @@ function App() {
             <button type="submit" disabled={loading || (!youtubeUrl && files.length === 0)} style={getActionButtonStyle(loading || (!youtubeUrl && files.length === 0))}>
               {loading ? '⏳ Extracting…' : '📤 Extract Content'}
             </button>
+            <LoadingProgressBar loading={loading && resultSource === ''} label="Extracting Content" />
             {uploadId && <p style={{ color: 'green', marginTop: 8, textAlign: 'center' }}>✅ Extracted! Upload ID: {uploadId.slice(0, 8)}...</p>}
           </div>
           </form>
@@ -1362,6 +1378,7 @@ function App() {
             <button type="submit" disabled={loading || !rawNotes.trim()} style={getActionButtonStyle(loading || !rawNotes.trim())}>
               {loading ? '⏳ Analyzing…' : '🔍 Analyze Content'}
             </button>
+            <LoadingProgressBar loading={loading && resultSource === 'extracted'} label="Analyzing Context" />
             {syllabusAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Syllabus mapped!</p>}
             {examAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Exam patterns analyzed!</p>}
           </form>
@@ -1395,6 +1412,7 @@ function App() {
             <button type="submit" disabled={loading || !uploadId} style={getActionButtonStyle(loading || !uploadId)}>
               {loading ? '⏳ Generating…' : '✨ Generate Output'}
             </button>
+            <LoadingProgressBar loading={loading && (resultSource === 'analyzed' || resultSource === 'extracted')} label={`Generating ${requestType.replace('_', ' ')}`} />
           </form>
         </section>
       </ScrollReveal>

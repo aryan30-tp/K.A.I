@@ -376,12 +376,13 @@ function App() {
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          marginLeft: 'auto'
         }}>👤</div>
-        <div className="app-header-user">
+        {/* <div className="app-header-user">
           <span>{currentUser.email || currentUser.uid}</span>
           <button onClick={signOutUser}>Sign out</button>
-        </div>
+        </div> */}
       </div>
 
       {/* Tab Bar */}

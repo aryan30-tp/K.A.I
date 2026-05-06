@@ -1277,7 +1277,7 @@ function App() {
             <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexWrap: 'wrap' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', marginBottom: 10 }}>Syllabus Image (optional)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
                   <input
                     id="syllabus-image-upload"
                     type="file"
@@ -1288,23 +1288,23 @@ function App() {
                   <label htmlFor="syllabus-image-upload" style={uploadPickerButtonStyle}>
                     {syllabusImage ? '✅ Selected' : '🖼️ Choose Image'}
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => handleOcrImage('syllabus')}
+                    disabled={syllabusImageLoading || !syllabusImage}
+                    style={getActionButtonStyle(syllabusImageLoading || !syllabusImage)}
+                  >
+                    {syllabusImageLoading ? '⏳ Extracting…' : '📄 Extract from image'}
+                  </button>
                   {syllabusImage && <span style={{ fontSize: 12, opacity: 0.7, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{syllabusImage.name}</span>}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleOcrImage('syllabus')}
-                  disabled={syllabusImageLoading || !syllabusImage}
-                  style={getActionButtonStyle(syllabusImageLoading || !syllabusImage)}
-                >
-                  {syllabusImageLoading ? '⏳ Extracting…' : '📄 Extract from image'}
-                </button>
                 {syllabusImageError && (
                   <div style={{ color: 'crimson', marginTop: 8 }}>{syllabusImageError}</div>
                 )}
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', marginBottom: 10 }}>Notes Image (optional)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
                   <input
                     id="notes-image-upload"
                     type="file"
@@ -1315,16 +1315,16 @@ function App() {
                   <label htmlFor="notes-image-upload" style={uploadPickerButtonStyle}>
                     {notesImage ? '✅ Selected' : '🖼️ Choose Image'}
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => handleOcrImage('notes')}
+                    disabled={notesImageLoading || !notesImage}
+                    style={getActionButtonStyle(notesImageLoading || !notesImage)}
+                  >
+                    {notesImageLoading ? '⏳ Extracting…' : '📄 Extract from image'}
+                  </button>
                   {notesImage && <span style={{ fontSize: 12, opacity: 0.7, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notesImage.name}</span>}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleOcrImage('notes')}
-                  disabled={notesImageLoading || !notesImage}
-                  style={getActionButtonStyle(notesImageLoading || !notesImage)}
-                >
-                  {notesImageLoading ? '⏳ Extracting…' : '📄 Extract from image'}
-                </button>
                 {notesImageError && (
                   <div style={{ color: 'crimson', marginTop: 8 }}>{notesImageError}</div>
                 )}

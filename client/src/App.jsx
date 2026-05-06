@@ -60,10 +60,10 @@ function RandomMovingBox({ children }) {
   return (
     <div style={{
       width: '100%',
-      height: '300px',
+      height: '450px',
       position: 'relative',
       overflow: 'hidden',
-      marginBottom: '-80px', // Pull content slightly up into the "zone"
+      marginBottom: '20px', 
       pointerEvents: 'none'
     }}>
       <div style={{
@@ -71,7 +71,7 @@ function RandomMovingBox({ children }) {
         left: `${position.x}%`,
         top: `${position.y}%`,
         transform: 'translate(-50%, -50%)',
-        transition: 'none', // Smoothness comes from requestAnimationFrame
+        transition: 'none', 
       }}>
         {children}
       </div>
@@ -603,13 +603,13 @@ function App() {
             muted 
             playsInline 
             style={{ 
-              width: '180px', 
-              height: '180px',
-              filter: 'drop-shadow(0 0 20px rgba(179, 255, 0, 0.3))'
+              width: '320px', 
+              height: '320px',
+              filter: 'drop-shadow(0 0 30px rgba(179, 255, 0, 0.4))'
             }} 
           />
         </RandomMovingBox>
-        <section style={{ ...translucentPanelStyle, minHeight: 340, paddingTop: 40, paddingBottom: 28, position: 'relative', zIndex: 1 }}>
+        <section style={{ ...translucentPanelStyle, minHeight: 340, paddingTop: 40, paddingBottom: 28 }}>
           <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 0 }}>Step 1: Extract Content</h2>
           <form onSubmit={handleExtract}>
           <div

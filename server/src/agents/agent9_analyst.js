@@ -18,7 +18,9 @@ export async function generateHeatmap(workspaceId) {
     cardsSnap.forEach((doc) => {
       totalCards += 1;
       const data = doc.data();
-      if ((data.intervalDays || 0) > 5) strongCards += 1;
+      // Any card reviewed at least once (interval > 0) shows retention.
+      // Mastered cards (long term) are interval > 5.
+      if ((data.intervalDays || 0) > 0) strongCards += 1;
       else weakCards += 1;
     });
 

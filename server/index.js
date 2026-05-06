@@ -38,6 +38,7 @@ import { generateSurvivalPlan } from './src/agents/agent11_triage.js';
 
 const app = express();
 const PORT = process.env.PORT || 10000;
+const MAX_EXTRACTED_CHARACTERS = 100000;
 
 // Middleware
 app.use(express.json());
@@ -69,6 +70,7 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
   try {
     const { youtubeUrl, forceWhisper, workspaceId, userId } = req.body;
     let rawText = "";
+    let warning = '';
 
     if (!workspaceId) {
       return res.status(400).json({ error: 'workspaceId is required' });
@@ -84,52 +86,56 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
         rawText = await extractFromYoutube(youtubeUrl);
       }
     } else if (req.files && req.files.length > 0) {
-      const extractedTexts = [];
+      const extractedTexts = await Promise.all(
+        req.files.map(async (file) => {
+          const mimeType = file.mimetype || '';
+          const originalName = file.originalname || 'uploaded-file';
+          const normalizedName = originalName.toLowerCase();
+          const originalExt = normalizedName.includes('.')
+            ? `.${normalizedName.split('.').pop()}`
+            : '';
+          const filePathWithExt = originalExt ? `${file.path}${originalExt}` : file.path;
 
-      for (const file of req.files) {
-        const mimeType = file.mimetype;
-        const originalName = file.originalname.toLowerCase();
-        const originalExt = originalName.includes('.')
-          ? `.${originalName.split('.').pop()}`
-          : '';
-        const filePathWithExt = originalExt ? `${file.path}${originalExt}` : file.path;
+          if (filePathWithExt !== file.path) {
+            fs.renameSync(file.path, filePathWithExt);
+          }
 
-        if (filePathWithExt !== file.path) {
-          fs.renameSync(file.path, filePathWithExt);
-        }
+          try {
+            let fileText = '';
+            if (mimeType === 'application/pdf' || normalizedName.endsWith('.pdf')) {
+              fileText = await extractFromPdf(filePathWithExt);
+            } else if (
+              normalizedName.endsWith('.ppt') ||
+              mimeType === 'application/vnd.ms-powerpoint'
+            ) {
+              throw new Error('Legacy .ppt files are not supported. Please export as .pptx.');
+            } else if (
+              normalizedName.endsWith('.pptx') ||
+              normalizedName.endsWith('.docx') ||
+              mimeType.includes('presentation') ||
+              mimeType.includes('wordprocessingml')
+            ) {
+              fileText = await extractOfficeFile(filePathWithExt);
+            } else {
+              throw new Error('Unsupported file format. Please upload PDF, DOCX, or PPTX.');
+            }
 
-        let fileText = '';
-        if (mimeType === 'application/pdf' || originalName.endsWith('.pdf')) {
-          fileText = await extractFromPdf(filePathWithExt);
-        } else if (
-          originalName.endsWith('.ppt') ||
-          mimeType === 'application/vnd.ms-powerpoint'
-        ) {
-          fs.unlinkSync(filePathWithExt);
-          return res
-            .status(400)
-            .json({ error: 'Legacy .ppt files are not supported. Please export as .pptx.' });
-        } else if (
-          originalName.endsWith('.pptx') ||
-          originalName.endsWith('.docx') ||
-          mimeType.includes('presentation') ||
-          mimeType.includes('wordprocessingml')
-        ) {
-          fileText = await extractOfficeFile(filePathWithExt);
-        } else {
-          fs.unlinkSync(filePathWithExt);
-          return res
-            .status(400)
-            .json({ error: 'Unsupported file format. Please upload PDF, DOCX, or PPTX.' });
-        }
+            return `### ${originalName}\n\n${fileText}`;
+          } finally {
+            if (fs.existsSync(filePathWithExt)) {
+              fs.unlinkSync(filePathWithExt);
+            }
+          }
+        })
+      );
 
-        extractedTexts.push(`### ${originalName}\n\n${fileText}`);
+      rawText = extractedTexts.join('\n\n--- [NEW DOCUMENT] ---\n\n');
 
-        // Clean up the temporary file immediately after reading it
-        fs.unlinkSync(filePathWithExt);
+      if (rawText.length > MAX_EXTRACTED_CHARACTERS) {
+        rawText = rawText.slice(0, MAX_EXTRACTED_CHARACTERS);
+        warning =
+          'Data load too heavy. Truncated extracted content to the first 100000 characters to prioritize immediate triage.';
       }
-
-      rawText = extractedTexts.join('\n\n---\n\n');
     } else {
       return res.status(400).json({ error: "No file or URL provided" });
     }
@@ -156,7 +162,7 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
       { merge: true }
     );
 
-    res.json({ ok: true, uploadId, rawText, workspaceId });
+    res.json({ ok: true, uploadId, rawText, workspaceId, warning });
   } catch (error) {
     console.error('Extraction error:', error);
     res.status(500).json({

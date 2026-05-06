@@ -5,7 +5,7 @@ import { useAuth } from './context/AuthContext.jsx';
 
 function App() {
   const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [syllabusText, setSyllabusText] = useState('');
   const [pastPapersText, setPastPapersText] = useState('');
   const [syllabusImage, setSyllabusImage] = useState(null);
@@ -26,6 +26,7 @@ function App() {
   const [result, setResult] = useState('');
   const [resultSource, setResultSource] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [generatedData, setGeneratedData] = useState(null);
   const [heatmapLoading, setHeatmapLoading] = useState(false);
   const [heatmapError, setHeatmapError] = useState('');
@@ -111,7 +112,7 @@ function App() {
 
   async function handleExtract(e) {
     e.preventDefault();
-    if (!youtubeUrl && !file) {
+    if (!youtubeUrl && files.length === 0) {
       setError('Please provide a YouTube URL or upload a file.');
       return;
     }
@@ -126,14 +127,17 @@ function App() {
 
     setLoading(true);
     setError('');
+    setNotice('');
     setResult('');
     try {
       const formData = new FormData();
       if (youtubeUrl) {
         formData.append('youtubeUrl', youtubeUrl);
       }
-      if (file) {
-        formData.append('file', file);
+      if (files.length > 0) {
+        files.forEach((selectedFile) => {
+          formData.append('file', selectedFile);
+        });
       }
       formData.append('workspaceId', workspaceId.trim());
       formData.append('userId', currentUser.uid);
@@ -152,6 +156,7 @@ function App() {
       setResult(data.rawText);
       setResultSource('extracted');
       setGeneratedData(null);
+      setNotice(data.warning || '');
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -485,11 +490,15 @@ function App() {
               type="file"
               accept=".pdf,.docx,.pptx"
               multiple
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              onChange={(e) => setFiles(Array.from(e.target.files || []))}
               style={{ marginBottom: 8 }}
             />
             <small style={{ color: '#D6D6D6' }}>
-              {file ? `Selected: ${file.name}` : 'Or upload PDF/DOCX/PPTX'}
+              {files.length > 0
+                ? `Selected ${files.length} file${files.length === 1 ? '' : 's'}: ${files
+                    .map((selectedFile) => selectedFile.name)
+                    .join(', ')}`
+                : 'Or upload PDF/DOCX/PPTX'}
             </small>
           </div>
           <label style={{ display: 'block', marginBottom: 18 }}>
@@ -501,7 +510,7 @@ function App() {
             />
             Force Groq Whisper (skip RapidAPI)
           </label>
-          <button type="submit" disabled={loading || (!youtubeUrl && !file)} style={getActionButtonStyle(loading || (!youtubeUrl && !file))}>
+          <button type="submit" disabled={loading || (!youtubeUrl && files.length === 0)} style={getActionButtonStyle(loading || (!youtubeUrl && files.length === 0))}>
             {loading ? '⏳ Extracting…' : '📤 Extract Content'}
           </button>
           {uploadId && <p style={{ color: 'green', marginTop: 8 }}>✅ Extracted! Upload ID: {uploadId.slice(0, 8)}...</p>}
@@ -608,6 +617,21 @@ function App() {
       </section>
 
       {/* Results */}
+      {notice && (
+        <div
+          style={{
+            color: '#000000',
+            marginBottom: 12,
+            padding: 12,
+            backgroundColor: '#B3FF00',
+            borderRadius: 18,
+            fontWeight: 600,
+          }}
+        >
+          {notice}
+        </div>
+      )}
+
       {error && <div style={{ color: 'crimson', marginBottom: 12, padding: 12, backgroundColor: '#ffe6e6', borderRadius: 4 }}>❌ {error}</div>}
 
       {generatedData && (

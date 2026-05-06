@@ -71,6 +71,9 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
     const { youtubeUrl, forceWhisper, workspaceId, userId } = req.body;
     let rawText = "";
     let warning = '';
+    const extractedSegments = [];
+    const hasYoutubeUrl = Boolean(youtubeUrl);
+    const hasUploadedFiles = Boolean(req.files && req.files.length > 0);
 
     if (!workspaceId) {
       return res.status(400).json({ error: 'workspaceId is required' });
@@ -79,13 +82,18 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
     // Generate a unique ID for this specific study session/document
     const uploadId = uuidv4(); 
 
-    if (youtubeUrl) {
+    if (hasYoutubeUrl) {
+      let youtubeText = '';
       if (forceWhisper === 'true') {
-        rawText = await extractViaWhisper(youtubeUrl);
+        youtubeText = await extractViaWhisper(youtubeUrl);
       } else {
-        rawText = await extractFromYoutube(youtubeUrl);
+        youtubeText = await extractFromYoutube(youtubeUrl);
       }
-    } else if (req.files && req.files.length > 0) {
+
+      extractedSegments.push(`### YouTube Source\n\n${youtubeText}`);
+    }
+
+    if (hasUploadedFiles) {
       const extractedTexts = await Promise.all(
         req.files.map(async (file) => {
           const mimeType = file.mimetype || '';
@@ -129,15 +137,19 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
         })
       );
 
-      rawText = extractedTexts.join('\n\n--- [NEW DOCUMENT] ---\n\n');
+      extractedSegments.push(...extractedTexts);
+    }
 
-      if (rawText.length > MAX_EXTRACTED_CHARACTERS) {
-        rawText = rawText.slice(0, MAX_EXTRACTED_CHARACTERS);
-        warning =
-          'Data load too heavy. Truncated extracted content to the first 100000 characters to prioritize immediate triage.';
-      }
-    } else {
+    if (extractedSegments.length === 0) {
       return res.status(400).json({ error: "No file or URL provided" });
+    }
+
+    rawText = extractedSegments.join('\n\n--- [NEW DOCUMENT] ---\n\n');
+
+    if (rawText.length > MAX_EXTRACTED_CHARACTERS) {
+      rawText = rawText.slice(0, MAX_EXTRACTED_CHARACTERS);
+      warning =
+        'Data load too heavy. Truncated extracted content to the first 100000 characters to prioritize immediate triage.';
     }
 
     try {
@@ -156,7 +168,7 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
         workspaceId,
         userId: resolvedUserId,
         rawText,
-        sourceType: youtubeUrl ? 'youtube' : 'file',
+        sourceType: hasYoutubeUrl && hasUploadedFiles ? 'mixed' : hasYoutubeUrl ? 'youtube' : 'file',
         createdAt: Timestamp.now(),
       },
       { merge: true }

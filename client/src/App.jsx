@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import SocraticTutorTest from './components/SocraticTutorTest.jsx';
 import VisualAid from './components/VisualAid.jsx';
 import { useAuth } from './context/AuthContext.jsx';
+import kaiMascotSprite from './assets/Gemini_Generated_Image_lbwm0slbwm0slbwm.png';
 
 function App() {
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -36,6 +37,7 @@ function App() {
   const [survivalError, setSurvivalError] = useState('');
   const [survivalPlan, setSurvivalPlan] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
+  const [mascotFrameIndex, setMascotFrameIndex] = useState(0);
 
   const { currentUser, loadingAuth, signInWithGoogle, signOutUser } = useAuth();
 
@@ -145,12 +147,24 @@ function App() {
   }
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
+  const mascotFrameSequence = [0, 1, 2, 3, 7, 11, 10, 9, 8, 4, 0, 5, 6, 2];
+  const activeMascotFrame = mascotFrameSequence[mascotFrameIndex];
+  const mascotFrameColumn = activeMascotFrame % 4;
+  const mascotFrameRow = Math.floor(activeMascotFrame / 4);
 
   useEffect(() => {
     if (currentUser?.uid) {
       setWorkspaceId(currentUser.uid);
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setMascotFrameIndex((currentIndex) => (currentIndex + 1) % mascotFrameSequence.length);
+    }, 260);
+
+    return () => window.clearInterval(intervalId);
+  }, [mascotFrameSequence.length]);
 
   async function parseResponse(res) {
     const raw = await res.text();
@@ -518,9 +532,19 @@ function App() {
           <div>
       
       {/* Step 1: Extract */}
-      <section style={{ ...translucentPanelStyle, minHeight: 420, paddingBottom: 38 }}>
-        <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Step 1: Extract Content</h2>
-        <form onSubmit={handleExtract}>
+      <div className="step-one-shell">
+        <div className="kai-mascot-stage" aria-hidden="true">
+          <div
+            className="kai-mascot-sprite"
+            style={{
+              backgroundImage: `url(${kaiMascotSprite})`,
+              backgroundPosition: `${mascotFrameColumn * 33.333333}% ${mascotFrameRow * 50}%`,
+            }}
+          />
+        </div>
+        <section style={{ ...translucentPanelStyle, minHeight: 420, paddingTop: 120, paddingBottom: 38 }}>
+          <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Step 1: Extract Content</h2>
+          <form onSubmit={handleExtract}>
           <div
             style={{
               marginBottom: 18,
@@ -643,8 +667,9 @@ function App() {
             </button>
             {uploadId && <p style={{ color: 'green', marginTop: 8, textAlign: 'center' }}>✅ Extracted! Upload ID: {uploadId.slice(0, 8)}...</p>}
           </div>
-        </form>
-      </section>
+          </form>
+        </section>
+      </div>
 
       {/* Step 2: Analyze */}
       <section style={translucentPanelStyle}>

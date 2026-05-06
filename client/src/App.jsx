@@ -6,7 +6,7 @@ import chatbotVideo from './assets/Live chatbot.webm';
 
 function RandomMovingBox({ children }) {
   const [position, setPosition] = useState({ x: 50, y: 50 });
-  const [velocity, setVelocity] = useState({ x: (Math.random() - 0.5) * 0.4, y: (Math.random() - 0.5) * 0.4 });
+  const [velocity, setVelocity] = useState({ x: (Math.random() - 0.5) * 0.1, y: (Math.random() - 0.5) * 0.1 });
 
   useEffect(() => {
     let animationFrameId;
@@ -19,24 +19,24 @@ function RandomMovingBox({ children }) {
         let nextVelY = velocity.y;
 
         // Bounce off walls (percentages)
-        if (nextX <= 10 || nextX >= 90) {
+        if (nextX <= 15 || nextX >= 85) {
           nextVelX *= -1;
           nextX = prev.x + nextVelX;
         }
-        if (nextY <= 10 || nextY >= 90) {
+        if (nextY <= 15 || nextY >= 85) {
           nextVelY *= -1;
           nextY = prev.y + nextVelY;
         }
 
-        // Randomly nudge velocity for unpredictability
-        if (Math.random() < 0.02) {
-          nextVelX += (Math.random() - 0.5) * 0.1;
-          nextVelY += (Math.random() - 0.5) * 0.1;
+        // Randomly nudge velocity for unpredictability (lower frequency)
+        if (Math.random() < 0.005) {
+          nextVelX += (Math.random() - 0.5) * 0.05;
+          nextVelY += (Math.random() - 0.5) * 0.05;
           
-          // Clamp speed
+          // Clamp speed (much lower)
           const speed = Math.sqrt(nextVelX ** 2 + nextVelY ** 2);
-          const maxSpeed = 0.6;
-          const minSpeed = 0.2;
+          const maxSpeed = 0.12;
+          const minSpeed = 0.04;
           if (speed > maxSpeed) {
             nextVelX = (nextVelX / speed) * maxSpeed;
             nextVelY = (nextVelY / speed) * maxSpeed;

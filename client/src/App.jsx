@@ -1262,6 +1262,9 @@ function App() {
   }, [activeTab, loadSessions]);
 
   const [socraticHistory, setSocraticHistory] = useState('[]');
+  const [socraticTopic, setSocraticTopic] = useState('');
+  const [socraticConfirmedTopic, setSocraticConfirmedTopic] = useState('');
+  const [socraticAttemptCount, setSocraticAttemptCount] = useState(0);
 
   const handleSessionClick = async (session) => {
     setUploadId(session.sessionId);
@@ -1273,7 +1276,8 @@ function App() {
     
     if (session.sourceType === 'socratic') {
       setSocraticHistory(JSON.stringify(session.coreIntel?.socraticChat || []));
-      setSpecificTopic(session.coreIntel?.topic || '');
+      setSocraticTopic(session.coreIntel?.topic || '');
+      setSocraticConfirmedTopic(session.coreIntel?.topic || '');
       setActiveTab(1); // Go to Study Lab for Socratic sessions
     } else {
       setActiveTab(0); // Go back to Build tab to resume
@@ -1809,8 +1813,14 @@ function App() {
               sessionId={sessionId}
               onWorkspaceIdChange={setWorkspaceId}
               onSessionIdUpdate={setSessionId}
-              initialHistory={socraticHistory}
-              initialTopic={specificTopic}
+              chatHistory={socraticHistory}
+              setChatHistory={setSocraticHistory}
+              topic={socraticTopic}
+              setTopic={setSocraticTopic}
+              confirmedTopic={socraticConfirmedTopic}
+              setConfirmedTopic={setSocraticConfirmedTopic}
+              attemptCount={socraticAttemptCount}
+              setAttemptCount={setSocraticAttemptCount}
             />
           </div>
         )}

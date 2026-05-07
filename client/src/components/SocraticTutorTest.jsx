@@ -8,29 +8,20 @@ export default function SocraticTutorTest({
   sessionId = '',
   onWorkspaceIdChange = () => {},
   onSessionIdUpdate = () => {},
-  initialHistory = '[]',
-  initialTopic = ''
+  chatHistory = '[]',
+  setChatHistory = () => {},
+  topic = '',
+  setTopic = () => {},
+  confirmedTopic = '',
+  setConfirmedTopic = () => {},
+  attemptCount = 0,
+  setAttemptCount = () => {}
 }) {
-  const [topic, setTopic] = useState(initialTopic);
-  const [confirmedTopic, setConfirmedTopic] = useState(initialTopic);
-  const [chatHistory, setChatHistory] = useState(initialHistory);
-  const [attemptCount, setAttemptCount] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [statusText, setStatusText] = useState('Ready for input.');
   const [output, setOutput] = useState(null);
   const [parsedHistory, setParsedHistory] = useState([]);
   const [isFirstMount, setIsFirstMount] = useState(true);
-
-  // Sync with initial props if they change (e.g. session loaded)
-  useEffect(() => {
-    if (initialHistory !== '[]') {
-      setChatHistory(initialHistory);
-    }
-    if (initialTopic) {
-      setTopic(initialTopic);
-      setConfirmedTopic(initialTopic);
-    }
-  }, [initialHistory, initialTopic]);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -575,45 +566,65 @@ export default function SocraticTutorTest({
           </div>
         </div>
 
-        {/* Cool AI Flow Animation */}
-        <div 
-          onClick={cancelRecording}
-          style={{ 
-            marginTop: 'auto', 
-            marginBottom: '10px', 
-            display: 'flex', 
-            justifyContent: 'center', 
-            overflow: 'hidden', 
-            borderRadius: '20px',
-            cursor: isRecording ? 'pointer' : 'default',
-            border: isRecording ? `1px solid ${accentColor}` : 'none',
-            transition: 'all 0.3s ease'
-          }}
-        >
-          <video 
-            src={aiFlowVideo} 
-            autoPlay 
-            loop 
-            muted 
-            playsInline 
+        {/* Cool AI Flow Animation Section */}
+        <div style={{ marginTop: 'auto', marginBottom: '10px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+             <div style={{ 
+               width: '32px', 
+               height: '32px', 
+               borderRadius: '50%', 
+               backgroundColor: '#ff4d4d', 
+               display: 'flex', 
+               alignItems: 'center', 
+               justifyContent: 'center',
+               fontSize: '16px',
+               fontWeight: '900',
+               color: '#fff',
+               boxShadow: `0 0 15px #ff4d4d`
+             }}>!</div>
+             <div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+               Press while recording to cancel
+             </div>
+          </div>
+
+          <div 
+            onClick={cancelRecording}
             style={{ 
-              width: '100%', 
-              height: 'auto', 
-              filter: isRecording 
-                ? 'drop-shadow(0 0 20px rgba(179, 255, 0, 0.6)) brightness(1.2)' 
-                : 'drop-shadow(0 0 20px rgba(179, 255, 0, 0.3))' 
-            }} 
-          />
+              display: 'flex', 
+              justifyContent: 'center', 
+              overflow: 'hidden', 
+              borderRadius: '20px',
+              cursor: isRecording ? 'pointer' : 'default',
+              border: isRecording ? `1px solid #ff4d4d` : '1px solid rgba(179, 255, 0, 0.2)',
+              transition: 'all 0.3s ease',
+              backgroundColor: 'rgba(0,0,0,0.3)'
+            }}
+          >
+            <video 
+              src={aiFlowVideo} 
+              autoPlay 
+              loop 
+              muted 
+              playsInline 
+              style={{ 
+                width: '100%', 
+                height: 'auto', 
+                filter: isRecording 
+                  ? 'drop-shadow(0 0 20px rgba(255, 77, 77, 0.6)) brightness(1.2)' 
+                  : 'drop-shadow(0 0 20px rgba(179, 255, 0, 0.3))' 
+              }} 
+            />
+          </div>
         </div>
 
         <div style={{ 
-          marginTop: 'auto',
           fontSize: '10px', 
           opacity: 0.4, 
           textAlign: 'center', 
           letterSpacing: '2px',
           fontWeight: 800,
-          textTransform: 'uppercase'
+          textTransform: 'uppercase',
+          marginTop: '10px'
         }}>
           K.A.I. Neural Interface V2.4.9
         </div>

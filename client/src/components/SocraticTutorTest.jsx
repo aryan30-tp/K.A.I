@@ -139,7 +139,7 @@ export default function SocraticTutorTest({
   };
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 20px', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
       
       {/* Robot Stage */}
       <div style={{ 
@@ -148,18 +148,31 @@ export default function SocraticTutorTest({
         flexDirection: 'column', 
         alignItems: 'center', 
         justifyContent: 'center',
-        padding: '40px',
-        backgroundColor: 'rgba(20, 20, 20, 0.4)',
-        borderRadius: '40px',
-        border: `1px solid ${isRecording ? accentColor : 'rgba(255,255,255,0.1)'}`,
-        boxShadow: isRecording ? `0 0 60px rgba(179, 255, 0, 0.2)` : 'none',
-        transition: 'all 0.4s ease',
+        padding: '60px 40px',
+        backgroundColor: 'rgba(20, 20, 20, 0.6)',
+        borderRadius: '50px',
+        border: `2px solid ${isRecording ? accentColor : 'rgba(179, 255, 0, 0.15)'}`,
+        boxShadow: isRecording 
+          ? `0 0 80px rgba(179, 255, 0, 0.25), inset 0 0 40px rgba(179, 255, 0, 0.05)` 
+          : `0 0 40px rgba(179, 255, 0, 0.05)`,
+        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
         cursor: 'pointer',
-        marginBottom: '30px',
-        overflow: 'hidden'
+        marginBottom: '40px',
+        overflow: 'hidden',
+        backdropFilter: 'blur(20px)'
       }}
       onClick={handleRobotClick}
       >
+        {/* Ambient Green Background Glow */}
+        <div style={{
+          position: 'absolute',
+          width: '400px',
+          height: '400px',
+          background: `radial-gradient(circle, rgba(179, 255, 0, 0.08) 0%, transparent 70%)`,
+          zIndex: 0,
+          pointerEvents: 'none'
+        }} />
+
         <video 
           src={robotVideo} 
           autoPlay 
@@ -167,59 +180,65 @@ export default function SocraticTutorTest({
           muted 
           playsInline 
           style={{ 
-            width: '350px', 
-            height: '350px', 
-            filter: isRecording ? `drop-shadow(0 0 30px ${accentColor})` : 'none',
-            transition: 'filter 0.3s ease'
+            width: '450px', 
+            height: '450px', 
+            zIndex: 1,
+            filter: `drop-shadow(0 0 25px rgba(179, 255, 0, ${isRecording ? '0.5' : '0.2'})) brightness(1.1)`,
+            transition: 'all 0.4s ease'
           }} 
         />
         
         <div style={{ 
-          marginTop: '20px', 
-          fontSize: '18px', 
-          fontWeight: '700', 
-          letterSpacing: '1px',
+          marginTop: '30px', 
+          fontSize: '22px', 
+          fontWeight: '800', 
+          letterSpacing: '2px',
           color: isRecording ? accentColor : '#fff',
           textTransform: 'uppercase',
-          textAlign: 'center'
+          textAlign: 'center',
+          zIndex: 1,
+          textShadow: isRecording ? `0 0 15px ${accentColor}` : 'none'
         }}>
-          {isRecording ? '● Recording... Click to Stop' : 'Click me to talk'}
+          {isRecording ? '● System Active: Listening' : 'Initialize Voice Sync'}
         </div>
-        <div style={{ opacity: 0.6, fontSize: '13px', marginTop: '8px' }}>
+        <div style={{ opacity: 0.7, fontSize: '14px', marginTop: '10px', zIndex: 1, fontWeight: 500 }}>
           {statusText}
         </div>
       </div>
 
       {/* Chat History Box */}
       <div style={{ 
-        backgroundColor: 'rgba(255, 255, 255, 0.03)', 
-        borderRadius: '30px', 
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        padding: '30px',
-        minHeight: '200px',
-        maxHeight: '400px',
+        backgroundColor: 'rgba(34, 34, 34, 0.4)', 
+        borderRadius: '40px', 
+        border: `1px solid rgba(179, 255, 0, 0.1)`,
+        padding: '40px',
+        minHeight: '250px',
+        maxHeight: '500px',
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px',
-        backdropFilter: 'blur(10px)'
+        gap: '24px',
+        backdropFilter: 'blur(15px)',
+        boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
       }}>
         {parsedHistory.length === 0 ? (
-          <div style={{ textAlign: 'center', opacity: 0.4, marginTop: '60px' }}>
-            No transcript yet. Start talking to your tutor!
+          <div style={{ textAlign: 'center', opacity: 0.5, marginTop: '80px', fontSize: '16px' }}>
+            Translink empty. Synchronize with K.A.I. to begin.
           </div>
         ) : (
           parsedHistory.map((msg, i) => (
             <div key={i} style={{ 
               alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-              maxWidth: '80%',
-              padding: '16px 24px',
-              borderRadius: msg.role === 'user' ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
-              backgroundColor: msg.role === 'user' ? accentColor : 'rgba(255,255,255,0.08)',
+              maxWidth: '85%',
+              padding: '20px 28px',
+              borderRadius: msg.role === 'user' ? '30px 30px 4px 30px' : '30px 30px 30px 4px',
+              backgroundColor: msg.role === 'user' ? accentColor : 'rgba(255,255,255,0.05)',
               color: msg.role === 'user' ? '#000' : '#fff',
-              fontWeight: 500,
-              lineHeight: 1.5,
-              fontSize: '15px'
+              fontWeight: msg.role === 'user' ? 700 : 500,
+              lineHeight: 1.6,
+              fontSize: '16px',
+              border: msg.role === 'user' ? 'none' : `1px solid rgba(179, 255, 0, 0.1)`,
+              boxShadow: msg.role === 'user' ? `0 10px 20px rgba(179, 255, 0, 0.2)` : 'none'
             }}>
               {msg.parts[0].text}
             </div>

@@ -208,6 +208,21 @@ select:focus {
   animation: pulse 1.5s infinite ease-in-out;
 }
 
+@keyframes emergencyPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+.emergency-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(255, 0, 0, 0.08);
+  pointer-events: none;
+  z-index: 9999;
+  boxShadow: inset 0 0 150px rgba(255, 0, 0, 0.3);
+  animation: emergencyPulse 3s infinite ease-in-out;
+}
+
 .file-carousel {
   scrollbar-width: thin;
   scrollbar-color: #b3ff00 rgba(71, 71, 71, 0.75);

@@ -3,6 +3,7 @@ import SocraticTutorTest from './components/SocraticTutorTest.jsx';
 import VisualLabCard from './components/VisualLabCard.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import chatbotVideo from './assets/Live chatbot.webm';
+import ignisVideo from './assets/Technology isometric ai robot brain.webm';
 
 function StarsBackground() {
   const [stars, setStars] = useState([]);
@@ -728,6 +729,29 @@ function App() {
   const [sessions, setSessions] = useState([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
 
+  const [isEmergencyActive, setIsEmergencyActive] = useState(false);
+  const [isVaultOpen, setIsVaultOpen] = useState(false);
+  const [survivalSeconds, setSurvivalSeconds] = useState(0);
+
+  useEffect(() => {
+    let interval;
+    if (isEmergencyActive) {
+      interval = setInterval(() => {
+        setSurvivalSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      setSurvivalSeconds(0);
+    }
+    return () => clearInterval(interval);
+  }, [isEmergencyActive]);
+
+  const formatTime = (totalSeconds) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
   const { currentUser, loadingAuth, signInWithGoogle, signOutUser, deleteAccount } = useAuth();
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
@@ -1231,11 +1255,20 @@ function App() {
       const data = await parseResponse(res);
       if (!data.ok) throw new Error(data.error);
       setSurvivalPlan(data.data);
+      setIsEmergencyActive(true);
+      setIsVaultOpen(true);
     } catch (err) {
       setSurvivalError(err.message || String(err));
     } finally {
       setSurvivalLoading(false);
     }
+  }
+
+  function handleStopSurvival() {
+    setIsEmergencyActive(false);
+    setIsVaultOpen(false);
+    setSurvivalPlan(null);
+    setSurvivalSeconds(0);
   }
 
 
@@ -1309,31 +1342,59 @@ function App() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'transparent' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      minHeight: '100vh', 
+      backgroundColor: 'transparent',
+      transition: 'all 0.5s ease'
+    }}>
       <StarsBackground />
+      {isEmergencyActive && <div className="emergency-overlay" />}
       {/* Header */}
       <div className="app-header">
-        <div 
-          onClick={() => setActiveTab(3)}
-          style={{ 
-          fontSize: 24, 
-          cursor: 'pointer',
-          width: 48,
-          height: 48,
-          backgroundColor: '#444',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginLeft: 'auto',
-          color: '#B3FF00',
-          fontWeight: 800,
-          border: activeTab === 3 ? '2px solid #B3FF00' : 'none'
-        }}>K</div>
-        {/* <div className="app-header-user">
-          <span>{currentUser.email || currentUser.uid}</span>
-          <button onClick={signOutUser}>Sign out</button>
-        </div> */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 25, marginLeft: 'auto', marginRight: 20 }}>
+          {isEmergencyActive && (
+            <div style={{
+              color: '#ff4d4d',
+              fontFamily: 'monospace',
+              fontSize: 24,
+              fontWeight: 900,
+              textShadow: '0 0 10px #ff4d4d',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              backgroundColor: 'rgba(255, 0, 0, 0.1)',
+              padding: '5px 20px',
+              borderRadius: '15px',
+              border: '1px solid rgba(255, 0, 0, 0.3)'
+            }}>
+              <span style={{ fontSize: 12, opacity: 0.8, letterSpacing: 1 }}>SURVIVAL CLOCK</span>
+              {formatTime(survivalSeconds)}
+            </div>
+          )}
+          <div 
+            onClick={() => setActiveTab(3)}
+            style={{ 
+              fontSize: 24, 
+              cursor: 'pointer',
+              width: 48,
+              height: 48,
+              backgroundColor: '#444',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#B3FF00',
+              fontWeight: 800,
+              transition: 'all 0.3s ease',
+              border: activeTab === 3 ? '2px solid #B3FF00' : '1px solid rgba(255,255,255,0.1)',
+              boxShadow: activeTab === 3 ? '0 0 15px rgba(179, 255, 0, 0.4)' : 'none'
+            }}
+          >
+            K
+          </div>
+        </div>
       </div>
 
       {/* Tab Bar */}
@@ -1827,81 +1888,210 @@ function App() {
 
         {/* Tab 2: Survival Mode */}
         {activeTab === 2 && (
-          <div>
-            <section style={{ marginBottom: 24, padding: 12, border: '1px solid #ccc', borderRadius: 4 }}>
-              <h2>🚨 Survival Mode (Agent 11)</h2>
-              <form onSubmit={handleSurvivalPlan}>
-                <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={hoursRemaining}
-                    onChange={(e) => setHoursRemaining(e.target.value)}
-                    placeholder="Hours Remaining"
-                    style={{ width: 160, padding: 8 }}
-                  />
-                  <button
-                    type="submit"
-                    disabled={survivalLoading}
-                    style={{ padding: '10px 16px', cursor: 'pointer' }}
-                  >
-                    {survivalLoading ? '⏳ Planning…' : '🚨 Generate Plan'}
-                  </button>
-                </div>
-              </form>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '400px 1fr',
+            gap: 30,
+            height: 'calc(100vh - 160px)',
+            padding: '20px 40px',
+            boxSizing: 'border-box'
+          }}>
+            {/* Left Panel: Ignis */}
+            <div className="fade-in" style={{
+              backgroundColor: 'rgba(25, 25, 25, 0.7)',
+              borderRadius: '40px',
+              border: `1px solid ${isEmergencyActive ? '#ff4d4d' : 'rgba(179, 255, 0, 0.4)'}`,
+              padding: '35px',
+              backdropFilter: 'blur(25px)',
+              boxShadow: isEmergencyActive 
+                ? '0 0 50px rgba(255, 77, 77, 0.2)' 
+                : '0 20px 50px rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 20,
+              overflowY: 'auto'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <video 
+                  src={ignisVideo} 
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline 
+                  onClick={() => {
+                    const hrs = window.prompt("Enter hours remaining for survival mission:");
+                    if (hrs) {
+                      setHoursRemaining(hrs);
+                      // Trigger handleSurvivalPlan manually
+                      const trimmedWorkspaceId = workspaceId.trim();
+                      const hoursValue = Number(hrs);
+                      if (trimmedWorkspaceId && !Number.isNaN(hoursValue)) {
+                        setSurvivalLoading(true);
+                        setSurvivalError('');
+                        setSurvivalPlan(null);
+                        fetch(`${apiBase}/api/survival/triage`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            workspaceId: trimmedWorkspaceId,
+                            hoursRemaining: hoursValue,
+                          }),
+                        })
+                        .then(res => parseResponse(res))
+                        .then(data => {
+                          if (!data.ok) throw new Error(data.error);
+                          setSurvivalPlan(data.data);
+                          setIsEmergencyActive(true);
+                          setIsVaultOpen(true);
+                        })
+                        .catch(err => setSurvivalError(err.message || String(err)))
+                        .finally(() => setSurvivalLoading(false));
+                      }
+                    }
+                  }}
+                  style={{ 
+                    width: '100%', 
+                    maxWidth: 300,
+                    cursor: 'pointer',
+                    filter: isEmergencyActive ? 'drop-shadow(0 0 30px #ff4d4d)' : 'none',
+                    transition: 'all 0.5s ease'
+                  }} 
+                />
+              </div>
 
-              {survivalError && (
-                <div
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ 
+                  width: 12, 
+                  height: 12, 
+                  borderRadius: '50%', 
+                  backgroundColor: isEmergencyActive ? '#ff4d4d' : '#B3FF00',
+                  boxShadow: `0 0 10px ${isEmergencyActive ? '#ff4d4d' : '#B3FF00'}`
+                }} />
+                <h3 style={{ 
+                  margin: 0, 
+                  fontSize: 20, 
+                  fontWeight: 900, 
+                  color: isEmergencyActive ? '#ff4d4d' : '#B3FF00',
+                  textTransform: 'uppercase', 
+                  letterSpacing: 3 
+                }}>
+                  Ignis Core
+                </h3>
+              </div>
+
+              <div style={{ height: 1, background: `linear-gradient(90deg, ${isEmergencyActive ? '#ff4d4d' : '#B3FF00'}, transparent)` }} />
+
+              <div style={{ 
+                padding: '25px', 
+                backgroundColor: isEmergencyActive ? 'rgba(255, 77, 77, 0.1)' : 'rgba(179, 255, 0, 0.05)', 
+                borderRadius: '35px', 
+                border: `1px solid ${isEmergencyActive ? 'rgba(255, 77, 77, 0.3)' : 'rgba(179, 255, 0, 0.2)'}`,
+                lineHeight: 1.6
+              }}>
+                <div style={{ color: isEmergencyActive ? '#ff4d4d' : '#B3FF00', fontWeight: 900, fontSize: 18, textTransform: 'uppercase', marginBottom: 10 }}>
+                  System Profile: Ignis
+                </div>
+                <div style={{ fontSize: 14, opacity: 0.8 }}>
+                  I am <span style={{ color: isEmergencyActive ? '#ff4d4d' : '#B3FF00', fontWeight: 800 }}>Ignis</span>, the emergency triage strategist. When time is your enemy, I am your architect.
+                </div>
+                <div style={{ fontSize: 13, opacity: 0.7, marginTop: 15 }}>
+                  Click my neural core above to initialize a time-crunched battle plan. I will analyze your remaining fuel and deploy a maximum-efficiency survival protocol.
+                </div>
+              </div>
+              
+              {isEmergencyActive && (
+                <button 
+                  onClick={handleStopSurvival}
                   style={{
-                    color: 'crimson',
-                    marginBottom: 12,
-                    padding: 12,
-                    backgroundColor: '#ffe6e6',
-                    borderRadius: 4,
+                    marginTop: 'auto',
+                    padding: '15px',
+                    borderRadius: '20px',
+                    backgroundColor: '#ff4d4d',
+                    color: '#fff',
+                    border: 'none',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    textTransform: 'uppercase',
+                    letterSpacing: 2,
+                    boxShadow: '0 0 20px rgba(255, 77, 77, 0.4)'
                   }}
                 >
-                  ❌ {survivalError}
-                </div>
+                  Terminate Mission
+                </button>
               )}
+            </div>
 
-              {survivalPlan && (
-                <div style={{ backgroundColor: '#f7f7f7', padding: 12, borderRadius: 4 }}>
-                  <h3 style={{ marginTop: 0 }}>Mission Briefing</h3>
-                  <p style={{ marginTop: 0 }}>{survivalPlan.missionBriefing}</p>
-
-                  <h3>Survival Plan</h3>
-                  {Array.isArray(survivalPlan.survivalPlan) && survivalPlan.survivalPlan.length > 0 ? (
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
-                        <thead>
-                          <tr>
-                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Phase</th>
-                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Action</th>
-                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Concept</th>
-                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Trigger</th>
-                            <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #ddd' }}>Instruction</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {survivalPlan.survivalPlan.map((row, idx) => (
-                            <tr key={`${row.phase}-${idx}`}>
-                              <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.phase}</td>
-                              <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.action}</td>
-                              <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.concept}</td>
-                              <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.triggerAgent}</td>
-                              <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{row.instruction}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+            {/* Right Panel: Vault */}
+            <div className="fade-in" style={{
+              backgroundColor: 'rgba(15, 15, 15, 0.8)',
+              borderRadius: '50px',
+              border: `2px solid ${isEmergencyActive ? '#ff4d4d' : 'rgba(179, 255, 0, 0.25)'}`,
+              padding: '40px',
+              backdropFilter: 'blur(30px)',
+              boxShadow: '0 30px 80px rgba(0,0,0,0.5)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: isVaultOpen ? 'flex-start' : 'center',
+              alignItems: isVaultOpen ? 'stretch' : 'center',
+              overflow: 'hidden'
+            }}>
+              {!isVaultOpen ? (
+                <div style={{ textAlign: 'center', opacity: 0.4 }}>
+                  <div style={{ fontSize: 80, marginBottom: 20 }}>🔐</div>
+                  <div style={{ fontSize: 24, fontWeight: 900, letterSpacing: 5 }}>VAULT ENCRYPTED</div>
+                  <div style={{ fontSize: 14, marginTop: 10 }}>AWAITING COMMANDER INITIALIZATION</div>
+                </div>
+              ) : (
+                <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30, flexShrink: 0 }}>
+                    <h2 style={{ color: '#ff4d4d', margin: 0, textTransform: 'uppercase', letterSpacing: 4 }}>Emergency Protocol</h2>
+                    <div style={{ padding: '8px 15px', backgroundColor: 'rgba(255, 77, 77, 0.2)', border: '1px solid #ff4d4d', borderRadius: 10, color: '#ff4d4d', fontWeight: 800, fontSize: 12 }}>
+                      STATUS: ACTIVE
                     </div>
-                  ) : (
-                    <p style={{ margin: 0 }}>No plan items returned.</p>
-                  )}
+                  </div>
+
+                  <div style={{ flex: 1, overflowY: 'auto', paddingRight: 10 }}>
+                    {survivalLoading ? (
+                      <div style={{ textAlign: 'center', padding: 50 }}>
+                        <div className="pulse" style={{ fontSize: 20, color: '#ff4d4d', fontWeight: 800 }}>CALCULATING TRAJECTORY...</div>
+                      </div>
+                    ) : survivalError ? (
+                      <div style={{ padding: 20, backgroundColor: 'rgba(255, 77, 77, 0.1)', border: '1px solid #ff4d4d', borderRadius: 20, color: '#ff4d4d' }}>
+                        ERROR: {survivalError}
+                      </div>
+                    ) : survivalPlan && (
+                      <div style={{ animation: 'fadeIn 1s ease-out' }}>
+                        <div style={{ marginBottom: 30, padding: 20, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 20, borderLeft: '4px solid #ff4d4d' }}>
+                          <div style={{ fontSize: 12, opacity: 0.5, textTransform: 'uppercase', marginBottom: 5 }}>Mission Briefing</div>
+                          <div style={{ fontSize: 15, lineHeight: 1.6 }}>{survivalPlan.missionBriefing}</div>
+                        </div>
+
+                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 10px' }}>
+                          <thead>
+                            <tr>
+                              {['Phase', 'Action', 'Concept', 'Trigger', 'Instruction'].map(h => (
+                                <th key={h} style={{ textAlign: 'left', padding: '10px 20px', fontSize: 11, textTransform: 'uppercase', opacity: 0.5 }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {survivalPlan.survivalPlan.map((row, idx) => (
+                              <tr key={idx} style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+                                <td style={{ padding: '20px', borderRadius: '15px 0 0 15px', fontWeight: 900, color: '#ff4d4d' }}>{row.phase}</td>
+                                <td style={{ padding: '20px' }}>{row.action}</td>
+                                <td style={{ padding: '20px' }}>{row.concept}</td>
+                                <td style={{ padding: '20px', color: '#B3FF00', fontSize: 12, fontWeight: 800 }}>{row.triggerAgent}</td>
+                                <td style={{ padding: '20px', borderRadius: '0 15px 15px 0', fontSize: 14, opacity: 0.9 }}>{row.instruction}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
-            </section>
+            </div>
           </div>
         )}
 

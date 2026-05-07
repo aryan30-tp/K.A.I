@@ -392,7 +392,7 @@ function FlashcardComponent({ card, apiBase }) {
   );
 }
 
-function MockTestComponent({ testData, workspaceId, apiBase }) {
+function MockTestComponent({ testData, workspaceId, apiBase, sessionId }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedOpt, setSelectedOpt] = useState(null);
   const [showExplanation, setShowExplanation] = useState(false);
@@ -422,6 +422,7 @@ function MockTestComponent({ testData, workspaceId, apiBase }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           workspaceId: workspaceId.trim(),
+          sessionId, // Include sessionId
           topic: testData.testTitle || 'General',
           score: isCorrect ? 100 : 0,
           missingConcepts: isCorrect ? [] : [question.questionText]
@@ -697,6 +698,7 @@ function App() {
   const [uploadId, setUploadId] = useState(null);
   const [rawNotes, setRawNotes] = useState('');
   const [workspaceId, setWorkspaceId] = useState('user_123');
+  const [sessionId, setSessionId] = useState(''); // New sessionId state
   const [forceWhisper, setForceWhisper] = useState(false);
   const [syllabusAnalysis, setSyllabusAnalysis] = useState(null);
   const [examAnalysis, setExamAnalysis] = useState(null);
@@ -763,6 +765,7 @@ function App() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               workspaceId: workspaceId.trim(),
+              sessionId,
               flashcards: newCards
             }),
           });
@@ -933,6 +936,11 @@ function App() {
     setError('');
     setNotice('');
     setResult('');
+
+    // Generate a new sessionId for this session (Step 1 upload)
+    const newSessionId = `session_${Date.now()}`;
+    setSessionId(newSessionId);
+
     try {
       const formData = new FormData();
       if (youtubeUrl) {
@@ -1129,6 +1137,7 @@ function App() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               workspaceId: workspaceId.trim(),
+              sessionId,
               flashcards: newCards
             }),
           });
@@ -1162,7 +1171,7 @@ function App() {
 
     try {
       const res = await fetch(
-        `${apiBase}/api/analytics/heatmap/${encodeURIComponent(workspaceId.trim())}`
+        `${apiBase}/api/analytics/heatmap/${encodeURIComponent(workspaceId.trim())}?sessionId=${encodeURIComponent(sessionId)}`
       );
       const data = await parseResponse(res);
       if (!data.ok) throw new Error(data.error);
@@ -1615,7 +1624,7 @@ function App() {
           )}
 
           {requestType === 'mock_test' && Array.isArray(generatedData.questions) && (
-            <MockTestComponent testData={generatedData} workspaceId={workspaceId} apiBase={apiBase} />
+            <MockTestComponent testData={generatedData} workspaceId={workspaceId} apiBase={apiBase} sessionId={sessionId} />
           )}
 
           {requestType === 'study_plan' && generatedData.tasks && (
@@ -1625,110 +1634,112 @@ function App() {
       )}
 
       {/* Analytics */}
-      <section style={translucentPanelStyle}>
-        <h2 style={{ color: accentColor }}>Performance Heatmap</h2>
-        <form onSubmit={handleFetchHeatmap}>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-            <input
-              type="text"
-              value={workspaceId}
-              onChange={(e) => setWorkspaceId(e.target.value)}
-              placeholder="Workspace ID"
-              style={{ ...glassyInputStyle, flex: 1 }}
-            />
-            <button
-              type="submit"
-              disabled={heatmapLoading || !workspaceId.trim()}
-              style={getActionButtonStyle(heatmapLoading || !workspaceId.trim())}
+      <ScrollReveal isLocked={!uploadId}>
+        <section style={translucentPanelStyle}>
+          <h2 style={{ color: accentColor }}>Performance Heatmap</h2>
+          <form onSubmit={handleFetchHeatmap}>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+              <input
+                type="text"
+                value={workspaceId}
+                onChange={(e) => setWorkspaceId(e.target.value)}
+                placeholder="Workspace ID"
+                style={{ ...glassyInputStyle, flex: 1 }}
+              />
+              <button
+                type="submit"
+                disabled={heatmapLoading || !workspaceId.trim()}
+                style={getActionButtonStyle(heatmapLoading || !workspaceId.trim())}
+              >
+                {heatmapLoading ? 'Fetching…' : 'Fetch Heatmap'}
+              </button>
+            </div>
+            <LoadingProgressBar loading={heatmapLoading} label="Compiling Analytics" />
+          </form>
+
+          {heatmapError && (
+            <div
+              style={{
+                color: '#ff4d4d',
+                marginBottom: 12,
+                padding: 16,
+                backgroundColor: 'rgba(255, 77, 77, 0.1)',
+                borderRadius: 20,
+                border: '1px solid #ff4d4d',
+                fontWeight: 600
+              }}
             >
-              {heatmapLoading ? 'Fetching…' : 'Fetch Heatmap'}
-            </button>
-          </div>
-          <LoadingProgressBar loading={heatmapLoading} label="Compiling Analytics" />
-        </form>
-
-        {heatmapError && (
-          <div
-            style={{
-              color: '#ff4d4d',
-              marginBottom: 12,
-              padding: 16,
-              backgroundColor: 'rgba(255, 77, 77, 0.1)',
-              borderRadius: 20,
-              border: '1px solid #ff4d4d',
-              fontWeight: 600
-            }}
-          >
-            Error: {heatmapError}
-          </div>
-        )}
-
-        {heatmapResult && (
-          <div style={{ marginTop: 24 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
-               <div style={{ padding: 24, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 30, border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ color: accentColor, fontSize: 13, textTransform: 'uppercase', fontWeight: 800, marginBottom: 8 }}>Memory Retention</div>
-                  <div style={{ fontSize: 36, fontWeight: 800 }}>{heatmapResult.overview.memoryRetentionRate}%</div>
-               </div>
-               <div style={{ padding: 24, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 30, border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ color: accentColor, fontSize: 13, textTransform: 'uppercase', fontWeight: 800, marginBottom: 8 }}>Mastered Facts</div>
-                  <div style={{ fontSize: 36, fontWeight: 800 }}>{heatmapResult.overview.totalCards} total</div>
-               </div>
+              Error: {heatmapError}
             </div>
+          )}
 
-            <div style={{ padding: 24, backgroundColor: 'rgba(179, 255, 0, 0.08)', borderRadius: 30, border: `1px solid ${accentColor}`, marginBottom: 30 }}>
-               <div style={{ fontWeight: 800, color: accentColor, marginBottom: 10 }}>AI Action Plan</div>
-               <div style={{ lineHeight: 1.6 }}>{heatmapResult.overview.aiActionPlan}</div>
+          {heatmapResult && (
+            <div style={{ marginTop: 24 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+                 <div style={{ padding: 24, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 30, border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ color: accentColor, fontSize: 13, textTransform: 'uppercase', fontWeight: 800, marginBottom: 8 }}>Memory Retention</div>
+                    <div style={{ fontSize: 36, fontWeight: 800 }}>{heatmapResult.overview.memoryRetentionRate}%</div>
+                 </div>
+                 <div style={{ padding: 24, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 30, border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ color: accentColor, fontSize: 13, textTransform: 'uppercase', fontWeight: 800, marginBottom: 8 }}>Mastered Facts</div>
+                    <div style={{ fontSize: 36, fontWeight: 800 }}>{heatmapResult.overview.totalCards} total</div>
+                 </div>
+              </div>
+
+              <div style={{ padding: 24, backgroundColor: 'rgba(179, 255, 0, 0.08)', borderRadius: 30, border: `1px solid ${accentColor}`, marginBottom: 30 }}>
+                 <div style={{ fontWeight: 800, color: accentColor, marginBottom: 10 }}>AI Action Plan</div>
+                 <div style={{ lineHeight: 1.6 }}>{heatmapResult.overview.aiActionPlan}</div>
+              </div>
+
+              {Array.isArray(heatmapResult.heatmap) && heatmapResult.heatmap.length > 0 ? (
+                <div style={{ overflowX: 'auto', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'rgba(34,34,34,0.6)' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                        <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Topic</th>
+                        <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Score</th>
+                        <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Status</th>
+                        <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Weak Concepts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {heatmapResult.heatmap.map((row, idx) => {
+                        const rowStatusStyle = heatmapStatusStyles[row.status] || {
+                          backgroundColor: '#f0f0f0',
+                          color: '#333',
+                        };
+                        return (
+                          <tr key={`${row.topic}-${idx}`} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                            <td style={{ padding: '16px 20px', fontWeight: 600 }}>{row.topic}</td>
+                            <td style={{ padding: '16px 20px' }}>{row.avgScore}%</td>
+                            <td style={{ padding: '16px 20px' }}>
+                              <span style={{ 
+                                  padding: '6px 12px', 
+                                  borderRadius: 12, 
+                                  fontSize: 11, 
+                                  fontWeight: 800, 
+                                  ...rowStatusStyle,
+                                  textTransform: 'uppercase'
+                              }}>
+                                {row.status}
+                              </span>
+                            </td>
+                            <td style={{ padding: '16px 20px', fontSize: 13, opacity: 0.7 }}>{row.missed || '—'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: 40, opacity: 0.5 }}>
+                  No detailed topic data yet. Solve a test to see your heatmap.
+                </div>
+              )}
             </div>
-
-            {Array.isArray(heatmapResult.heatmap) && heatmapResult.heatmap.length > 0 ? (
-              <div style={{ overflowX: 'auto', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'rgba(34,34,34,0.6)' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                      <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Topic</th>
-                      <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Score</th>
-                      <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Status</th>
-                      <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Weak Concepts</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {heatmapResult.heatmap.map((row, idx) => {
-                      const rowStatusStyle = heatmapStatusStyles[row.status] || {
-                        backgroundColor: '#f0f0f0',
-                        color: '#333',
-                      };
-                      return (
-                        <tr key={`${row.topic}-${idx}`} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                          <td style={{ padding: '16px 20px', fontWeight: 600 }}>{row.topic}</td>
-                          <td style={{ padding: '16px 20px' }}>{row.avgScore}%</td>
-                          <td style={{ padding: '16px 20px' }}>
-                            <span style={{ 
-                                padding: '6px 12px', 
-                                borderRadius: 12, 
-                                fontSize: 11, 
-                                fontWeight: 800, 
-                                ...rowStatusStyle,
-                                textTransform: 'uppercase'
-                            }}>
-                              {row.status}
-                            </span>
-                          </td>
-                          <td style={{ padding: '16px 20px', fontSize: 13, opacity: 0.7 }}>{row.missed || '—'}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: 40, opacity: 0.5 }}>
-                No detailed topic data yet. Solve a test to see your heatmap.
-              </div>
-            )}
-          </div>
-        )}
-      </section>
+          )}
+        </section>
+      </ScrollReveal>
           </div>
         )}
 
@@ -1738,6 +1749,7 @@ function App() {
             <SocraticTutorTest
               apiBase={import.meta.env.VITE_API_URL ?? ''}
               workspaceId={workspaceId}
+              sessionId={sessionId}
               onWorkspaceIdChange={setWorkspaceId}
             />
           </div>

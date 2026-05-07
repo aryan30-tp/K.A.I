@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 export default function SocraticTutorTest({
   apiBase = '',
   workspaceId = '',
+  sessionId = '',
   onWorkspaceIdChange = () => {},
 }) {
   const [topic, setTopic] = useState('Graph Algorithms');
@@ -54,6 +55,7 @@ export default function SocraticTutorTest({
         formData.append('audioFile', audioFile);
         formData.append('topic', topic);
         formData.append('workspaceId', workspaceId);
+        formData.append('sessionId', sessionId);
         formData.append('chatHistory', chatHistory);
         formData.append('attemptCount', String(attemptCount));
 

@@ -301,7 +301,7 @@ app.post('/api/generate', async (req, res) => {
 // --- ANALYTICS & PERFORMANCE ---
 app.post('/api/analytics/record-test', async (req, res) => {
   try {
-    const { workspaceId, topic, score, missingConcepts = [] } = req.body;
+    const { workspaceId, topic, score, missingConcepts = [], sessionId } = req.body;
 
     if (!workspaceId || !topic || typeof score !== 'number') {
       return res.status(400).json({ ok: false, error: 'Missing required analytics parameters' });
@@ -309,6 +309,7 @@ app.post('/api/analytics/record-test', async (req, res) => {
 
     await db.collection('exam_results').add({
       workspaceId,
+      sessionId: sessionId || null,
       topic,
       score,
       missingConcepts,
@@ -324,7 +325,7 @@ app.post('/api/analytics/record-test', async (req, res) => {
 
 app.post('/api/analytics/onboard-flashcards', async (req, res) => {
   try {
-    const { workspaceId, flashcards } = req.body;
+    const { workspaceId, flashcards, sessionId } = req.body;
 
     if (!workspaceId || !Array.isArray(flashcards)) {
       return res.status(400).json({ ok: false, error: 'Missing workspaceId or flashcards array' });
@@ -340,6 +341,7 @@ app.post('/api/analytics/onboard-flashcards', async (req, res) => {
         back: card.back,
         mermaidCode: card.mermaidCode || null,
         workspaceId,
+        sessionId: sessionId || null,
         repetitionCount: 0,
         easeFactor: 2.5,
         intervalDays: 0,
@@ -375,7 +377,7 @@ app.post('/api/exam/generate', async (req, res) => {
 
 app.post('/api/exam/grade', async (req, res) => {
   try {
-    const { question, studentAnswer, workspaceId, topic } = req.body;
+    const { question, studentAnswer, workspaceId, topic, sessionId } = req.body;
 
     if (!question || !studentAnswer || !workspaceId || !topic) {
       return res.status(400).json({ ok: false, error: 'Missing required grading parameters' });
@@ -385,6 +387,7 @@ app.post('/api/exam/grade', async (req, res) => {
 
     await db.collection('exam_results').add({
       workspaceId,
+      sessionId: sessionId || null,
       topic,
       score: gradingReport.score,
       missingConcepts: gradingReport.missingConcepts || [],
@@ -402,11 +405,12 @@ app.post('/api/exam/grade', async (req, res) => {
 app.get('/api/analytics/heatmap/:workspaceId', async (req, res) => {
   try {
     const { workspaceId } = req.params;
+    const { sessionId } = req.query; // Extract sessionId from query
     if (!workspaceId) {
       return res.status(400).json({ ok: false, error: 'Missing workspaceId' });
     }
 
-    const heatmapData = await generateHeatmap(workspaceId);
+    const heatmapData = await generateHeatmap(workspaceId, sessionId);
     return res.json({ ok: true, data: heatmapData });
   } catch (error) {
     console.error('Heatmap Generation Error:', error?.message || error);
@@ -443,7 +447,7 @@ app.post('/api/survival/triage', async (req, res) => {
 // --- SOCRATIC VOICE EXAM ---
 app.post('/api/socratic/turn', upload.single('audioFile'), async (req, res) => {
   try {
-    const { chatHistory, topic, workspaceId, attemptCount } = req.body;
+    const { chatHistory, topic, workspaceId, attemptCount, sessionId } = req.body;
 
     if (!req.file || !topic || !workspaceId) {
       return res.status(400).json({ ok: false, error: 'Missing audio file, topic, or workspaceId' });
@@ -476,6 +480,7 @@ app.post('/api/socratic/turn', upload.single('audioFile'), async (req, res) => {
     if (tutorResponse.isConceptMastered) {
       await db.collection('exam_results').add({
         workspaceId,
+        sessionId: sessionId || null,
         topic,
         score: 100,
         missingConcepts: [],

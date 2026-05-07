@@ -4,11 +4,14 @@ import Groq from 'groq-sdk';
 const db = getFirestore();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-export async function generateHeatmap(workspaceId) {
+export async function generateHeatmap(workspaceId, sessionId = null) {
   try {
-    console.log(`Compiling Heatmap for workspace: ${workspaceId}`);
+    console.log(`Compiling Heatmap for workspace: ${workspaceId}${sessionId ? ` (Session: ${sessionId})` : ''}`);
 
-    const cardsRef = db.collection('flashcards').where('workspaceId', '==', workspaceId);
+    let cardsRef = db.collection('flashcards').where('workspaceId', '==', workspaceId);
+    if (sessionId && sessionId.trim() !== '') {
+      cardsRef = cardsRef.where('sessionId', '==', sessionId);
+    }
     const cardsSnap = await cardsRef.get();
 
     let totalCards = 0;
@@ -24,7 +27,10 @@ export async function generateHeatmap(workspaceId) {
       else weakCards += 1;
     });
 
-    const examsRef = db.collection('exam_results').where('workspaceId', '==', workspaceId);
+    let examsRef = db.collection('exam_results').where('workspaceId', '==', workspaceId);
+    if (sessionId && sessionId.trim() !== '') {
+      examsRef = examsRef.where('sessionId', '==', sessionId);
+    }
     const examsSnap = await examsRef.get();
 
     const topicStats = {};

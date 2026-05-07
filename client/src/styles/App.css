@@ -8,9 +8,6 @@ body {
   background-color: #000000;
   background-image: none;
   color: #E8E8E8;
-  overflow: hidden;
-  height: 100vh;
-  width: 100vw;
 }
 
 .app-header {
@@ -20,8 +17,6 @@ body {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #444;
-  height: 80px;
-  box-sizing: border-box;
 }
 
 .app-header h1 {
@@ -60,8 +55,6 @@ body {
   padding: 0;
   background-color: #000000;
   border-bottom: 2px solid #B3FF00;
-  height: 50px;
-  box-sizing: border-box;
 }
 
 .tab-button {
@@ -88,7 +81,7 @@ body {
 
 .tab-content {
   padding: 20px;
-  height: calc(100vh - 130px);
+  height: calc(100vh - 120px);
   background: transparent;
   overflow: hidden;
   box-sizing: border-box;
@@ -337,7 +330,7 @@ select:focus {
   background: #ff4d4d;
   width: 0%;
   box-shadow: 0 0 15px #ff4d4d;
-  animation: syncProgress 4s forwards linear;
+  animation: syncProgress 5s forwards linear; /* Matches the 5s delay in JS */
 }
 
 @keyframes syncProgress {

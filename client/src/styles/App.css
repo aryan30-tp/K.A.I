@@ -8,6 +8,9 @@ body {
   background-color: #000000;
   background-image: none;
   color: #E8E8E8;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
 }
 
 .app-header {
@@ -17,6 +20,8 @@ body {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #444;
+  height: 80px;
+  box-sizing: border-box;
 }
 
 .app-header h1 {
@@ -55,6 +60,8 @@ body {
   padding: 0;
   background-color: #000000;
   border-bottom: 2px solid #B3FF00;
+  height: 50px;
+  box-sizing: border-box;
 }
 
 .tab-button {
@@ -81,7 +88,7 @@ body {
 
 .tab-content {
   padding: 20px;
-  height: calc(100vh - 120px);
+  height: calc(100vh - 130px);
   background: transparent;
   overflow: hidden;
   box-sizing: border-box;
@@ -330,14 +337,11 @@ select:focus {
   background: #ff4d4d;
   width: 0%;
   box-shadow: 0 0 15px #ff4d4d;
-  animation: syncProgress 3s forwards cubic-bezier(0.1, 0.7, 1, 0.1);
+  animation: syncProgress 4s forwards linear;
 }
 
 @keyframes syncProgress {
   0% { width: 0%; }
-  20% { width: 30%; }
-  50% { width: 45%; }
-  80% { width: 85%; }
   100% { width: 100%; }
 }
 

@@ -21,7 +21,7 @@ export async function generateSurvivalPlan(workspaceId, hoursRemaining) {
     );
 
     const embeddingModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004',
+      model: process.env.GEMINI_EMBEDDING_MODEL || 'embedding-001',
     });
     const queryResult = await embeddingModel.embedContent(
       'Core concepts, syllabus overview, main chapters, and primary formulas.'

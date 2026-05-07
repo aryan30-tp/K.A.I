@@ -32,7 +32,7 @@ export async function ingestDocumentToBrain(rawText, workspaceId, sourceName) {
       return;
     }
     const embeddingModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004',
+      model: process.env.GEMINI_EMBEDDING_MODEL || 'embedding-001',
     });
 
     const vectors = await Promise.all(
@@ -77,7 +77,7 @@ export async function askKAI(studentQuestion, workspaceId) {
     console.log(`Searching K.A.I. brain for: "${studentQuestion}"`);
 
     const embeddingModel = genAI.getGenerativeModel({
-      model: process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004',
+      model: process.env.GEMINI_EMBEDDING_MODEL || 'embedding-001',
     });
     const queryResult = await embeddingModel.embedContent(studentQuestion);
     const queryVector = queryResult.embedding.values;

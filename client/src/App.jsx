@@ -1899,7 +1899,8 @@ function App() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 flex: 1,
-                position: 'relative'
+                position: 'relative',
+                overflow: 'hidden'
               }}>
                 <video 
                   src={ignisVideo} 
@@ -1907,6 +1908,7 @@ function App() {
                   loop 
                   muted 
                   playsInline 
+                  className={`ignis-visual ${isEmergencyActive ? 'emergency' : ''}`}
                   onClick={() => {
                     const hrs = window.prompt("Enter hours remaining for survival mission:");
                     if (hrs) {
@@ -1917,7 +1919,7 @@ function App() {
                         setSurvivalLoading(true);
                         setSurvivalError('');
                         setSurvivalPlan(null);
-                        setIsVaultOpen(false); // Reset vault state for new mission
+                        setIsVaultOpen(false); // Ensure vault is locked
                         fetch(`${apiBase}/api/survival/triage`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
@@ -1931,7 +1933,8 @@ function App() {
                           if (!data.ok) throw new Error(data.error);
                           setSurvivalPlan(data.data);
                           setIsEmergencyActive(true);
-                          setTimeout(() => setIsVaultOpen(true), 500); // Delayed vault opening
+                          // Vault opens after sync bar completes (3s)
+                          setTimeout(() => setIsVaultOpen(true), 3500); 
                         })
                         .catch(err => setSurvivalError(err.message || String(err)))
                         .finally(() => setSurvivalLoading(false));
@@ -1943,12 +1946,21 @@ function App() {
                     height: 'auto',
                     maxWidth: 500,
                     cursor: 'pointer',
-                    filter: isEmergencyActive ? 'drop-shadow(0 0 40px #ff4d4d) brightness(1.1)' : 'brightness(0.9)',
-                    transition: 'all 0.5s ease',
-                    transform: isEmergencyActive ? 'scale(1.05)' : 'scale(1)'
+                    zIndex: 2
                   }} 
                 />
-                <div style={{ position: 'absolute', bottom: 30, right: 30, opacity: 0.5, fontSize: 12, fontWeight: 900, color: isEmergencyActive ? '#ff4d4d' : '#B3FF00', letterSpacing: 2 }}>
+                
+                {/* Visual Glow Layer */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: isEmergencyActive 
+                    ? 'radial-gradient(circle, rgba(255, 77, 77, 0.1) 0%, transparent 70%)'
+                    : 'radial-gradient(circle, rgba(179, 255, 0, 0.05) 0%, transparent 70%)',
+                  zIndex: 1
+                }} />
+
+                <div style={{ position: 'absolute', bottom: 30, right: 30, opacity: 0.5, fontSize: 12, fontWeight: 900, color: isEmergencyActive ? '#ff4d4d' : '#B3FF00', letterSpacing: 2, zIndex: 3 }}>
                   IGNIS NEURAL CORE v4.1.2
                 </div>
               </div>
@@ -2022,16 +2034,33 @@ function App() {
               height: '100%',
               position: 'relative'
             }}>
-              {/* Vault Doors */}
+              {/* Redesigned Vault Doors */}
               <div className="vault-door-left">
-                <div style={{ transform: 'rotate(-90deg)', fontSize: 14, fontWeight: 900, letterSpacing: 10, color: 'rgba(255,255,255,0.1)' }}>SECURITY SEAL</div>
+                <div className="vault-lock-ring" style={{ right: '-60px' }}>
+                  <div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 10 }}>K.A.I.</div>
+                </div>
+                <div style={{ position: 'absolute', top: 40, left: 40, opacity: 0.2, fontSize: 10, fontWeight: 900, letterSpacing: 5 }}>DIGITAL ENCRYPTION v9.0</div>
               </div>
               <div className="vault-door-right">
-                <div style={{ transform: 'rotate(90deg)', fontSize: 14, fontWeight: 900, letterSpacing: 10, color: 'rgba(255,255,255,0.1)' }}>LOCKDOWN ACTIVE</div>
+                <div className="vault-lock-ring" style={{ left: '-60px' }}>
+                  <div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 10 }}>SECURE</div>
+                </div>
+                <div style={{ position: 'absolute', bottom: 40, right: 40, opacity: 0.2, fontSize: 10, fontWeight: 900, letterSpacing: 5 }}>BIOMETRIC SCAN: ARYAN</div>
               </div>
 
-              {/* Locked Indicator (Visible when doors are closed) */}
-              {!isVaultOpen && !survivalLoading && (
+              {/* Mission Synchronization State */}
+              {!isVaultOpen && isEmergencyActive && (
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 12, textAlign: 'center', width: '80%' }}>
+                  <div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 20, letterSpacing: 5, marginBottom: 10 }}>MISSION SYNCHRONIZATION</div>
+                  <div className="sync-bar">
+                    <div className="sync-bar-fill" />
+                  </div>
+                  <div style={{ color: '#ff4d4d', fontSize: 12, marginTop: 15, opacity: 0.6, fontWeight: 700 }}>UPLOADING SURVIVAL PARAMETERS...</div>
+                </div>
+              )}
+
+              {/* Locked Indicator (Visible only before sync) */}
+              {!isVaultOpen && !isEmergencyActive && (
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 11, textAlign: 'center' }}>
                   <div style={{ fontSize: 80, marginBottom: 20 }}>🔐</div>
                   <div style={{ fontSize: 24, fontWeight: 900, letterSpacing: 5 }}>VAULT ENCRYPTED</div>

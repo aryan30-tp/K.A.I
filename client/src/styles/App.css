@@ -81,9 +81,10 @@ body {
 
 .tab-content {
   padding: 20px;
-  min-height: calc(100vh - 120px);
+  height: calc(100vh - 120px);
   background: transparent;
-  overflow: visible;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* Interactive Elements Pop-out Effect */

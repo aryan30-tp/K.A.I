@@ -278,22 +278,63 @@ export default function SocraticTutorTest({
           fontStyle: 'italic',
           padding: '15px',
           borderLeft: `2px solid ${accentColor}`,
-          backgroundColor: 'rgba(255,255,255,0.02)'
+          backgroundColor: 'rgba(255,255,255,0.02)',
+          marginBottom: '-10px'
         }}>
           "Knowledge is the only weapon that grows sharper with use." - K.A.I. System
         </div>
 
         <div style={{ 
-          marginTop: 'auto',
-          padding: '25px', 
+          flex: 1,
+          padding: '30px', 
           backgroundColor: 'rgba(179, 255, 0, 0.05)', 
-          borderRadius: '30px', 
-          border: `1px solid rgba(179, 255, 0, 0.15)`,
-          lineHeight: 1.5
+          borderRadius: '35px', 
+          border: `1px solid rgba(179, 255, 0, 0.2)`,
+          lineHeight: 1.6,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '15px',
+          boxShadow: `inset 0 0 30px rgba(0,0,0,0.2)`
         }}>
-          <div style={{ color: accentColor, fontWeight: 900, fontSize: '16px', marginBottom: '10px', textTransform: 'uppercase' }}>Meet Axiom</div>
-          <div style={{ fontSize: '14px', opacity: 0.8 }}>
-            Hi, I am <span style={{ color: accentColor, fontWeight: 'bold' }}>Axiom</span>, your neural-linked tutor. I'm engineered to dismantle complex concepts and rebuild them in your mind until you ace your goals. Let's sync and conquer.
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+             <div style={{ 
+               width: '40px', 
+               height: '40px', 
+               borderRadius: '50%', 
+               backgroundColor: accentColor, 
+               display: 'flex', 
+               alignItems: 'center', 
+               justifyContent: 'center',
+               fontSize: '20px',
+               fontWeight: '900',
+               color: '#000',
+               boxShadow: `0 0 15px ${accentColor}`
+             }}>A</div>
+             <div style={{ color: accentColor, fontWeight: 900, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '1px' }}>System Profile: Axiom</div>
+          </div>
+          
+          <div style={{ height: '1px', backgroundColor: 'rgba(179, 255, 0, 0.1)' }} />
+
+          <div style={{ fontSize: '15px', opacity: 0.9, color: '#fff', fontWeight: 500 }}>
+            Greetings, Commander. I am <span style={{ color: accentColor, fontWeight: 800 }}>Axiom</span>, your advanced neural-linked pedagogical interface.
+          </div>
+
+          <div style={{ fontSize: '14px', opacity: 0.7, lineHeight: 1.7 }}>
+            My architecture is specifically tuned to dismantle high-complexity academic barriers. By synchronizing with your current cognitive state, I deploy targeted Socratic inquiry to catalyze deep conceptual integration. 
+          </div>
+
+          <div style={{ 
+            marginTop: 'auto',
+            padding: '12px', 
+            borderRadius: '12px', 
+            backgroundColor: 'rgba(179, 255, 0, 0.1)', 
+            border: `1px solid rgba(179, 255, 0, 0.3)`,
+            fontSize: '12px',
+            color: accentColor,
+            fontWeight: 700,
+            textAlign: 'center'
+          }}>
+            CORE MISSION: ACADEMIC DOMINANCE
           </div>
         </div>
       </div>

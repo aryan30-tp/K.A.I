@@ -1261,6 +1261,8 @@ function App() {
     }
   }, [activeTab, loadSessions]);
 
+  const [socraticHistory, setSocraticHistory] = useState('[]');
+
   const handleSessionClick = async (session) => {
     setUploadId(session.sessionId);
     setSessionId(session.sessionId);
@@ -1268,7 +1270,14 @@ function App() {
     setRawNotes(session.coreIntel?.rawNotes || '');
     setSyllabusText(session.coreIntel?.syllabusText || '');
     setPastPapersText(session.coreIntel?.pastPapersText || '');
-    setActiveTab(0); // Go back to Build tab to resume
+    
+    if (session.sourceType === 'socratic') {
+      setSocraticHistory(JSON.stringify(session.coreIntel?.socraticChat || []));
+      setSpecificTopic(session.coreIntel?.topic || '');
+      setActiveTab(1); // Go to Study Lab for Socratic sessions
+    } else {
+      setActiveTab(0); // Go back to Build tab to resume
+    }
   };
 
   if (loadingAuth) {
@@ -1799,6 +1808,9 @@ function App() {
               workspaceId={workspaceId}
               sessionId={sessionId}
               onWorkspaceIdChange={setWorkspaceId}
+              onSessionIdUpdate={setSessionId}
+              initialHistory={socraticHistory}
+              initialTopic={specificTopic}
             />
           </div>
         )}

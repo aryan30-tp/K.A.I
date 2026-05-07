@@ -7,14 +7,13 @@ export default function SocraticTutorTest({
   workspaceId = '',
   sessionId = '',
   onWorkspaceIdChange = () => {},
+  onSessionIdUpdate = () => {},
+  initialHistory = '[]',
+  initialTopic = ''
 }) {
-  // Persistence Keys
-  const STORAGE_KEY_TOPIC = `kai_tutor_topic_${workspaceId}`;
-  const STORAGE_KEY_HISTORY = `kai_tutor_history_${workspaceId}`;
-
-  const [topic, setTopic] = useState(() => localStorage.getItem(STORAGE_KEY_TOPIC) || '');
-  const [confirmedTopic, setConfirmedTopic] = useState(() => localStorage.getItem(STORAGE_KEY_TOPIC) || '');
-  const [chatHistory, setChatHistory] = useState(() => localStorage.getItem(STORAGE_KEY_HISTORY) || '[]');
+  const [topic, setTopic] = useState(initialTopic);
+  const [confirmedTopic, setConfirmedTopic] = useState(initialTopic);
+  const [chatHistory, setChatHistory] = useState(initialHistory);
   const [attemptCount, setAttemptCount] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [statusText, setStatusText] = useState('Ready for input.');
@@ -22,9 +21,21 @@ export default function SocraticTutorTest({
   const [parsedHistory, setParsedHistory] = useState([]);
   const [isFirstMount, setIsFirstMount] = useState(true);
 
+  // Sync with initial props if they change (e.g. session loaded)
+  useEffect(() => {
+    if (initialHistory !== '[]') {
+      setChatHistory(initialHistory);
+    }
+    if (initialTopic) {
+      setTopic(initialTopic);
+      setConfirmedTopic(initialTopic);
+    }
+  }, [initialHistory, initialTopic]);
+
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const chatEndRef = useRef(null);
+  const isCancelledRef = useRef(false);
 
   const accentColor = '#B3FF00';
 
@@ -33,11 +44,10 @@ export default function SocraticTutorTest({
     try {
       const history = JSON.parse(chatHistory);
       setParsedHistory(history);
-      localStorage.setItem(STORAGE_KEY_HISTORY, chatHistory);
     } catch (err) {
       console.error('Failed to parse history', err);
     }
-  }, [chatHistory, STORAGE_KEY_HISTORY]);
+  }, [chatHistory]);
 
   // Scroll to bottom when history updates
   useEffect(() => {
@@ -74,12 +84,19 @@ export default function SocraticTutorTest({
 
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
+      isCancelledRef.current = false;
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
 
       mediaRecorder.onstop = async () => {
+        if (isCancelledRef.current) {
+          setStatusText('Recording cancelled.');
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
         setStatusText('Decoding your response...');
 
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
@@ -104,6 +121,10 @@ export default function SocraticTutorTest({
           const data = await response.json();
           setOutput(data);
           
+          if (data.sessionId && data.sessionId !== sessionId) {
+            onSessionIdUpdate(data.sessionId);
+          }
+
           if (data.tutorSpeech) {
             setStatusText('Listen to your tutor...');
             speakSocraticResponse(data.tutorSpeech);
@@ -148,6 +169,14 @@ export default function SocraticTutorTest({
     }
   };
 
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      isCancelledRef.current = true;
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
   const handleRobotClick = () => {
     if (isRecording) {
       stopRecording();
@@ -159,7 +188,6 @@ export default function SocraticTutorTest({
   const handleConfirmTopic = () => {
     if (!topic.trim()) return;
     setConfirmedTopic(topic);
-    localStorage.setItem(STORAGE_KEY_TOPIC, topic);
     setStatusText(`Topic confirmed: ${topic}`);
   };
 
@@ -548,14 +576,33 @@ export default function SocraticTutorTest({
         </div>
 
         {/* Cool AI Flow Animation */}
-        <div style={{ marginTop: 'auto', marginBottom: '10px', display: 'flex', justifyContent: 'center', overflow: 'hidden', borderRadius: '20px' }}>
+        <div 
+          onClick={cancelRecording}
+          style={{ 
+            marginTop: 'auto', 
+            marginBottom: '10px', 
+            display: 'flex', 
+            justifyContent: 'center', 
+            overflow: 'hidden', 
+            borderRadius: '20px',
+            cursor: isRecording ? 'pointer' : 'default',
+            border: isRecording ? `1px solid ${accentColor}` : 'none',
+            transition: 'all 0.3s ease'
+          }}
+        >
           <video 
             src={aiFlowVideo} 
             autoPlay 
             loop 
             muted 
             playsInline 
-            style={{ width: '100%', height: 'auto', filter: 'drop-shadow(0 0 20px rgba(179, 255, 0, 0.3))' }} 
+            style={{ 
+              width: '100%', 
+              height: 'auto', 
+              filter: isRecording 
+                ? 'drop-shadow(0 0 20px rgba(179, 255, 0, 0.6)) brightness(1.2)' 
+                : 'drop-shadow(0 0 20px rgba(179, 255, 0, 0.3))' 
+            }} 
           />
         </div>
 

@@ -562,10 +562,43 @@ app.post('/api/socratic/turn', upload.single('audioFile'), async (req, res) => {
 
     fs.unlinkSync(audioPathWithExt);
 
+    // Persistence: Save/Update Session History
+    const resolvedSessionId = sessionId || `socratic_${uuidv4().slice(0,8)}`;
+    const sessionRef = db.collection('users').doc(workspaceId).collection('sessions').doc(resolvedSessionId);
+    
+    const updatedHistory = [
+      ...parsedHistory,
+      { role: 'user', parts: [{ text: transcriptionText }] },
+      { role: 'model', parts: [{ text: tutorResponse.tutorSpeech }] },
+    ];
+
+    const sessionSnap = await sessionRef.get();
+    if (!sessionSnap.exists) {
+      await sessionRef.set({
+        sessionId: resolvedSessionId,
+        workspaceId,
+        userId: workspaceId,
+        status: 'active',
+        subject: `Tutor: ${topic}`,
+        lastUpdated: Timestamp.now(),
+        createdAt: Timestamp.now(),
+        sourceType: 'socratic',
+        coreIntel: {
+          socraticChat: updatedHistory,
+          topic: topic
+        }
+      });
+    } else {
+      await sessionRef.update({
+        lastUpdated: Timestamp.now(),
+        "coreIntel.socraticChat": updatedHistory
+      });
+    }
+
     if (tutorResponse.isConceptMastered) {
       await db.collection('exam_results').add({
         workspaceId,
-        sessionId: sessionId || null,
+        sessionId: resolvedSessionId,
         topic,
         score: 100,
         missingConcepts: [],
@@ -580,6 +613,7 @@ app.post('/api/socratic/turn', upload.single('audioFile'), async (req, res) => {
       tutorSpeech: tutorResponse.tutorSpeech,
       isConceptMastered: tutorResponse.isConceptMastered,
       revealAnswer: tutorResponse.revealAnswer || null,
+      sessionId: resolvedSessionId
     });
   } catch (error) {
     console.error('Socratic Turn Error:', error?.message || error);

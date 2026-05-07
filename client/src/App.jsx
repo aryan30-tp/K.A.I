@@ -732,6 +732,7 @@ function App() {
   const [isEmergencyActive, setIsEmergencyActive] = useState(false);
   const [isVaultOpen, setIsVaultOpen] = useState(false);
   const [survivalSeconds, setSurvivalSeconds] = useState(0);
+  const [showSurvivalModal, setShowSurvivalModal] = useState(false);
 
   useEffect(() => {
     let interval;
@@ -1261,6 +1262,43 @@ function App() {
       setSurvivalError(err.message || String(err));
     } finally {
       setSurvivalLoading(false);
+    }
+  }
+
+  async function handleSurvivalModalSubmit(hrs) {
+    if (!hrs) return;
+    setHoursRemaining(hrs);
+    const trimmedWorkspaceId = workspaceId.trim();
+    const hoursValue = Number(hrs);
+    
+    if (trimmedWorkspaceId && !Number.isNaN(hoursValue)) {
+      setSurvivalLoading(true);
+      setSurvivalError('');
+      setSurvivalPlan(null);
+      setIsVaultOpen(false);
+      setIsEmergencyActive(true); // Trigger loading bar immediately
+      setShowSurvivalModal(false);
+
+      try {
+        const res = await fetch(`${apiBase}/api/survival/triage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            workspaceId: trimmedWorkspaceId,
+            hoursRemaining: hoursValue,
+          }),
+        });
+        const data = await parseResponse(res);
+        if (!data.ok) throw new Error(data.error);
+        setSurvivalPlan(data.data);
+        // Delay vault opening slightly for effect after data is ready
+        setTimeout(() => setIsVaultOpen(true), 3500); 
+      } catch (err) {
+        setSurvivalError(err.message || String(err));
+        setIsEmergencyActive(false);
+      } finally {
+        setSurvivalLoading(false);
+      }
     }
   }
 
@@ -1909,44 +1947,17 @@ function App() {
                   muted 
                   playsInline 
                   className={`ignis-visual ${isEmergencyActive ? 'emergency' : ''}`}
-                  onClick={() => {
-                    const hrs = window.prompt("Enter hours remaining for survival mission:");
-                    if (hrs) {
-                      setHoursRemaining(hrs);
-                      const trimmedWorkspaceId = workspaceId.trim();
-                      const hoursValue = Number(hrs);
-                      if (trimmedWorkspaceId && !Number.isNaN(hoursValue)) {
-                        setSurvivalLoading(true);
-                        setSurvivalError('');
-                        setSurvivalPlan(null);
-                        setIsVaultOpen(false); // Ensure vault is locked
-                        fetch(`${apiBase}/api/survival/triage`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            workspaceId: trimmedWorkspaceId,
-                            hoursRemaining: hoursValue,
-                          }),
-                        })
-                        .then(res => parseResponse(res))
-                        .then(data => {
-                          if (!data.ok) throw new Error(data.error);
-                          setSurvivalPlan(data.data);
-                          setIsEmergencyActive(true);
-                          // Vault opens after sync bar completes (3s)
-                          setTimeout(() => setIsVaultOpen(true), 3500); 
-                        })
-                        .catch(err => setSurvivalError(err.message || String(err)))
-                        .finally(() => setSurvivalLoading(false));
-                      }
-                    }
-                  }}
+                  onClick={() => setShowSurvivalModal(true)}
                   style={{ 
-                    width: '90%', 
+                    width: '95%', 
                     height: 'auto',
-                    maxWidth: 500,
+                    maxWidth: 550,
                     cursor: 'pointer',
-                    zIndex: 2
+                    zIndex: 2,
+                    imageRendering: 'crisp-edges', // Improve blurriness
+                    filter: isEmergencyActive 
+                      ? 'drop-shadow(0 0 40px #ff4d4d) contrast(1.1) brightness(1.1)' 
+                      : 'drop-shadow(0 0 20px rgba(179, 255, 0, 0.2)) contrast(1.05)'
                   }} 
                 />
                 
@@ -2062,9 +2073,7 @@ function App() {
               {/* Locked Indicator (Visible only before sync) */}
               {!isVaultOpen && !isEmergencyActive && (
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 11, textAlign: 'center' }}>
-                  <div style={{ fontSize: 80, marginBottom: 20 }}>🔐</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, letterSpacing: 5 }}>VAULT ENCRYPTED</div>
-                  <div style={{ fontSize: 14, marginTop: 10, opacity: 0.6 }}>INITIALIZE IGNIS TO DECODE</div>
+                  <div style={{ fontSize: 100 }}>🔐</div>
                 </div>
               )}
 
@@ -2196,6 +2205,95 @@ function App() {
           </div>
         )}
       </div>
+
+      {/* Custom Survival Hours Modal */}
+      {showSurvivalModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(20px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          animation: 'fadeIn 0.3s ease-out'
+        }}>
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            borderRadius: '40px',
+            border: '2px solid #ff4d4d',
+            padding: '50px',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 0 50px rgba(255, 77, 77, 0.3)',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: 12, fontWeight: 900, color: '#ff4d4d', textTransform: 'uppercase', letterSpacing: 5, marginBottom: 20 }}>MISSION PARAMETERS</div>
+            <h2 style={{ color: '#fff', fontSize: 24, marginBottom: 10 }}>Operational Duration</h2>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 30 }}>Specify remaining mission time for tactical redistribution.</p>
+            
+            <div style={{ position: 'relative', marginBottom: 40 }}>
+              <input 
+                type="number" 
+                defaultValue="6"
+                id="survival-hrs-input"
+                autoFocus
+                style={{
+                  width: '100%',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255, 77, 77, 0.4)',
+                  padding: '20px',
+                  borderRadius: '20px',
+                  fontSize: '32px',
+                  fontWeight: 900,
+                  color: '#ff4d4d',
+                  textAlign: 'center',
+                  outline: 'none'
+                }}
+              />
+              <div style={{ position: 'absolute', right: 25, top: '50%', transform: 'translateY(-50%)', fontWeight: 900, color: '#ff4d4d', opacity: 0.5 }}>HRS</div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 20 }}>
+              <button 
+                onClick={() => setShowSurvivalModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '18px',
+                  borderRadius: '18px',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                ABORT
+              </button>
+              <button 
+                onClick={() => {
+                  const val = document.getElementById('survival-hrs-input').value;
+                  handleSurvivalModalSubmit(val);
+                }}
+                style={{
+                  flex: 2,
+                  padding: '18px',
+                  borderRadius: '18px',
+                  backgroundColor: '#ff4d4d',
+                  color: '#fff',
+                  border: 'none',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  boxShadow: '0 10px 20px rgba(255, 77, 77, 0.3)'
+                }}
+              >
+                INITIALIZE ➔
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

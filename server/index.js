@@ -65,6 +65,83 @@ app.use(cors(corsOptions));
 // Set up Multer to temporarily save uploaded files to an /uploads folder
 const upload = multer({ dest: 'uploads/' });
 
+// --- SESSION MANAGEMENT ---
+app.get('/api/sessions/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) return res.status(400).json({ error: 'Missing userId' });
+    
+    const snapshot = await db.collection('users').doc(userId).collection('sessions').orderBy('lastUpdated', 'desc').get();
+    const sessions = [];
+    snapshot.forEach(doc => {
+      sessions.push(doc.data());
+    });
+    
+    return res.json({ ok: true, sessions });
+  } catch (error) {
+    console.error('Fetch sessions error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to fetch sessions' });
+  }
+});
+
+app.get('/api/sessions/:userId/:sessionId', async (req, res) => {
+  try {
+    const { userId, sessionId } = req.params;
+    const docRef = db.collection('users').doc(userId).collection('sessions').doc(sessionId);
+    const docSnap = await docRef.get();
+    
+    if (!docSnap.exists) {
+      return res.status(404).json({ ok: false, error: 'Session not found' });
+    }
+    
+    return res.json({ ok: true, session: docSnap.data() });
+  } catch (error) {
+    console.error('Fetch session error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to fetch session' });
+  }
+});
+
+app.post('/api/sessions/:userId/:sessionId/append', async (req, res) => {
+  try {
+    const { userId, sessionId } = req.params;
+    const { newPastPapersText, newSyllabusText } = req.body;
+    
+    const docRef = db.collection('users').doc(userId).collection('sessions').doc(sessionId);
+    const docSnap = await docRef.get();
+    
+    if (!docSnap.exists) {
+      return res.status(404).json({ ok: false, error: 'Session not found' });
+    }
+    
+    const currentSession = docSnap.data();
+    const coreIntel = currentSession.coreIntel || {};
+    
+    let updatedPastPapers = coreIntel.pastPapersText || '';
+    if (newPastPapersText) {
+      updatedPastPapers = updatedPastPapers ? `${updatedPastPapers}\n\n--- [LATE INTEL ADDITION] ---\n\n${newPastPapersText}` : newPastPapersText;
+    }
+    
+    let updatedSyllabus = coreIntel.syllabusText || '';
+    if (newSyllabusText) {
+      updatedSyllabus = updatedSyllabus ? `${updatedSyllabus}\n\n--- [LATE INTEL ADDITION] ---\n\n${newSyllabusText}` : newSyllabusText;
+    }
+    
+    await docRef.set({
+      lastUpdated: Timestamp.now(),
+      coreIntel: {
+        ...coreIntel,
+        pastPapersText: updatedPastPapers,
+        syllabusText: updatedSyllabus
+      }
+    }, { merge: true });
+    
+    return res.json({ ok: true, coreIntel: { ...coreIntel, pastPapersText: updatedPastPapers, syllabusText: updatedSyllabus } });
+  } catch (error) {
+    console.error('Append session error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to append to session' });
+  }
+});
+
 // --- ROUTE 1: EXTRACT FUEL (Agent 1) ---
 app.post('/api/extract', upload.array('file', 10), async (req, res) => {
   try {
@@ -163,11 +240,19 @@ app.post('/api/extract', upload.array('file', 10), async (req, res) => {
 
     const resolvedUserId = userId || workspaceId;
 
-    await db.collection('study_sessions').doc(uploadId).set(
+    await db.collection('users').doc(resolvedUserId).collection('sessions').doc(uploadId).set(
       {
+        sessionId: uploadId,
         workspaceId,
         userId: resolvedUserId,
-        rawText,
+        status: 'active',
+        subject: `Session ${new Date().toLocaleDateString()}`,
+        lastUpdated: Timestamp.now(),
+        coreIntel: {
+          rawNotes: rawText,
+          syllabusText: '',
+          pastPapersText: ''
+        },
         sourceType: hasYoutubeUrl && hasUploadedFiles ? 'mixed' : hasYoutubeUrl ? 'youtube' : 'file',
         createdAt: Timestamp.now(),
       },

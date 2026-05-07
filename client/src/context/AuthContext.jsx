@@ -4,6 +4,7 @@ import {
   onAuthStateChanged,
   signInWithPopup,
   signOut,
+  deleteUser
 } from 'firebase/auth';
 import { auth } from '../firebase.js';
 
@@ -29,8 +30,14 @@ export function AuthProvider({ children }) {
 
   const signOutUser = async () => signOut(auth);
 
+  const deleteAccount = async () => {
+    if (currentUser) {
+      return deleteUser(currentUser);
+    }
+  };
+
   const value = useMemo(
-    () => ({ currentUser, loadingAuth, signInWithGoogle, signOutUser }),
+    () => ({ currentUser, loadingAuth, signInWithGoogle, signOutUser, deleteAccount }),
     [currentUser, loadingAuth]
   );
 

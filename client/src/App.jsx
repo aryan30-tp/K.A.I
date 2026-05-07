@@ -725,8 +725,10 @@ function App() {
   const [activeTab, setActiveTab] = useState(0);
   const [flashcards, setFlashcards] = useState([]);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
 
-  const { currentUser, loadingAuth, signInWithGoogle, signOutUser } = useAuth();
+  const { currentUser, loadingAuth, signInWithGoogle, signOutUser, deleteAccount } = useAuth();
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
 
@@ -997,6 +999,17 @@ function App() {
     setError('');
     setResult('');
     try {
+      if (sessionId) {
+        await fetch(`${apiBase}/api/sessions/${encodeURIComponent(currentUser.uid)}/${encodeURIComponent(sessionId)}/append`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            newSyllabusText: syllabusText,
+            newPastPapersText: pastPapersText.trim() || null,
+          })
+        });
+      }
+
       const res = await fetch(`${apiBase}/api/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1226,6 +1239,38 @@ function App() {
   }
 
 
+  const loadSessions = React.useCallback(async () => {
+    if (!currentUser?.uid) return;
+    setSessionsLoading(true);
+    try {
+      const res = await fetch(`${apiBase}/api/sessions/${encodeURIComponent(currentUser.uid)}`);
+      const data = await parseResponse(res);
+      if (data.ok) {
+        setSessions(data.sessions || []);
+      }
+    } catch (err) {
+      console.error('Failed to load sessions', err);
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, [currentUser, apiBase]);
+
+  useEffect(() => {
+    if (activeTab === 3) {
+      loadSessions();
+    }
+  }, [activeTab, loadSessions]);
+
+  const handleSessionClick = async (session) => {
+    setUploadId(session.sessionId);
+    setSessionId(session.sessionId);
+    setWorkspaceId(session.workspaceId || 'user_123');
+    setRawNotes(session.coreIntel?.rawNotes || '');
+    setSyllabusText(session.coreIntel?.syllabusText || '');
+    setPastPapersText(session.coreIntel?.pastPapersText || '');
+    setActiveTab(0); // Go back to Build tab to resume
+  };
+
   if (loadingAuth) {
     return (
       <div style={{ padding: 24, fontFamily: 'Arial, sans-serif' }}>
@@ -1255,7 +1300,9 @@ function App() {
       <StarsBackground />
       {/* Header */}
       <div className="app-header">
-        <div style={{ 
+        <div 
+          onClick={() => setActiveTab(3)}
+          style={{ 
           fontSize: 24, 
           cursor: 'pointer',
           width: 48,
@@ -1267,7 +1314,8 @@ function App() {
           justifyContent: 'center',
           marginLeft: 'auto',
           color: '#B3FF00',
-          fontWeight: 800
+          fontWeight: 800,
+          border: activeTab === 3 ? '2px solid #B3FF00' : 'none'
         }}>K</div>
         {/* <div className="app-header-user">
           <span>{currentUser.email || currentUser.uid}</span>
@@ -1832,6 +1880,81 @@ function App() {
                 </div>
               )}
             </section>
+          </div>
+        )}
+
+        {/* Tab 3: Profile & Sessions */}
+        {activeTab === 3 && (
+          <div style={{ padding: 24, maxWidth: 800, marginInline: 'auto' }}>
+            <h2 style={{ color: '#B3FF00' }}>Commander Profile</h2>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 32 }}>
+              <button 
+                onClick={signOutUser}
+                style={{ padding: '10px 16px', backgroundColor: '#333', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Sign Out
+              </button>
+              <button 
+                onClick={async () => {
+                  if (window.confirm("Are you sure you want to delete your account? This cannot be undone.")) {
+                    try {
+                      await deleteAccount();
+                    } catch (e) {
+                      alert("Failed to delete account. You may need to sign in again first.");
+                    }
+                  }
+                }}
+                style={{ padding: '10px 16px', backgroundColor: '#ff4d4d', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Delete Account
+              </button>
+            </div>
+
+            <h3 style={{ borderBottom: '1px solid #333', paddingBottom: 8 }}>Session History</h3>
+            {sessionsLoading ? (
+              <p>Loading past operations...</p>
+            ) : sessions.length === 0 ? (
+              <p>No past operations found. Start a new session in the Build tab.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {sessions.map(session => {
+                  const dateStr = session.lastUpdated?.seconds 
+                    ? new Date(session.lastUpdated.seconds * 1000).toLocaleString() 
+                    : 'Unknown Date';
+                  return (
+                    <div 
+                      key={session.sessionId}
+                      onClick={() => handleSessionClick(session)}
+                      style={{ 
+                        backgroundColor: 'rgba(34,34,34,0.8)', 
+                        padding: 20, 
+                        borderRadius: 12, 
+                        border: '1px solid #B3FF00',
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      <div>
+                        <div style={{ fontSize: 18, fontWeight: 'bold', color: '#B3FF00', marginBottom: 4 }}>
+                          {session.subject || 'Intel Session'}
+                        </div>
+                        <div style={{ fontSize: 13, opacity: 0.7 }}>
+                          Last active: {dateStr}
+                        </div>
+                      </div>
+                      <div style={{ fontWeight: 'bold', color: '#fff' }}>
+                        Resume ➔
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

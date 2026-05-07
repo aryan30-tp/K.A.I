@@ -223,6 +223,72 @@ select:focus {
   animation: emergencyPulse 3s infinite ease-in-out;
 }
 
+.vault-container {
+  position: relative;
+  overflow: hidden;
+  transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vault-door-left, .vault-door-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background: #1a1a1a;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #333;
+  transition: transform 1.5s cubic-bezier(0.7, 0, 0.3, 1);
+}
+
+.vault-door-left {
+  left: 0;
+  border-right: 2px solid #ff4d4d;
+}
+
+.vault-door-right {
+  right: 0;
+  border-left: 2px solid #ff4d4d;
+}
+
+.vault-open .vault-door-left {
+  transform: translateX(-100%);
+}
+
+.vault-open .vault-door-right {
+  transform: translateX(100%);
+}
+
+.vault-content {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: all 0.8s ease-out 1s;
+}
+
+.vault-open .vault-content {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.header-timer {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(255, 0, 0, 0.15);
+  padding: 8px 25px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 77, 77, 0.4);
+  color: #ff4d4d;
+  font-family: 'Courier New', monospace;
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.2);
+  z-index: 100;
+}
+
 .file-carousel {
   scrollbar-width: thin;
   scrollbar-color: #b3ff00 rgba(71, 71, 71, 0.75);

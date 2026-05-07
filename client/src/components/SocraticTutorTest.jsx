@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import robotVideo from '../assets/Robot Ai chatbot.webm';
 
 export default function SocraticTutorTest({
   apiBase = '',
@@ -12,19 +13,36 @@ export default function SocraticTutorTest({
   const [isRecording, setIsRecording] = useState(false);
   const [statusText, setStatusText] = useState('Ready for input.');
   const [output, setOutput] = useState(null);
+  const [parsedHistory, setParsedHistory] = useState([]);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const chatEndRef = useRef(null);
+
+  const accentColor = '#B3FF00';
+
+  useEffect(() => {
+    try {
+      const history = JSON.parse(chatHistory);
+      setParsedHistory(history);
+    } catch (err) {
+      console.error('Failed to parse history', err);
+    }
+  }, [chatHistory]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [parsedHistory]);
 
   const speakSocraticResponse = (textToSpeak) => {
     if (!('speechSynthesis' in window)) return;
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = 1.0;
-    utterance.pitch = 0.9;
+    utterance.pitch = 1.0;
 
     const voices = window.speechSynthesis.getVoices();
     const preferredVoice = voices.find(
-      (voice) => voice.name.includes('Google') || voice.lang === 'en-US'
+      (voice) => voice.name.includes('Google') || voice.lang === 'en-US' || voice.name.includes('Natural')
     );
     if (preferredVoice) utterance.voice = preferredVoice;
 
@@ -44,7 +62,7 @@ export default function SocraticTutorTest({
       };
 
       mediaRecorder.onstop = async () => {
-        setStatusText('Processing audio and asking Pinecone...');
+        setStatusText('Decoding your response...');
 
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const audioFile = new File([audioBlob], 'live-recording.webm', {
@@ -67,24 +85,21 @@ export default function SocraticTutorTest({
 
           const data = await response.json();
           setOutput(data);
-          setStatusText('Response received!');
-
+          
           if (data.tutorSpeech) {
+            setStatusText('Listen to your tutor...');
             speakSocraticResponse(data.tutorSpeech);
+          } else {
+            setStatusText('Ready for next input.');
           }
 
           if (data.studentTranscription && data.tutorSpeech) {
-            try {
-              const currentHistory = JSON.parse(chatHistory);
-              const updatedHistory = [
-                ...currentHistory,
-                { role: 'user', parts: [{ text: data.studentTranscription }] },
-                { role: 'model', parts: [{ text: data.tutorSpeech }] },
-              ];
-              setChatHistory(JSON.stringify(updatedHistory, null, 2));
-            } catch (parseErr) {
-              console.error('Failed to parse chat history', parseErr);
-            }
+            const updatedHistory = [
+              ...parsedHistory,
+              { role: 'user', parts: [{ text: data.studentTranscription }] },
+              { role: 'model', parts: [{ text: data.tutorSpeech }] },
+            ];
+            setChatHistory(JSON.stringify(updatedHistory));
           }
 
           if (data.isConceptMastered) {
@@ -94,7 +109,7 @@ export default function SocraticTutorTest({
           }
         } catch (error) {
           setStatusText('Error connecting to backend.');
-          setOutput({ error: error.toString() });
+          console.error(error);
         }
 
         stream.getTracks().forEach((track) => track.stop());
@@ -102,9 +117,9 @@ export default function SocraticTutorTest({
 
       mediaRecorder.start();
       setIsRecording(true);
-      setStatusText('Listening... Speak your answer!');
+      setStatusText('Listening... Click robot to stop.');
     } catch (err) {
-      alert('Microphone access denied. Please allow mic permissions in your browser.');
+      alert('Microphone access denied. Please allow mic permissions.');
     }
   };
 
@@ -115,80 +130,135 @@ export default function SocraticTutorTest({
     }
   };
 
+  const handleRobotClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   return (
-    <div className="max-w-3xl mx-auto p-8 bg-gray-50 min-h-screen font-sans">
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">
-          🎙️ Agent 8: Live Voice Tutor
-        </h2>
+    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
+      
+      {/* Robot Stage */}
+      <div style={{ 
+        position: 'relative', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        padding: '40px',
+        backgroundColor: 'rgba(20, 20, 20, 0.4)',
+        borderRadius: '40px',
+        border: `1px solid ${isRecording ? accentColor : 'rgba(255,255,255,0.1)'}`,
+        boxShadow: isRecording ? `0 0 60px rgba(179, 255, 0, 0.2)` : 'none',
+        transition: 'all 0.4s ease',
+        cursor: 'pointer',
+        marginBottom: '30px',
+        overflow: 'hidden'
+      }}
+      onClick={handleRobotClick}
+      >
+        <video 
+          src={robotVideo} 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          style={{ 
+            width: '350px', 
+            height: '350px', 
+            filter: isRecording ? `drop-shadow(0 0 30px ${accentColor})` : 'none',
+            transition: 'filter 0.3s ease'
+          }} 
+        />
+        
+        <div style={{ 
+          marginTop: '20px', 
+          fontSize: '18px', 
+          fontWeight: '700', 
+          letterSpacing: '1px',
+          color: isRecording ? accentColor : '#fff',
+          textTransform: 'uppercase',
+          textAlign: 'center'
+        }}>
+          {isRecording ? '● Recording... Click to Stop' : 'Click me to talk'}
+        </div>
+        <div style={{ opacity: 0.6, fontSize: '13px', marginTop: '8px' }}>
+          {statusText}
+        </div>
+      </div>
 
-        <div className="space-y-4 mb-6">
-          <input
-            type="text"
-            value={topic}
-            onChange={(e) => {
-              setTopic(e.target.value);
-              setAttemptCount(0);
-            }}
-            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="Topic (e.g., Graph Algorithms)"
-          />
-          <input
-            type="text"
-            value={workspaceId}
-            onChange={(e) => onWorkspaceIdChange(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="Workspace ID"
-          />
+      {/* Chat History Box */}
+      <div style={{ 
+        backgroundColor: 'rgba(255, 255, 255, 0.03)', 
+        borderRadius: '30px', 
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        padding: '30px',
+        minHeight: '200px',
+        maxHeight: '400px',
+        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+        backdropFilter: 'blur(10px)'
+      }}>
+        {parsedHistory.length === 0 ? (
+          <div style={{ textAlign: 'center', opacity: 0.4, marginTop: '60px' }}>
+            No transcript yet. Start talking to your tutor!
+          </div>
+        ) : (
+          parsedHistory.map((msg, i) => (
+            <div key={i} style={{ 
+              alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+              maxWidth: '80%',
+              padding: '16px 24px',
+              borderRadius: msg.role === 'user' ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
+              backgroundColor: msg.role === 'user' ? accentColor : 'rgba(255,255,255,0.08)',
+              color: msg.role === 'user' ? '#000' : '#fff',
+              fontWeight: 500,
+              lineHeight: 1.5,
+              fontSize: '15px'
+            }}>
+              {msg.parts[0].text}
+            </div>
+          ))
+        )}
+        <div ref={chatEndRef} />
+      </div>
 
+      {/* Debug/Settings Area - Shifted Down */}
+      <div style={{ marginTop: '100px', padding: '24px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <h4 style={{ margin: '0 0 16px 0', opacity: 0.5, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Debug Settings</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div>
-            <label className="block text-sm font-bold text-gray-600 mb-2">
-              Chat History (JSON Array)
-            </label>
-            <textarea
-              value={chatHistory}
-              onChange={(e) => setChatHistory(e.target.value)}
-              rows="5"
-              className="w-full p-3 border border-gray-300 rounded font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            <label style={{ fontSize: '11px', opacity: 0.6, display: 'block', marginBottom: '6px' }}>Current Topic</label>
+            <input 
+              type="text" 
+              value={topic} 
+              onChange={(e) => setTopic(e.target.value)}
+              style={{ width: '100%', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px', borderRadius: '8px', color: '#fff' }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '11px', opacity: 0.6, display: 'block', marginBottom: '6px' }}>Workspace ID</label>
+            <input 
+              type="text" 
+              value={workspaceId} 
+              onChange={(e) => onWorkspaceIdChange(e.target.value)}
+              style={{ width: '100%', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px', borderRadius: '8px', color: '#fff' }}
             />
           </div>
         </div>
-
-        <div className="flex gap-4 mb-6">
-          <button
-            onClick={startRecording}
-            disabled={isRecording}
-            className={`flex-1 font-bold py-3 px-4 rounded text-white transition ${
-              isRecording ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            🎤 Start Recording
-          </button>
-          <button
-            onClick={stopRecording}
-            disabled={!isRecording}
-            className={`flex-1 font-bold py-3 px-4 rounded text-white transition ${
-              !isRecording ? 'bg-red-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'
-            }`}
-          >
-            🛑 Stop & Send
-          </button>
-        </div>
-
-        <div className="mb-6 flex items-center text-gray-700 font-medium">
-          <span
-            className={`inline-block w-3 h-3 rounded-full mr-3 ${
-              isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-400'
-            }`}
-          ></span>
-          {statusText}
-        </div>
-
-        <div>
-          <h3 className="text-lg font-bold mb-2 text-gray-800">API Response:</h3>
-          <pre className="bg-slate-900 text-sky-400 p-4 rounded overflow-x-auto text-sm font-mono">
-            {output ? JSON.stringify(output, null, 2) : 'Waiting for data...'}
-          </pre>
+        <div style={{ marginTop: '16px' }}>
+          <label style={{ fontSize: '11px', opacity: 0.6, display: 'block', marginBottom: '6px' }}>Raw Chat JSON</label>
+          <textarea 
+            value={chatHistory} 
+            onChange={(e) => setChatHistory(e.target.value)}
+            style={{ width: '100%', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px', borderRadius: '8px', color: '#fff', fontSize: '11px', fontFamily: 'monospace' }}
+            rows={3}
+          />
         </div>
       </div>
     </div>

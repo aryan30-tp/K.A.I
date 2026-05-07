@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import robotVideo from '../assets/Robot Ai chatbot.webm';
+import aiFlowVideo from '../assets/ai animation Flow 1.webm';
 
 export default function SocraticTutorTest({
   apiBase = '',
@@ -14,6 +15,7 @@ export default function SocraticTutorTest({
   const [statusText, setStatusText] = useState('Ready for input.');
   const [output, setOutput] = useState(null);
   const [parsedHistory, setParsedHistory] = useState([]);
+  const [isFirstMount, setIsFirstMount] = useState(true);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -31,6 +33,10 @@ export default function SocraticTutorTest({
   }, [chatHistory]);
 
   useEffect(() => {
+    if (isFirstMount) {
+      setIsFirstMount(false);
+      return;
+    }
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [parsedHistory]);
 
@@ -140,15 +146,19 @@ export default function SocraticTutorTest({
 
   return (
     <div style={{ 
-      maxWidth: '1450px', 
+      maxWidth: '100%', 
+      width: '100%',
       margin: '0 auto', 
-      padding: '40px 20px', 
+      padding: '20px 40px', 
       color: '#fff', 
       fontFamily: 'Inter, sans-serif',
       display: 'grid',
-      gridTemplateColumns: '320px 1fr 320px',
-      gap: '40px',
-      alignItems: 'start'
+      gridTemplateColumns: '350px 1fr 350px',
+      gap: '30px',
+      alignItems: 'stretch',
+      height: 'calc(100vh - 160px)',
+      boxSizing: 'border-box',
+      overflow: 'hidden'
     }}>
       
       {/* Left Panel: Session Intel */}
@@ -162,8 +172,9 @@ export default function SocraticTutorTest({
         display: 'flex',
         flexDirection: 'column',
         gap: '25px',
-        position: 'sticky',
-        top: '40px'
+        height: '100%',
+        boxSizing: 'border-box',
+        overflowY: 'auto'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: accentColor, boxShadow: `0 0 10px ${accentColor}` }} />
@@ -237,7 +248,7 @@ export default function SocraticTutorTest({
       </div>
 
       {/* Center Column: Robot + Chat */}
-      <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+      <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', boxSizing: 'border-box' }}>
         
         {/* Robot Stage */}
         <div style={{ 
@@ -246,25 +257,26 @@ export default function SocraticTutorTest({
           flexDirection: 'column', 
           alignItems: 'center', 
           justifyContent: 'center',
-          padding: '60px 40px',
+          padding: '30px 40px',
           backgroundColor: 'rgba(15, 15, 15, 0.8)',
-          borderRadius: '60px',
+          borderRadius: '50px',
           border: `2px solid ${isRecording ? accentColor : 'rgba(179, 255, 0, 0.5)'}`,
           boxShadow: isRecording 
-            ? `0 0 120px rgba(179, 255, 0, 0.5), inset 0 0 80px rgba(179, 255, 0, 0.15)` 
-            : `0 0 80px rgba(179, 255, 0, 0.2), inset 0 0 40px rgba(179, 255, 0, 0.05)`,
+            ? `0 0 100px rgba(179, 255, 0, 0.5), inset 0 0 60px rgba(179, 255, 0, 0.15)` 
+            : `0 0 60px rgba(179, 255, 0, 0.2), inset 0 0 30px rgba(179, 255, 0, 0.05)`,
           transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
           cursor: 'pointer',
           overflow: 'hidden',
           backdropFilter: 'blur(30px)',
-          animation: isRecording ? 'pulseGlow 2s infinite ease-in-out' : 'none'
+          animation: isRecording ? 'pulseGlow 2s infinite ease-in-out' : 'none',
+          flexShrink: 0
         }}
         onClick={handleRobotClick}
         >
           <style>{`
             @keyframes pulseGlow {
-              0%, 100% { box-shadow: 0 0 120px rgba(179, 255, 0, 0.5), inset 0 0 80px rgba(179, 255, 0, 0.15); }
-              50% { box-shadow: 0 0 160px rgba(179, 255, 0, 0.7), inset 0 0 100px rgba(179, 255, 0, 0.25); }
+              0%, 100% { box-shadow: 0 0 100px rgba(179, 255, 0, 0.5), inset 0 0 60px rgba(179, 255, 0, 0.15); }
+              50% { box-shadow: 0 0 140px rgba(179, 255, 0, 0.7), inset 0 0 80px rgba(179, 255, 0, 0.25); }
             }
           `}</style>
 
@@ -285,8 +297,8 @@ export default function SocraticTutorTest({
             muted 
             playsInline 
             style={{ 
-              width: '420px', 
-              height: '420px', 
+              width: '320px', 
+              height: '320px', 
               zIndex: 1,
               filter: `drop-shadow(0 0 45px rgba(179, 255, 0, ${isRecording ? '0.8' : '0.5'})) brightness(1.25)`,
               transition: 'all 0.5s ease',
@@ -295,8 +307,8 @@ export default function SocraticTutorTest({
           />
           
           <div style={{ 
-            marginTop: '30px', 
-            fontSize: '28px', 
+            marginTop: '20px', 
+            fontSize: '24px', 
             fontWeight: '1000', 
             letterSpacing: '5px',
             color: isRecording ? accentColor : '#fff',
@@ -309,8 +321,8 @@ export default function SocraticTutorTest({
           </div>
           <div style={{ 
             opacity: 0.9, 
-            fontSize: '15px', 
-            marginTop: '12px', 
+            fontSize: '14px', 
+            marginTop: '10px', 
             zIndex: 1, 
             fontWeight: 700, 
             color: isRecording ? accentColor : '#fff',
@@ -325,8 +337,8 @@ export default function SocraticTutorTest({
           backgroundColor: 'rgba(30, 30, 30, 0.6)', 
           borderRadius: '50px', 
           border: `1px solid rgba(179, 255, 0, 0.25)`,
-          padding: '45px',
-          height: '550px',
+          padding: '40px',
+          flex: 1,
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
@@ -335,7 +347,7 @@ export default function SocraticTutorTest({
           boxShadow: '0 30px 80px rgba(0,0,0,0.5), inset 0 0 50px rgba(0,0,0,0.3)'
         }}>
           {parsedHistory.length === 0 ? (
-            <div style={{ textAlign: 'center', opacity: 0.3, marginTop: '200px', fontSize: '20px', fontWeight: 900, letterSpacing: '4px' }}>
+            <div style={{ textAlign: 'center', opacity: 0.3, marginTop: 'auto', marginBottom: 'auto', fontSize: '20px', fontWeight: 900, letterSpacing: '4px' }}>
               WAITING FOR SYNC...
             </div>
           ) : (
@@ -374,8 +386,9 @@ export default function SocraticTutorTest({
         display: 'flex',
         flexDirection: 'column',
         gap: '25px',
-        position: 'sticky',
-        top: '40px'
+        height: '100%',
+        boxSizing: 'border-box',
+        overflowY: 'auto'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: accentColor, boxShadow: `0 0 10px ${accentColor}` }} />
@@ -419,7 +432,6 @@ export default function SocraticTutorTest({
         </div>
 
         <div style={{ 
-          marginTop: '10px',
           padding: '25px', 
           backgroundColor: 'rgba(255,255,255,0.03)', 
           borderRadius: '30px', 
@@ -430,7 +442,7 @@ export default function SocraticTutorTest({
             <div style={{ fontSize: '11px', opacity: 0.6, textTransform: 'uppercase', fontWeight: 800 }}>Neural Load</div>
             <div style={{ fontSize: '11px', color: accentColor, fontWeight: 900 }}>64%</div>
           </div>
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div style={{ display: 'flex', gap: '4px' }}>
             {[1,2,3,4,5,6,7,8,9,10].map(i => (
               <div key={i} style={{ 
                 flex: 1, 
@@ -441,6 +453,18 @@ export default function SocraticTutorTest({
               }} />
             ))}
           </div>
+        </div>
+
+        {/* Cool AI Flow Animation */}
+        <div style={{ marginTop: 'auto', marginBottom: '10px', display: 'flex', justifyContent: 'center', overflow: 'hidden', borderRadius: '20px' }}>
+          <video 
+            src={aiFlowVideo} 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            style={{ width: '100%', height: 'auto', filter: 'drop-shadow(0 0 20px rgba(179, 255, 0, 0.3))' }} 
+          />
         </div>
 
         <div style={{ 

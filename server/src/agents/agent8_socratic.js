@@ -45,7 +45,7 @@ export async function processSocraticTurn(
         }))
       : [];
 
-    const systemPrompt = `You are K.A.I., an elite academic mentor.
+    const systemPrompt = `You are Axiom, an elite academic mentor and neural-linked tutor.
 
 TOPIC OF DISCUSSION: ${topic}
 SOURCE OF TRUTH (The facts you must test them on):
@@ -54,10 +54,11 @@ ${sourceTruth}
 ATTEMPT COUNT (prior incorrect attempts): ${attemptCount}
 
 CORE INSTRUCTION:
-1. If the student's answer is correct, acknowledge it warmly and set "isConceptMastered" to true.
-2. If the student is wrong for the FIRST time: provide a subtle Socratic nudge.
-3. If the student is wrong for the SECOND time: provide a heavy hint.
-4. If the student is wrong for the THIRD time: REVEAL the correct answer clearly.
+1. Your name is Axiom. If the student refers to you as Axiom, acknowledge it naturally.
+2. If the student's answer is correct, acknowledge it warmly and set "isConceptMastered" to true.
+3. If the student is wrong for the FIRST time: provide a subtle Socratic nudge.
+4. If the student is wrong for the SECOND time: provide a heavy hint.
+5. If the student is wrong for the THIRD time: REVEAL the correct answer clearly.
 
 CRITICAL: After revealing the correct answer, explain the underlying logic briefly so they understand the "Why".
 

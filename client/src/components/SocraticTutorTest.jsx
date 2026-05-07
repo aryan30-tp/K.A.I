@@ -8,8 +8,13 @@ export default function SocraticTutorTest({
   sessionId = '',
   onWorkspaceIdChange = () => {},
 }) {
-  const [topic, setTopic] = useState('Graph Algorithms');
-  const [chatHistory, setChatHistory] = useState('[]');
+  // Persistence Keys
+  const STORAGE_KEY_TOPIC = `kai_tutor_topic_${workspaceId}`;
+  const STORAGE_KEY_HISTORY = `kai_tutor_history_${workspaceId}`;
+
+  const [topic, setTopic] = useState(() => localStorage.getItem(STORAGE_KEY_TOPIC) || '');
+  const [confirmedTopic, setConfirmedTopic] = useState(() => localStorage.getItem(STORAGE_KEY_TOPIC) || '');
+  const [chatHistory, setChatHistory] = useState(() => localStorage.getItem(STORAGE_KEY_HISTORY) || '[]');
   const [attemptCount, setAttemptCount] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [statusText, setStatusText] = useState('Ready for input.');
@@ -23,15 +28,18 @@ export default function SocraticTutorTest({
 
   const accentColor = '#B3FF00';
 
+  // Parse history from string state
   useEffect(() => {
     try {
       const history = JSON.parse(chatHistory);
       setParsedHistory(history);
+      localStorage.setItem(STORAGE_KEY_HISTORY, chatHistory);
     } catch (err) {
       console.error('Failed to parse history', err);
     }
-  }, [chatHistory]);
+  }, [chatHistory, STORAGE_KEY_HISTORY]);
 
+  // Scroll to bottom when history updates
   useEffect(() => {
     if (isFirstMount) {
       setIsFirstMount(false);
@@ -56,6 +64,10 @@ export default function SocraticTutorTest({
   };
 
   const startRecording = async () => {
+    if (!confirmedTopic) {
+      alert("Please confirm a topic first.");
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -77,7 +89,7 @@ export default function SocraticTutorTest({
 
         const formData = new FormData();
         formData.append('audioFile', audioFile);
-        formData.append('topic', topic);
+        formData.append('topic', confirmedTopic);
         formData.append('workspaceId', workspaceId);
         formData.append('sessionId', sessionId);
         formData.append('chatHistory', chatHistory);
@@ -144,6 +156,13 @@ export default function SocraticTutorTest({
     }
   };
 
+  const handleConfirmTopic = () => {
+    if (!topic.trim()) return;
+    setConfirmedTopic(topic);
+    localStorage.setItem(STORAGE_KEY_TOPIC, topic);
+    setStatusText(`Topic confirmed: ${topic}`);
+  };
+
   return (
     <div style={{ 
       maxWidth: '100%', 
@@ -153,7 +172,7 @@ export default function SocraticTutorTest({
       color: '#fff', 
       fontFamily: 'Inter, sans-serif',
       display: 'grid',
-      gridTemplateColumns: '350px 1fr 350px',
+      gridTemplateColumns: '380px 1fr 350px',
       gap: '30px',
       alignItems: 'stretch',
       height: 'calc(100vh - 160px)',
@@ -192,27 +211,45 @@ export default function SocraticTutorTest({
         
         <div style={{ height: '1px', background: `linear-gradient(90deg, ${accentColor}, transparent)` }} />
 
-        <div>
+        <div style={{ position: 'relative', marginLeft: '-10px' }}>
           <label style={{ fontSize: '11px', opacity: 0.5, display: 'block', marginBottom: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Mission Objective</label>
-          <input 
-            type="text" 
-            value={topic} 
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="Focus topic..."
-            style={{ 
-              width: '100%', 
-              backgroundColor: 'rgba(0,0,0,0.5)', 
-              border: `1px solid rgba(179, 255, 0, 0.3)`, 
-              padding: '18px', 
-              borderRadius: '20px', 
-              color: '#fff',
-              fontSize: '15px',
-              fontWeight: '600',
-              outline: 'none',
-              boxShadow: `inset 0 0 15px rgba(179, 255, 0, 0.1)`,
-              transition: 'all 0.3s ease'
-            }}
-          />
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input 
+              type="text" 
+              value={topic} 
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="Focus topic..."
+              style={{ 
+                flex: 1,
+                backgroundColor: 'rgba(0,0,0,0.5)', 
+                border: `1px solid ${confirmedTopic === topic && topic ? accentColor : 'rgba(179, 255, 0, 0.3)'}`, 
+                padding: '18px', 
+                borderRadius: '20px', 
+                color: '#fff',
+                fontSize: '15px',
+                fontWeight: '600',
+                outline: 'none',
+                boxShadow: `inset 0 0 15px rgba(179, 255, 0, 0.1)`,
+                transition: 'all 0.3s ease'
+              }}
+            />
+            <button 
+              onClick={handleConfirmTopic}
+              style={{
+                backgroundColor: accentColor,
+                color: '#000',
+                border: 'none',
+                borderRadius: '15px',
+                padding: '0 20px',
+                fontWeight: '900',
+                fontSize: '12px',
+                cursor: 'pointer',
+                textTransform: 'uppercase'
+              }}
+            >
+              Set
+            </button>
+          </div>
         </div>
 
         <div style={{ 
@@ -245,10 +282,24 @@ export default function SocraticTutorTest({
         }}>
           "Knowledge is the only weapon that grows sharper with use." - K.A.I. System
         </div>
+
+        <div style={{ 
+          marginTop: 'auto',
+          padding: '25px', 
+          backgroundColor: 'rgba(179, 255, 0, 0.05)', 
+          borderRadius: '30px', 
+          border: `1px solid rgba(179, 255, 0, 0.15)`,
+          lineHeight: 1.5
+        }}>
+          <div style={{ color: accentColor, fontWeight: 900, fontSize: '16px', marginBottom: '10px', textTransform: 'uppercase' }}>Meet Axiom</div>
+          <div style={{ fontSize: '14px', opacity: 0.8 }}>
+            Hi, I am <span style={{ color: accentColor, fontWeight: 'bold' }}>Axiom</span>, your neural-linked tutor. I'm engineered to dismantle complex concepts and rebuild them in your mind until you ace your goals. Let's sync and conquer.
+          </div>
+        </div>
       </div>
 
       {/* Center Column: Robot + Chat */}
-      <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', boxSizing: 'border-box' }}>
+      <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
         
         {/* Robot Stage */}
         <div style={{ 

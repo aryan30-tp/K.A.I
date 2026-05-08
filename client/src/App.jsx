@@ -5,40 +5,8 @@ import { useAuth } from './context/AuthContext.jsx';
 import chatbotVideo from './assets/Live chatbot.webm';
 import ignisVideo from './assets/Technology isometric ai robot brain.webm';
 import kaiLogo from './assets/Screenshot 2026-05-08 175656.png';
-
-function StarsBackground() {
-  const [stars, setStars] = useState([]);
-
-  useEffect(() => {
-    const starCount = 150;
-    const generatedStars = Array.from({ length: starCount }).map((_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      top: `${Math.random() * 100}%`,
-      size: `${Math.random() * 2 + 1}px`,
-      duration: `${Math.random() * 3 + 2}s`,
-    }));
-    setStars(generatedStars);
-  }, []);
-
-  return (
-    <div className="stars-container">
-      {stars.map((star) => (
-        <div
-          key={star.id}
-          className="star"
-          style={{
-            left: star.left,
-            top: star.top,
-            width: star.size,
-            height: star.size,
-            '--duration': star.duration,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
+import StarsBackground from './components/StarsBackground.jsx';
+import LandingPage from './components/LandingPage.jsx';
 
 function LoadingProgressBar({ loading, label }) {
   if (!loading) return null;
@@ -1234,7 +1202,7 @@ function App() {
   };
 
   if (loadingAuth) return <div style={{ padding: 24, fontFamily: 'Arial, sans-serif' }}><h1>K.A.I.</h1><p>Checking session...</p></div>;
-  if (!currentUser) return <div style={{ padding: 24, fontFamily: 'Arial, sans-serif', textAlign: 'center' }}><h1 style={{ color: '#B3FF00' }}>K.A.I. Emergency Triage</h1><p style={{ color: '#E8E8E8' }}>Sign in to continue.</p><button onClick={signInWithGoogle} style={{ padding: '10px 16px', cursor: 'pointer', fontWeight: 600, backgroundColor: '#B3FF00', color: '#000', border: 'none', borderRadius: 4 }}>Sign in with Google</button></div>;
+  if (!currentUser) return <LandingPage signInWithGoogle={signInWithGoogle} />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'transparent', transition: 'all 0.5s ease' }}>

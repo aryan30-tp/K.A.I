@@ -238,6 +238,7 @@ select:focus {
   animation: emergencyPulse 3s infinite ease-in-out;
 }
 
+/* Vault Styles */
 .vault-container {
   position: relative;
   overflow: hidden;
@@ -256,7 +257,7 @@ select:focus {
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, #ff4d4d, transparent);
-  z-index: 5;
+  z-index: 2; /* Below content */
   animation: scanline 4s linear infinite;
   opacity: 0.3;
 }
@@ -313,6 +314,8 @@ select:focus {
   justify-content: center;
   background: rgba(0,0,0,0.9);
   box-shadow: 0 0 40px rgba(255, 77, 77, 0.3);
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .vault-lock-ring::after {
@@ -324,12 +327,17 @@ select:focus {
   animation: rotate 15s linear infinite;
 }
 
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .vault-panel-corner {
   position: absolute;
   width: 20px;
   height: 20px;
   border: 2px solid #ff4d4d;
-  z-index: 2;
+  z-index: 3; /* Below content */
   opacity: 0.6;
 }
 
@@ -338,6 +346,14 @@ select:focus {
 .corner-bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
 .corner-br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
 
+.vault-open .vault-door-left {
+  transform: translateX(-105%);
+}
+
+.vault-open .vault-door-right {
+  transform: translateX(105%);
+}
+
 .vault-content {
   opacity: 0;
   transform: scale(0.98);
@@ -345,7 +361,8 @@ select:focus {
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(5px);
   position: relative;
-  z-index: 1;
+  z-index: 5; /* Above background elements, below doors */
+  height: 100%;
 }
 
 .vault-open .vault-content {
@@ -367,7 +384,7 @@ select:focus {
   background: #ff4d4d;
   width: 0%;
   box-shadow: 0 0 15px #ff4d4d;
-  animation: syncProgress 5s forwards linear; /* Matches the 5s delay in JS */
+  animation: syncProgress 5s forwards linear;
 }
 
 @keyframes syncProgress {

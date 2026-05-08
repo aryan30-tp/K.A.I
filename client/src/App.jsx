@@ -1746,8 +1746,19 @@ function App() {
                 <div className="vault-panel-corner corner-tr" />
                 <div className="vault-panel-corner corner-bl" />
                 <div className="vault-panel-corner corner-br" />
-                <div className="vault-door-left"><div className="vault-lock-ring" style={{ right: '-70px' }}><div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 10 }}>K.A.I.</div></div></div>
-                <div className="vault-door-right"><div className="vault-lock-ring" style={{ left: '-70px' }}><div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 10 }}>SECURE</div></div></div>
+                
+                {/* Sliding Doors with split Lock Rings */}
+                <div className="vault-door-left">
+                  <div className="vault-lock-ring" style={{ right: '-70px' }}>
+                    <div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 10 }}>K.A.I.</div>
+                  </div>
+                </div>
+                <div className="vault-door-right">
+                  <div className="vault-lock-ring" style={{ left: '-70px' }}>
+                    <div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 10 }}>SECURE</div>
+                  </div>
+                </div>
+
                 <div className="vault-content" style={{ padding: '40px', height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30, flexShrink: 0 }}><h2 style={{ color: '#ff4d4d', margin: 0, textTransform: 'uppercase', letterSpacing: 4 }}>Tactical Battle Plan</h2><div style={{ padding: '8px 15px', backgroundColor: 'rgba(255, 77, 77, 0.2)', border: '1px solid #ff4d4d', borderRadius: 10, color: '#ff4d4d', fontWeight: 800, fontSize: 12 }}>DECODED</div></div>
                   <div style={{ flex: 1, overflowY: 'auto' }}>{survivalPlan && (<div><div style={{ marginBottom: 30, padding: 25, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 25, borderLeft: '5px solid #ff4d4d' }}><div style={{ fontSize: 12, opacity: 0.5, textTransform: 'uppercase', fontWeight: 900 }}>Mission Briefing</div><div style={{ fontSize: 16, lineHeight: 1.7 }}>{survivalPlan.missionBriefing}</div></div><table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 12px' }}><thead><tr>{['Phase', 'Action', 'Target', 'Agent', 'Instruction'].map(h => <th key={h} style={{ textAlign: 'left', padding: '10px 20px', fontSize: 11, textTransform: 'uppercase', opacity: 0.5 }}>{h}</th>)}</tr></thead><tbody>{survivalPlan.survivalPlan.map((row, idx) => <tr key={idx} style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}><td style={{ padding: '25px 20px', borderRadius: '20px 0 0 20px', fontWeight: 900, color: '#ff4d4d' }}>{row.phase}</td><td style={{ padding: '25px 20px' }}>{row.action}</td><td style={{ padding: '25px 20px' }}>{row.concept}</td><td style={{ padding: '25px 20px', color: '#B3FF00', fontWeight: 800 }}>

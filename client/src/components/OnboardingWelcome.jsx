@@ -55,7 +55,7 @@ const OnboardingWelcome = ({ user, onComplete }) => {
         clearInterval(typingTimeoutRef.current);
         setIsTyping(false);
       }
-    }, 25);
+    }, 12); // Faster typing speed
   };
 
   const handleNext = () => {
@@ -87,6 +87,13 @@ const OnboardingWelcome = ({ user, onComplete }) => {
       fontFamily: '"Share Tech Mono", monospace'
     }}>
       <StarsBackground />
+      
+      {/* ATMOSPHERIC GALAXY NEBULAE */}
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+        <div className="nebula" style={{ top: '10%', left: '10%', width: '40vw', height: '40vh', background: `radial-gradient(circle, ${neonGreen}05 0%, transparent 70%)` }} />
+        <div className="nebula" style={{ top: '50%', right: '5%', width: '35vw', height: '35vh', background: `radial-gradient(circle, ${neonGreen}08 0%, transparent 70%)`, animationDelay: '-2s' }} />
+        <div className="nebula" style={{ bottom: '5%', left: '20%', width: '30vw', height: '30vh', background: `radial-gradient(circle, ${neonGreen}04 0%, transparent 70%)`, animationDelay: '-4s' }} />
+      </div>
 
       {/* SCANLINE OVERLAY */}
       <div style={{
@@ -96,7 +103,7 @@ const OnboardingWelcome = ({ user, onComplete }) => {
         backgroundSize: '100% 2px, 3px 100%',
         zIndex: 50,
         pointerEvents: 'none',
-        opacity: 0.1
+        opacity: 0.15
       }} />
 
       {/* MAIN CONTAINER */}
@@ -126,14 +133,14 @@ const OnboardingWelcome = ({ user, onComplete }) => {
           {/* ROBOT SUB-ROUTINES (LEFT/RIGHT) */}
           <div style={{
             position: 'absolute',
-            left: '80px',
+            left: '6vw',
             top: '50%',
             transform: 'translateY(-50%)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '30px',
+            gap: '40px',
             opacity: sequences[sequence].layout === 'side' ? 1 : 0,
-            transition: 'all 0.8s ease',
+            transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
             zIndex: 20
           }}>
             <RobotBox 
@@ -155,11 +162,11 @@ const OnboardingWelcome = ({ user, onComplete }) => {
 
           <div style={{
             position: 'absolute',
-            right: '80px',
+            right: '6vw',
             top: '50%',
             transform: 'translateY(-50%)',
             opacity: sequences[sequence].layout === 'side' ? 1 : 0,
-            transition: 'all 0.8s ease',
+            transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
             zIndex: 20
           }}>
             <RobotBox 
@@ -178,7 +185,7 @@ const OnboardingWelcome = ({ user, onComplete }) => {
             width: 'min(65vh, 70vw)',
             height: 'min(65vh, 70vw)',
             transition: 'transform 1s cubic-bezier(0.4, 0, 0.2, 1)',
-            transform: sequences[sequence].layout === 'side' ? 'translateY(-30px) scale(0.8)' : 'translateY(0) scale(1)',
+            transform: sequences[sequence].layout === 'side' ? 'translateY(-40px) scale(0.75)' : 'translateY(0) scale(1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
@@ -193,18 +200,18 @@ const OnboardingWelcome = ({ user, onComplete }) => {
                 width: '100%',
                 height: 'auto',
                 zIndex: 6,
-                opacity: 0.8
+                opacity: 0.85
               }} 
             />
 
-            {/* TINTED LAYER (Head/Shoulders only via mask) */}
+            {/* TINTED LAYER (Head/Shoulders strictly) */}
             <div style={{
               position: 'absolute',
               inset: 0,
-              zIndex: 7,
+              zIndex: 10,
               pointerEvents: 'none',
-              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 60%)',
-              maskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 60%)'
+              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 35%, transparent 55%)',
+              maskImage: 'linear-gradient(to bottom, black 0%, black 35%, transparent 55%)'
             }}>
               <img 
                 src={robotImg} 
@@ -213,7 +220,7 @@ const OnboardingWelcome = ({ user, onComplete }) => {
                 style={{
                   width: '100%',
                   height: 'auto',
-                  filter: `sepia(100%) hue-rotate(50deg) saturate(10) brightness(1.2) drop-shadow(0 0 20px ${neonGreen})`,
+                  filter: `sepia(100%) hue-rotate(50deg) saturate(8) brightness(1.3) drop-shadow(0 0 30px ${neonGreen})`,
                 }} 
               />
             </div>
@@ -227,39 +234,38 @@ const OnboardingWelcome = ({ user, onComplete }) => {
               width: '30%',
               height: '6%',
               background: `radial-gradient(ellipse, ${neonGreen} 0%, transparent 80%)`,
-              opacity: (sequence === 1 || sequence === 5) ? 0.9 : 0.4,
-              zIndex: 8,
+              opacity: (sequence === 1 || sequence === 5) ? 1 : 0.5,
+              zIndex: 15,
               filter: 'blur(10px)',
-              animation: (sequence === 1 || sequence === 5) ? 'eye-flare 0.5s infinite alternate' : 'eye-flicker 4s infinite'
+              animation: (sequence === 1 || sequence === 5) ? 'eye-flare 0.4s infinite alternate' : 'eye-flicker 3s infinite'
             }} />
           </div>
         </div>
 
-        {/* BOTTOM PANEL: FULL WIDTH DIALOGUE */}
+        {/* BOTTOM PANEL: FULL WIDTH COMMAND CONSOLE */}
         <div style={{
           width: '100%',
-          background: 'rgba(5, 5, 5, 0.95)',
-          backdropFilter: 'blur(20px)',
-          borderTop: `2px solid ${neonGreen}44`,
-          padding: '40px 80px',
+          background: 'linear-gradient(to bottom, rgba(5, 5, 5, 0.98), #000)',
+          backdropFilter: 'blur(30px)',
+          borderTop: `2px solid ${neonGreen}55`,
+          padding: '40px 100px',
           boxSizing: 'border-box',
-          minHeight: '260px',
+          minHeight: '280px',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          alignItems: 'stretch', // Fill entire width
           justifyContent: 'space-between',
           zIndex: 100,
-          boxShadow: `0 -20px 50px rgba(0,0,0,0.8)`
+          boxShadow: `0 -30px 80px rgba(0,0,0,0.9)`
         }}>
           <div style={{
             width: '100%',
-            maxWidth: '1100px',
             color: neonGreen,
-            fontSize: '20px',
+            fontSize: '22px',
             lineHeight: 1.7,
             textAlign: 'left',
-            letterSpacing: '1.5px',
-            textShadow: `0 0 8px ${neonGreen}66`,
+            letterSpacing: '1px',
+            textShadow: `0 0 10px ${neonGreen}44`,
             whiteSpace: 'pre-wrap',
             flex: 1,
             display: 'flex',
@@ -269,23 +275,23 @@ const OnboardingWelcome = ({ user, onComplete }) => {
           </div>
 
           <div style={{ marginTop: '30px', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: '12px', opacity: 0.4, letterSpacing: '3px', fontWeight: 900 }}>
-              K.A.I. PROLOGUE // SECURE_LINE_0{sequence}
+            <div style={{ fontSize: '12px', opacity: 0.4, letterSpacing: '4px', fontWeight: 900, textTransform: 'uppercase' }}>
+              PROLOGUE_PROTOCOL // LINK_ACTIVE // SEQ_0{sequence}
             </div>
             <button 
               onClick={handleNext}
               style={{
-                padding: '16px 45px',
+                padding: '18px 60px',
                 backgroundColor: sequence === 5 && !isTyping ? neonGreen : 'transparent',
                 color: sequence === 5 && !isTyping ? '#000' : neonGreen,
                 border: `2px solid ${neonGreen}`,
                 fontWeight: 900,
                 fontSize: '14px',
-                letterSpacing: '4px',
+                letterSpacing: '5px',
                 textTransform: 'uppercase',
                 cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                boxShadow: (sequence === 5 && !isTyping) ? `0 0 40px ${neonGreen}` : 'none',
+                boxShadow: (sequence === 5 && !isTyping) ? `0 0 50px ${neonGreen}` : 'none',
                 borderRadius: '4px'
               }}
               className="pulse-glow"
@@ -298,45 +304,55 @@ const OnboardingWelcome = ({ user, onComplete }) => {
 
       <style>{`
         @keyframes breathing {
-          0%, 100% { transform: scale(1); filter: brightness(0.95); }
-          50% { transform: scale(1.01); filter: brightness(1.15); }
+          0%, 100% { transform: scale(1); filter: brightness(1); }
+          50% { transform: scale(1.01); filter: brightness(1.2); }
         }
         .breathing-kai {
           animation: breathing 4s ease-in-out infinite;
         }
         @keyframes eye-flicker {
-          0%, 100% { opacity: 0.3; }
-          45% { opacity: 0.4; }
-          50% { opacity: 0.7; }
-          52% { opacity: 0.2; }
-          55% { opacity: 0.8; }
-          60% { opacity: 0.4; }
+          0%, 100% { opacity: 0.4; }
+          45% { opacity: 0.5; }
+          50% { opacity: 0.8; }
+          52% { opacity: 0.1; }
+          55% { opacity: 0.9; }
+          60% { opacity: 0.5; }
         }
         @keyframes eye-flare {
-          from { opacity: 0.6; transform: translateX(-50%) scale(1); }
-          to { opacity: 1; transform: translateX(-50%) scale(1.3); }
+          from { opacity: 0.7; transform: translateX(-50%) scale(1); }
+          to { opacity: 1; transform: translateX(-50%) scale(1.4); }
         }
         .cursor {
-          animation: blink 0.8s step-end infinite;
+          animation: blink 0.6s step-end infinite;
         }
         @keyframes blink {
           50% { opacity: 0; }
         }
+        @keyframes nebula {
+          0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.5; }
+          50% { transform: scale(1.1) translate(20px, -20px); opacity: 0.8; }
+        }
+        .nebula {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          animation: nebula 10s ease-in-out infinite;
+        }
         @keyframes pulse-box {
           0% { box-shadow: 0 0 15px rgba(179, 255, 0, 0.2); border-color: rgba(179, 255, 0, 0.3); }
-          50% { box-shadow: 0 0 35px rgba(179, 255, 0, 0.6); border-color: rgba(179, 255, 0, 1); }
+          50% { box-shadow: 0 0 45px rgba(179, 255, 0, 0.7); border-color: rgba(179, 255, 0, 1); }
           100% { box-shadow: 0 0 15px rgba(179, 255, 0, 0.2); border-color: rgba(179, 255, 0, 0.3); }
         }
         @keyframes pulse-box-out-of-sync {
           0% { box-shadow: 0 0 5px rgba(179, 255, 0, 0.1); transform: scale(1); }
-          33% { box-shadow: 0 0 40px rgba(179, 255, 0, 0.8); transform: scale(1.05) rotate(1deg); }
-          66% { box-shadow: 0 0 20px rgba(179, 255, 0, 0.4); transform: scale(0.95) rotate(-1deg); }
+          33% { box-shadow: 0 0 50px rgba(179, 255, 0, 0.9); transform: scale(1.08) rotate(1.5deg); }
+          66% { box-shadow: 0 0 25px rgba(179, 255, 0, 0.5); transform: scale(0.92) rotate(-1.5deg); }
           100% { box-shadow: 0 0 5px rgba(179, 255, 0, 0.1); transform: scale(1); }
         }
         .pulse-glow:hover {
           background-color: ${neonGreen} !important;
           color: #000 !important;
-          box-shadow: 0 0 50px ${neonGreen} !important;
+          box-shadow: 0 0 60px ${neonGreen} !important;
         }
       `}</style>
     </div>
@@ -345,22 +361,22 @@ const OnboardingWelcome = ({ user, onComplete }) => {
 
 const RobotBox = ({ name, role, active, accent, outOfSync, isIgnis, videoSrc }) => (
   <div style={{
-    width: '280px',
-    backgroundColor: 'rgba(10, 10, 10, 0.95)',
-    border: `2px solid ${active ? accent : 'rgba(255,255,255,0.05)'}`,
-    borderRadius: '16px',
+    width: '340px', // Larger operative boxes
+    backgroundColor: 'rgba(5, 5, 5, 0.98)',
+    border: `3px solid ${active ? accent : 'rgba(255,255,255,0.05)'}`,
+    borderRadius: '20px',
     opacity: active ? 1 : 0,
-    transform: active ? 'scale(1)' : 'scale(0.8) translateY(20px)',
+    transform: active ? 'scale(1)' : 'scale(0.8) translateY(30px)',
     transition: 'all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
     animation: active ? (outOfSync ? 'pulse-box-out-of-sync 0.6s infinite' : 'pulse-box 2.5s infinite') : 'none',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    boxShadow: active ? `0 20px 40px rgba(0,0,0,0.6)` : 'none'
+    boxShadow: active ? `0 30px 60px rgba(0,0,0,0.8)` : 'none'
   }}>
     <div style={{ 
       width: '100%', 
-      height: '180px', 
+      height: '220px', // Taller video area
       backgroundColor: '#000', 
       position: 'relative',
       display: 'flex',
@@ -377,24 +393,24 @@ const RobotBox = ({ name, role, active, accent, outOfSync, isIgnis, videoSrc }) 
           width: '100%', 
           height: '100%', 
           objectFit: 'cover',
-          filter: active ? `brightness(1.2) drop-shadow(0 0 10px ${accent}44)` : 'grayscale(100%)',
-          opacity: active ? 1 : 0.5
+          filter: active ? `brightness(1.3) drop-shadow(0 0 20px ${accent}66)` : 'grayscale(100%)',
+          opacity: active ? 1 : 0.4
         }} 
       />
       {isIgnis && active && (
         <div style={{ 
           position: 'absolute', 
           inset: 0, 
-          background: 'linear-gradient(to top, rgba(255, 77, 77, 0.3), transparent)', 
+          background: 'linear-gradient(to top, rgba(255, 77, 77, 0.4), transparent)', 
           zIndex: 1 
         }} />
       )}
     </div>
-    <div style={{ padding: '20px', borderTop: `1px solid ${accent}33` }}>
-      <div style={{ fontSize: '10px', color: active ? accent : '#777', letterSpacing: '2px', fontWeight: 900, marginBottom: '4px' }}>
+    <div style={{ padding: '25px', borderTop: `1px solid ${accent}44` }}>
+      <div style={{ fontSize: '11px', color: active ? accent : '#777', letterSpacing: '3px', fontWeight: 900, marginBottom: '6px' }}>
         // {role}
       </div>
-      <div style={{ fontSize: '26px', color: '#fff', fontWeight: 900, letterSpacing: '4px' }}>
+      <div style={{ fontSize: '32px', color: '#fff', fontWeight: 900, letterSpacing: '5px' }}>
         {name}
       </div>
     </div>

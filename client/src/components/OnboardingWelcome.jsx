@@ -28,7 +28,7 @@ const OnboardingWelcome = ({ user, onComplete }) => {
       activeRobot: 'AXIOM'
     },
     4: {
-      text: `"Finally, there is Ignis. Ignis is the tactician. He requires the raw, harvested data directly from Kortex to scan your entire syllabus and map out the statistical probabilities of your paper.\n\nBut Ignis is highly adaptive. If Axiom has interrogated you, Ignis will fetch that combat data to further expose your personal weak spots. Kortex provides the past. Axiom tests the present. Ignis predicts the future. Together, they generate your definitive survival heatmap—highlighting the exact glowing red zones where the points are hidden, and the cold grey zones you must completely ignore."`,
+      text: `"Finally, there is Ignis. Ignis is the tactician. He requires the raw, harvested data directly from Kortex to scan your entire syllabus and map out the statistical probabilities of your paper.\n\nBut Ignis is highly adaptive. If Axiom has interrogated you, Ignis will fetch that combat data to literally scan your brain and expose your personal weak spots. Kortex provides the past. Axiom tests the present. Ignis predicts the future. Together, they generate your definitive survival heatmap—highlighting the exact glowing red zones where the points are hidden, and the cold grey zones you must completely ignore."`,
       layout: 'side',
       activeRobot: 'IGNIS'
     },

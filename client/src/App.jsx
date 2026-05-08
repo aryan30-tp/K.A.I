@@ -1753,9 +1753,9 @@ function App() {
                                      row.triggerAgent === 'agent4_generator' ? 'Forge' :
                                      row.triggerAgent === 'agent5_rag' ? 'Neural Core' :
                                      row.triggerAgent === 'agent6_grader' ? 'Evaluator' :
-                                     row.triggerAgent === 'agent7_exam_generator' ? 'Exam Engine' :
-                                     row.triggerAgent === 'agent8_socratic' ? 'Tutor' :
-                                     row.triggerAgent === 'agent9_analyst' ? 'Analyst' :
+                                     (row.triggerAgent === 'agent7_exam_generator' || row.triggerAgent === 'agent7_exam' || row.triggerAgent === 'Exam Engine') ? 'Exam Engine' :
+                                     (row.triggerAgent === 'agent8_socratic' || row.triggerAgent === 'Tutor') ? 'Tutor' :
+                                     row.triggerAgent === 'agent9_analyst' ? 'Performance Analyst' :
                                      row.triggerAgent === 'agent11_triage' ? 'Triage' :
                                      row.triggerAgent}
                                   </td><td style={{ padding: '25px 20px', borderRadius: '0 20px 20px 0', fontSize: 14 }}>{row.instruction}</td></tr>)}</tbody></table></div>)}</div>

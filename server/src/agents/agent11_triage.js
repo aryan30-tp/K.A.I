@@ -86,7 +86,7 @@ Find the top 20% highest-yield concepts (core mechanics, key formulas, primary a
 SYLLABUS DATA:
 ${sourceSyllabus}
 
-  Divide the time into phases with an action, concept, triggerAgent (agent8_socratic or agent7_exam), and instruction.
+  Divide the time into phases with an action, concept, triggerAgent (Tutor or Exam Engine), and instruction.
   If a concept is high-visual (process, structure, cycle), include a 10-word diagram visualPrompt; otherwise set it to null.
 
 Respond STRICTLY in JSON with this exact structure:
@@ -97,7 +97,7 @@ Respond STRICTLY in JSON with this exact structure:
       "phase": "Hour 1-2",
       "action": "Memorize Core Mechanic",
       "concept": "[Insert Concept]",
-      "triggerAgent": "agent8_socratic",
+      "triggerAgent": "Tutor",
       "instruction": "Do a voice drill on this specific mechanism.",
       "visualPrompt": null
     }

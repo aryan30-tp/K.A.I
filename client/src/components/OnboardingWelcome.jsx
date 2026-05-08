@@ -57,7 +57,6 @@ const OnboardingWelcome = ({ user, onComplete }) => {
 
   const handleNext = () => {
     if (isTyping) {
-      // Skip typing
       clearInterval(typingTimeoutRef.current);
       setDisplayText(sequences[sequence].text);
       setIsTyping(false);
@@ -178,21 +177,8 @@ const OnboardingWelcome = ({ user, onComplete }) => {
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            {/* SELECTIVE TINT: Head/Shoulders only */}
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '100%',
-              height: '55%', 
-              background: `radial-gradient(circle at center top, ${neonGreen}33 0%, transparent 80%)`,
-              zIndex: 7,
-              pointerEvents: 'none',
-              mixBlendMode: 'color-dodge',
-              borderRadius: '50% 50% 0 0'
-            }} />
-
+            
+            {/* BASE LAYER (Original Robot) */}
             <img 
               src={robotImg} 
               alt="K.A.I." 
@@ -200,10 +186,31 @@ const OnboardingWelcome = ({ user, onComplete }) => {
               style={{
                 width: '100%',
                 height: 'auto',
-                filter: `drop-shadow(0 0 15px ${neonGreen}33)`,
-                zIndex: 6
+                zIndex: 6,
+                opacity: 0.8
               }} 
             />
+
+            {/* TINTED LAYER (Head/Shoulders only via mask) */}
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 7,
+              pointerEvents: 'none',
+              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 65%)',
+              maskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 65%)'
+            }}>
+              <img 
+                src={robotImg} 
+                alt="K.A.I. Tint" 
+                className="breathing-kai"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  filter: `sepia(100%) hue-rotate(50deg) saturate(10) brightness(1.2) drop-shadow(0 0 15px ${neonGreen})`,
+                }} 
+              />
+            </div>
             
             {/* EYES */}
             <div style={{
@@ -225,8 +232,8 @@ const OnboardingWelcome = ({ user, onComplete }) => {
         {/* BOTTOM PANEL: TEXT & CONTROLS */}
         <div style={{
           width: '100%',
-          background: 'rgba(0,0,0,0.85)',
-          backdropFilter: 'blur(15px)',
+          background: 'rgba(0,0,0,0.9)',
+          backdropFilter: 'blur(20px)',
           borderTop: `1px solid ${neonGreen}33`,
           padding: '40px 60px',
           boxSizing: 'border-box',

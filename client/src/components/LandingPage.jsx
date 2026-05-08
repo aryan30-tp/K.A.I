@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import StarsBackground from './StarsBackground';
 import kaiLogo from '../assets/Screenshot 2026-05-08 175656.png';
-import robotBg from '../assets/ChatGPT Image May 8, 2026, 11_54_05 PM.png';
+import robotBg from '../assets/ChatGPT_Image_May_8__2026__11_54_05_PM.png';
 
 const LandingPage = ({ signInWithGoogle }) => {
   const neonGreen = '#B3FF00';

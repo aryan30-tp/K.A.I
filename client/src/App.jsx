@@ -1717,33 +1717,33 @@ function App() {
         {activeTab === 1 && <SocraticTutorTest apiBase={apiBase} workspaceId={workspaceId} sessionId={sessionId} chatHistory={socraticHistory} setChatHistory={setSocraticHistory} topic={socraticTopic} setTopic={setSocraticTopic} confirmedTopic={socraticConfirmedTopic} setConfirmedTopic={setSocraticConfirmedTopic} attemptCount={socraticAttemptCount} setAttemptCount={setSocraticAttemptCount} />}
         {activeTab === 2 && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30, flex: 1, padding: '20px 40px', boxSizing: 'border-box', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 30, height: '100%', overflowY: 'auto' }}>
-                <div className="fade-in" style={{ backgroundColor: 'rgba(25, 25, 25, 0.7)', borderRadius: '40px', border: `5px solid ${isEmergencyActive ? '#ff4d4d' : 'rgba(179, 255, 0, 0.8)'}`, padding: '30px', backdropFilter: 'blur(25px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400, position: 'relative', overflow: 'hidden' }}>
-                  <video src={ignisVideo} autoPlay loop muted playsInline className={`ignis-visual ${isEmergencyActive ? 'emergency' : ''}`} onClick={() => setShowSurvivalModal(true)} style={{ width: '60%', height: 'auto', maxWidth: 350, cursor: 'pointer', zIndex: 2, imageRendering: 'crisp-edges', marginTop: isSyncing ? -40 : 0, transition: 'all 0.5s ease' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, flex: 1, padding: '40px 60px', boxSizing: 'border-box', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 40, height: '100%', overflowY: 'auto' }}>
+                <div className="fade-in" style={{ backgroundColor: 'rgba(25, 25, 25, 0.7)', borderRadius: '50px', border: `5px solid ${isEmergencyActive ? '#ff4d4d' : 'rgba(179, 255, 0, 0.8)'}`, padding: '40px', backdropFilter: 'blur(25px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 500, position: 'relative', overflow: 'hidden' }}>
+                  <video src={ignisVideo} autoPlay loop muted playsInline className={`ignis-visual ${isEmergencyActive ? 'emergency' : ''}`} onClick={() => setShowSurvivalModal(true)} style={{ width: '70%', height: 'auto', maxWidth: 450, cursor: 'pointer', zIndex: 2, imageRendering: 'crisp-edges', marginTop: isSyncing ? -60 : 0, transition: 'all 0.5s ease' }} />
                   {!isVaultOpen && isSyncing && (
-                    <div style={{ zIndex: 12, textAlign: 'center', width: '80%', marginTop: 20 }}>
-                      <div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 16, letterSpacing: 3, marginBottom: 10 }}>MISSION SYNCHRONIZATION</div>
-                      <div className="sync-bar" style={{ height: 6 }}><div className="sync-bar-fill" /></div>
-                      <div style={{ color: '#ff4d4d', fontSize: 10, marginTop: 10, opacity: 0.8, fontWeight: 700 }}>UPLOADING SURVIVAL PARAMETERS...</div>
+                    <div style={{ zIndex: 12, textAlign: 'center', width: '85%', marginTop: 30 }}>
+                      <div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 18, letterSpacing: 4, marginBottom: 15 }}>MISSION SYNCHRONIZATION</div>
+                      <div className="sync-bar" style={{ height: 8 }}><div className="sync-bar-fill" /></div>
+                      <div style={{ color: '#ff4d4d', fontSize: 12, marginTop: 15, opacity: 0.8, fontWeight: 700 }}>UPLOADING SURVIVAL PARAMETERS...</div>
                     </div>
                   )}
                   <div style={{ position: 'absolute', inset: 0, background: isEmergencyActive ? 'radial-gradient(circle, rgba(255, 77, 77, 0.1) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(179, 255, 0, 0.05) 0%, transparent 70%)', zIndex: 1 }} />
-                  <div style={{ position: 'absolute', bottom: 30, right: 30, opacity: 0.5, fontSize: 12, fontWeight: 900, color: isEmergencyActive ? '#ff4d4d' : '#B3FF00', letterSpacing: 2, zIndex: 3 }}>IGNIS NEURAL CORE v4.1.2</div>
+                  <div style={{ position: 'absolute', bottom: 40, right: 40, opacity: 0.5, fontSize: 14, fontWeight: 900, color: isEmergencyActive ? '#ff4d4d' : '#B3FF00', letterSpacing: 2, zIndex: 3 }}>IGNIS NEURAL CORE v4.1.2</div>
                 </div>
-                <div className="fade-in" style={{ backgroundColor: 'rgba(25, 25, 25, 0.7)', borderRadius: '40px', border: `5px solid ${isEmergencyActive ? '#ff4d4d' : 'rgba(179, 255, 0, 0.8)'}`, padding: '35px', backdropFilter: 'blur(25px)', lineHeight: 1.6, minHeight: 280 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 15, marginBottom: 20 }}><div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: isEmergencyActive ? '#ff4d4d' : '#B3FF00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 900, color: '#fff' }}>I</div><div style={{ color: isEmergencyActive ? '#ff4d4d' : '#B3FF00', fontWeight: 900, fontSize: 22, textTransform: 'uppercase', letterSpacing: 1 }}>System Profile: Ignis</div></div>
-                  <div style={{ fontSize: 16, opacity: 0.9, marginBottom: 15 }}>Greetings, Commander. I am <span style={{ color: isEmergencyActive ? '#ff4d4d' : '#B3FF00', fontWeight: 800 }}>Ignis</span>, your emergency triage strategist.</div>
+                <div className="fade-in" style={{ backgroundColor: 'rgba(25, 25, 25, 0.7)', borderRadius: '50px', border: `5px solid ${isEmergencyActive ? '#ff4d4d' : 'rgba(179, 255, 0, 0.8)'}`, padding: '45px', backdropFilter: 'blur(25px)', lineHeight: 1.6, minHeight: 320 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 15, marginBottom: 25 }}><div style={{ width: 50, height: 50, borderRadius: '50%', backgroundColor: isEmergencyActive ? '#ff4d4d' : '#B3FF00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 900, color: '#fff' }}>I</div><div style={{ color: isEmergencyActive ? '#ff4d4d' : '#B3FF00', fontWeight: 900, fontSize: 26, textTransform: 'uppercase', letterSpacing: 2 }}>System Profile: Ignis</div></div>
+                  <div style={{ fontSize: 18, opacity: 0.9, marginBottom: 20 }}>Greetings, Commander. I am <span style={{ color: isEmergencyActive ? '#ff4d4d' : '#B3FF00', fontWeight: 800 }}>Ignis</span>, your emergency triage strategist.</div>
                   {!isEmergencyActive && (
-                    <div style={{ fontSize: 14, color: '#B3FF00', fontWeight: 800, marginBottom: 20, padding: '10px 15px', border: '1px dashed #B3FF00', borderRadius: '15px', backgroundColor: 'rgba(179, 255, 0, 0.05)', textAlign: 'center' }}>
+                    <div style={{ fontSize: 16, color: '#B3FF00', fontWeight: 800, marginBottom: 25, padding: '15px 20px', border: '2px dashed #B3FF00', borderRadius: '20px', backgroundColor: 'rgba(179, 255, 0, 0.05)', textAlign: 'center' }}>
                       ⚡ ACTION REQUIRED: CLICK IGNIS ABOVE TO INITIALIZE SURVIVAL PROTOCOLS
                     </div>
                   )}
-                  <div style={{ fontSize: 14, opacity: 0.7, lineHeight: 1.8 }}>When time is your enemy, I am your architect. My core is forged from the ashes of over 10,000 high-stakes simulations, specialized in extreme compression of complex syllabi. I deploy Tactical Knowledge Distribution—isolating high-yield nodes for maximum velocity. We will not study; we will conquer.</div>
-                  {isEmergencyActive && <button onClick={handleStopSurvival} style={{ marginTop: 30, width: '100%', padding: '15px', borderRadius: '20px', backgroundColor: '#ff4d4d', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 2, boxShadow: '0 0 20px rgba(255, 77, 77, 0.4)' }}>Terminate Mission</button>}
+                  <div style={{ fontSize: 16, opacity: 0.7, lineHeight: 1.8 }}>When time is your enemy, I am your architect. My core is forged from the ashes of over 10,000 high-stakes simulations, specialized in extreme compression of complex syllabi. I deploy Tactical Knowledge Distribution—isolating high-yield nodes for maximum velocity. We will not study; we will conquer.</div>
+                  {isEmergencyActive && <button onClick={handleStopSurvival} style={{ marginTop: 40, width: '100%', padding: '20px', borderRadius: '25px', backgroundColor: '#ff4d4d', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 3, fontSize: 16, boxShadow: '0 0 30px rgba(255, 77, 77, 0.4)' }}>Terminate Mission</button>}
                 </div>
               </div>
-              <div className={`vault-container ${isVaultOpen ? 'vault-open' : ''}`} style={{ backgroundColor: 'rgba(10, 10, 10, 0.9)', borderRadius: '50px', border: `5px solid ${isEmergencyActive ? '#ff4d4d' : 'rgba(179, 255, 0, 0.8)'}`, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+              <div className={`vault-container ${isVaultOpen ? 'vault-open' : ''}`} style={{ backgroundColor: 'rgba(10, 10, 10, 0.9)', borderRadius: '60px', border: `5px solid ${isEmergencyActive ? '#ff4d4d' : 'rgba(179, 255, 0, 0.8)'}`, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
                 <div className="vault-panel-corner corner-tl" />
                 <div className="vault-panel-corner corner-tr" />
                 <div className="vault-panel-corner corner-bl" />
@@ -1751,19 +1751,19 @@ function App() {
                 
                 {/* Sliding Doors with split Lock Rings */}
                 <div className="vault-door-left">
-                  <div className="vault-lock-ring" style={{ right: '-70px' }}>
-                    <div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 10 }}>K.A.I.</div>
+                  <div className="vault-lock-ring" style={{ right: '-90px', width: 180, height: 180 }}>
+                    <div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 12 }}>K.A.I.</div>
                   </div>
                 </div>
                 <div className="vault-door-right">
-                  <div className="vault-lock-ring" style={{ left: '-70px' }}>
-                    <div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 10 }}>SECURE</div>
+                  <div className="vault-lock-ring" style={{ left: '-90px', width: 180, height: 180 }}>
+                    <div style={{ color: '#ff4d4d', fontWeight: 900, fontSize: 12 }}>SECURE</div>
                   </div>
                 </div>
 
-                <div className="vault-content" style={{ padding: '40px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30, flexShrink: 0 }}><h2 style={{ color: '#ff4d4d', margin: 0, textTransform: 'uppercase', letterSpacing: 4 }}>Tactical Battle Plan</h2><div style={{ padding: '8px 15px', backgroundColor: 'rgba(255, 77, 77, 0.2)', border: '1px solid #ff4d4d', borderRadius: 10, color: '#ff4d4d', fontWeight: 800, fontSize: 12 }}>DECODED</div></div>
-                  <div style={{ flex: 1, overflowY: 'auto' }}>{survivalPlan && (<div><div style={{ marginBottom: 30, padding: 25, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 25, borderLeft: '5px solid #ff4d4d' }}><div style={{ fontSize: 12, opacity: 0.5, textTransform: 'uppercase', fontWeight: 900 }}>Mission Briefing</div><div style={{ fontSize: 16, lineHeight: 1.7 }}>{survivalPlan.missionBriefing}</div></div><table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 12px' }}><thead><tr>{['Phase', 'Action', 'Target', 'Agent', 'Instruction'].map(h => <th key={h} style={{ textAlign: 'left', padding: '10px 20px', fontSize: 11, textTransform: 'uppercase', opacity: 0.5 }}>{h}</th>)}</tr></thead><tbody>{survivalPlan.survivalPlan.map((row, idx) => <tr key={idx} style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}><td style={{ padding: '25px 20px', borderRadius: '20px 0 0 20px', fontWeight: 900, color: '#ff4d4d' }}>{row.phase}</td><td style={{ padding: '25px 20px' }}>{row.action}</td><td style={{ padding: '25px 20px' }}>{row.concept}</td><td style={{ padding: '25px 20px', color: '#B3FF00', fontWeight: 800 }}>
+                <div className="vault-content" style={{ padding: '60px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 40, flexShrink: 0 }}><h2 style={{ color: '#ff4d4d', margin: 0, textTransform: 'uppercase', letterSpacing: 6, fontSize: 32 }}>Tactical Battle Plan</h2><div style={{ padding: '10px 20px', backgroundColor: 'rgba(255, 77, 77, 0.2)', border: '2px solid #ff4d4d', borderRadius: 12, color: '#ff4d4d', fontWeight: 800, fontSize: 14 }}>DECODED</div></div>
+                  <div style={{ flex: 1, overflowY: 'auto' }}>{survivalPlan && (<div><div style={{ marginBottom: 40, padding: 35, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 30, borderLeft: '8px solid #ff4d4d' }}><div style={{ fontSize: 14, opacity: 0.5, textTransform: 'uppercase', fontWeight: 900, letterSpacing: 2 }}>Mission Briefing</div><div style={{ fontSize: 20, lineHeight: 1.8, marginTop: 10 }}>{survivalPlan.missionBriefing}</div></div><table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 15px' }}><thead><tr>{['Phase', 'Action', 'Target', 'Agent', 'Instruction'].map(h => <th key={h} style={{ textAlign: 'left', padding: '10px 25px', fontSize: 13, textTransform: 'uppercase', opacity: 0.5, letterSpacing: 1 }}>{h}</th>)}</tr></thead><tbody>{survivalPlan.survivalPlan.map((row, idx) => <tr key={idx} style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}><td style={{ padding: '30px 25px', borderRadius: '25px 0 0 25px', fontWeight: 900, color: '#ff4d4d', fontSize: 18 }}>{row.phase}</td><td style={{ padding: '30px 25px', fontSize: 16 }}>{row.action}</td><td style={{ padding: '30px 25px', fontSize: 16 }}>{row.concept}</td><td style={{ padding: '30px 25px', color: '#B3FF00', fontWeight: 800, fontSize: 16 }}>
                                     {row.triggerAgent === 'agent1_extractor' ? 'Extractor' :
                                      row.triggerAgent === 'agent2_mapper' ? 'Mapper' :
                                      row.triggerAgent === 'agent3_analyst' ? 'Analyst' :
@@ -1775,7 +1775,7 @@ function App() {
                                      row.triggerAgent === 'agent9_analyst' ? 'Performance Analyst' :
                                      row.triggerAgent === 'agent11_triage' ? 'Triage' :
                                      row.triggerAgent}
-                                  </td><td style={{ padding: '25px 20px', borderRadius: '0 20px 20px 0', fontSize: 14 }}>{row.instruction}</td></tr>)}</tbody></table></div>)}</div>
+                                  </td><td style={{ padding: '30px 25px', borderRadius: '0 25px 25px 0', fontSize: 16, lineHeight: 1.5 }}>{row.instruction}</td></tr>)}</tbody></table></div>)}</div>
                 </div>
               </div>
             </div>

@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import StarsBackground from './StarsBackground';
 import robotImg from '../assets/ChatGPT_Image_May_8__2026__11_54_05_PM.png';
+import kortexVideo from '../assets/Live chatbot.webm';
+import axiomVideo from '../assets/Robot Ai chatbot.webm';
+import ignisVideo from '../assets/Technology isometric ai robot brain.webm';
 
 const OnboardingWelcome = ({ user, onComplete }) => {
   const neonGreen = '#B3FF00';
@@ -99,7 +102,7 @@ const OnboardingWelcome = ({ user, onComplete }) => {
       {/* MAIN CONTAINER */}
       <div style={{
         width: '100%',
-        maxWidth: '1400px',
+        maxWidth: '100%',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -123,14 +126,14 @@ const OnboardingWelcome = ({ user, onComplete }) => {
           {/* ROBOT SUB-ROUTINES (LEFT/RIGHT) */}
           <div style={{
             position: 'absolute',
-            left: '50px',
+            left: '80px',
             top: '50%',
             transform: 'translateY(-50%)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '20px',
+            gap: '30px',
             opacity: sequences[sequence].layout === 'side' ? 1 : 0,
-            transition: 'opacity 0.5s ease',
+            transition: 'all 0.8s ease',
             zIndex: 20
           }}>
             <RobotBox 
@@ -138,6 +141,7 @@ const OnboardingWelcome = ({ user, onComplete }) => {
               role="DATA HARVESTER" 
               active={sequences[sequence].activeRobot === 'KORTEX' || (sequence === 4 && sequences[sequence].activeRobot === 'IGNIS') || sequence === 5} 
               accent={neonGreen}
+              videoSrc={kortexVideo}
             />
             <RobotBox 
               name="AXIOM" 
@@ -145,16 +149,17 @@ const OnboardingWelcome = ({ user, onComplete }) => {
               active={sequences[sequence].activeRobot === 'AXIOM' || (sequence === 4 && sequences[sequence].activeRobot === 'IGNIS') || sequence === 5} 
               accent={neonGreen}
               outOfSync={sequences[sequence].activeRobot === 'AXIOM'}
+              videoSrc={axiomVideo}
             />
           </div>
 
           <div style={{
             position: 'absolute',
-            right: '50px',
+            right: '80px',
             top: '50%',
             transform: 'translateY(-50%)',
             opacity: sequences[sequence].layout === 'side' ? 1 : 0,
-            transition: 'opacity 0.5s ease',
+            transition: 'all 0.8s ease',
             zIndex: 20
           }}>
             <RobotBox 
@@ -163,6 +168,7 @@ const OnboardingWelcome = ({ user, onComplete }) => {
               active={sequences[sequence].activeRobot === 'IGNIS' || sequence === 5} 
               accent={sequence === 4 ? '#FF4D4D' : neonGreen} 
               isIgnis={sequence === 4}
+              videoSrc={ignisVideo}
             />
           </div>
 
@@ -172,7 +178,7 @@ const OnboardingWelcome = ({ user, onComplete }) => {
             width: 'min(65vh, 70vw)',
             height: 'min(65vh, 70vw)',
             transition: 'transform 1s cubic-bezier(0.4, 0, 0.2, 1)',
-            transform: sequences[sequence].layout === 'side' ? 'translateY(-30px) scale(0.85)' : 'translateY(0) scale(1)',
+            transform: sequences[sequence].layout === 'side' ? 'translateY(-30px) scale(0.8)' : 'translateY(0) scale(1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
@@ -197,8 +203,8 @@ const OnboardingWelcome = ({ user, onComplete }) => {
               inset: 0,
               zIndex: 7,
               pointerEvents: 'none',
-              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 65%)',
-              maskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 65%)'
+              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 60%)',
+              maskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 60%)'
             }}>
               <img 
                 src={robotImg} 
@@ -207,7 +213,7 @@ const OnboardingWelcome = ({ user, onComplete }) => {
                 style={{
                   width: '100%',
                   height: 'auto',
-                  filter: `sepia(100%) hue-rotate(50deg) saturate(10) brightness(1.2) drop-shadow(0 0 15px ${neonGreen})`,
+                  filter: `sepia(100%) hue-rotate(50deg) saturate(10) brightness(1.2) drop-shadow(0 0 20px ${neonGreen})`,
                 }} 
               />
             </div>
@@ -221,64 +227,70 @@ const OnboardingWelcome = ({ user, onComplete }) => {
               width: '30%',
               height: '6%',
               background: `radial-gradient(ellipse, ${neonGreen} 0%, transparent 80%)`,
-              opacity: sequence === 5 ? 0.9 : 0.4,
+              opacity: (sequence === 1 || sequence === 5) ? 0.9 : 0.4,
               zIndex: 8,
               filter: 'blur(10px)',
-              animation: sequence === 5 ? 'eye-flare 0.5s infinite alternate' : 'eye-flicker 4s infinite'
+              animation: (sequence === 1 || sequence === 5) ? 'eye-flare 0.5s infinite alternate' : 'eye-flicker 4s infinite'
             }} />
           </div>
         </div>
 
-        {/* BOTTOM PANEL: TEXT & CONTROLS */}
+        {/* BOTTOM PANEL: FULL WIDTH DIALOGUE */}
         <div style={{
           width: '100%',
-          background: 'rgba(0,0,0,0.9)',
+          background: 'rgba(5, 5, 5, 0.95)',
           backdropFilter: 'blur(20px)',
-          borderTop: `1px solid ${neonGreen}33`,
-          padding: '40px 60px',
+          borderTop: `2px solid ${neonGreen}44`,
+          padding: '40px 80px',
           boxSizing: 'border-box',
-          minHeight: '280px',
+          minHeight: '260px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'space-between',
-          zIndex: 30
+          zIndex: 100,
+          boxShadow: `0 -20px 50px rgba(0,0,0,0.8)`
         }}>
           <div style={{
             width: '100%',
-            maxWidth: '900px',
+            maxWidth: '1100px',
             color: neonGreen,
-            fontSize: '18px',
-            lineHeight: 1.6,
+            fontSize: '20px',
+            lineHeight: 1.7,
             textAlign: 'left',
-            letterSpacing: '1px',
-            textShadow: `0 0 5px ${neonGreen}44`,
-            whiteSpace: 'pre-wrap'
+            letterSpacing: '1.5px',
+            textShadow: `0 0 8px ${neonGreen}66`,
+            whiteSpace: 'pre-wrap',
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center'
           }}>
             {displayText}<span className={isTyping ? 'cursor' : ''} style={{ opacity: isTyping ? 1 : 0 }}>_</span>
           </div>
 
-          <div style={{ marginTop: '30px', width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '20px' }}>
-            <div style={{ fontSize: '10px', opacity: 0.5, letterSpacing: '2px' }}>
-              SEQUENCE {sequence}/5 // NEURAL_LINK_STABLE
+          <div style={{ marginTop: '30px', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: '12px', opacity: 0.4, letterSpacing: '3px', fontWeight: 900 }}>
+              K.A.I. PROLOGUE // SECURE_LINE_0{sequence}
             </div>
             <button 
               onClick={handleNext}
               style={{
-                padding: '12px 30px',
+                padding: '16px 45px',
                 backgroundColor: sequence === 5 && !isTyping ? neonGreen : 'transparent',
                 color: sequence === 5 && !isTyping ? '#000' : neonGreen,
-                border: `1px solid ${neonGreen}`,
+                border: `2px solid ${neonGreen}`,
                 fontWeight: 900,
-                fontSize: '12px',
-                letterSpacing: '3px',
+                fontSize: '14px',
+                letterSpacing: '4px',
                 textTransform: 'uppercase',
                 cursor: 'pointer',
-                transition: 'all 0.3s',
-                boxShadow: sequence === 5 && !isTyping ? `0 0 30px ${neonGreen}88` : 'none'
+                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                boxShadow: (sequence === 5 && !isTyping) ? `0 0 40px ${neonGreen}` : 'none',
+                borderRadius: '4px'
               }}
+              className="pulse-glow"
             >
-              {isTyping ? '// SKIP' : (sequence === 5 ? 'INITIALIZE WAR ROOM' : 'NEXT PROTOCOL ➔')}
+              {isTyping ? '// SKIP_INTEL' : (sequence === 5 ? 'INITIALIZE WAR ROOM' : 'NEXT PROTOCOL ➔')}
             </button>
           </div>
         </div>
@@ -286,11 +298,11 @@ const OnboardingWelcome = ({ user, onComplete }) => {
 
       <style>{`
         @keyframes breathing {
-          0%, 100% { transform: scale(1); filter: brightness(0.9); }
-          50% { transform: scale(1.005); filter: brightness(1.1); }
+          0%, 100% { transform: scale(1); filter: brightness(0.95); }
+          50% { transform: scale(1.01); filter: brightness(1.15); }
         }
         .breathing-kai {
-          animation: breathing 6s ease-in-out infinite;
+          animation: breathing 4s ease-in-out infinite;
         }
         @keyframes eye-flicker {
           0%, 100% { opacity: 0.3; }
@@ -302,53 +314,90 @@ const OnboardingWelcome = ({ user, onComplete }) => {
         }
         @keyframes eye-flare {
           from { opacity: 0.6; transform: translateX(-50%) scale(1); }
-          to { opacity: 1; transform: translateX(-50%) scale(1.2); }
+          to { opacity: 1; transform: translateX(-50%) scale(1.3); }
         }
         .cursor {
-          animation: blink 1s step-end infinite;
+          animation: blink 0.8s step-end infinite;
         }
         @keyframes blink {
           50% { opacity: 0; }
         }
         @keyframes pulse-box {
-          0% { box-shadow: 0 0 10px rgba(179, 255, 0, 0.2); border-color: rgba(179, 255, 0, 0.3); }
-          50% { box-shadow: 0 0 25px rgba(179, 255, 0, 0.5); border-color: rgba(179, 255, 0, 0.8); }
-          100% { box-shadow: 0 0 10px rgba(179, 255, 0, 0.2); border-color: rgba(179, 255, 0, 0.3); }
+          0% { box-shadow: 0 0 15px rgba(179, 255, 0, 0.2); border-color: rgba(179, 255, 0, 0.3); }
+          50% { box-shadow: 0 0 35px rgba(179, 255, 0, 0.6); border-color: rgba(179, 255, 0, 1); }
+          100% { box-shadow: 0 0 15px rgba(179, 255, 0, 0.2); border-color: rgba(179, 255, 0, 0.3); }
         }
         @keyframes pulse-box-out-of-sync {
-          0% { box-shadow: 0 0 5px rgba(179, 255, 0, 0.1); transform: scale(1) translateX(0); }
-          33% { box-shadow: 0 0 30px rgba(179, 255, 0, 0.6); transform: scale(1.02) translateX(2px); }
-          66% { box-shadow: 0 0 15px rgba(179, 255, 0, 0.3); transform: scale(0.98) translateX(-2px); }
-          100% { box-shadow: 0 0 5px rgba(179, 255, 0, 0.1); transform: scale(1) translateX(0); }
+          0% { box-shadow: 0 0 5px rgba(179, 255, 0, 0.1); transform: scale(1); }
+          33% { box-shadow: 0 0 40px rgba(179, 255, 0, 0.8); transform: scale(1.05) rotate(1deg); }
+          66% { box-shadow: 0 0 20px rgba(179, 255, 0, 0.4); transform: scale(0.95) rotate(-1deg); }
+          100% { box-shadow: 0 0 5px rgba(179, 255, 0, 0.1); transform: scale(1); }
+        }
+        .pulse-glow:hover {
+          background-color: ${neonGreen} !important;
+          color: #000 !important;
+          box-shadow: 0 0 50px ${neonGreen} !important;
         }
       `}</style>
     </div>
   );
 };
 
-const RobotBox = ({ name, role, active, accent, outOfSync, isIgnis }) => (
+const RobotBox = ({ name, role, active, accent, outOfSync, isIgnis, videoSrc }) => (
   <div style={{
-    width: '240px',
-    padding: '20px',
-    backgroundColor: 'rgba(20, 20, 20, 0.9)',
-    border: `1px solid ${active ? accent : 'rgba(255,255,255,0.1)'}`,
-    borderRadius: '8px',
-    opacity: active ? 1 : 0.3,
-    transition: 'all 0.5s ease',
-    animation: active ? (outOfSync ? 'pulse-box-out-of-sync 0.8s infinite' : 'pulse-box 3s infinite') : 'none',
+    width: '280px',
+    backgroundColor: 'rgba(10, 10, 10, 0.95)',
+    border: `2px solid ${active ? accent : 'rgba(255,255,255,0.05)'}`,
+    borderRadius: '16px',
+    opacity: active ? 1 : 0,
+    transform: active ? 'scale(1)' : 'scale(0.8) translateY(20px)',
+    transition: 'all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    animation: active ? (outOfSync ? 'pulse-box-out-of-sync 0.6s infinite' : 'pulse-box 2.5s infinite') : 'none',
     display: 'flex',
     flexDirection: 'column',
-    gap: '5px'
+    overflow: 'hidden',
+    boxShadow: active ? `0 20px 40px rgba(0,0,0,0.6)` : 'none'
   }}>
-    <div style={{ fontSize: '10px', color: active ? accent : '#777', letterSpacing: '2px', fontWeight: 900 }}>
-      // {role}
+    <div style={{ 
+      width: '100%', 
+      height: '180px', 
+      backgroundColor: '#000', 
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <video 
+        src={videoSrc} 
+        autoPlay 
+        loop 
+        muted 
+        playsInline 
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          objectFit: 'cover',
+          filter: active ? `brightness(1.2) drop-shadow(0 0 10px ${accent}44)` : 'grayscale(100%)',
+          opacity: active ? 1 : 0.5
+        }} 
+      />
+      {isIgnis && active && (
+        <div style={{ 
+          position: 'absolute', 
+          inset: 0, 
+          background: 'linear-gradient(to top, rgba(255, 77, 77, 0.3), transparent)', 
+          zIndex: 1 
+        }} />
+      )}
     </div>
-    <div style={{ fontSize: '24px', color: '#fff', fontWeight: 900, letterSpacing: '4px' }}>
-      {name}
+    <div style={{ padding: '20px', borderTop: `1px solid ${accent}33` }}>
+      <div style={{ fontSize: '10px', color: active ? accent : '#777', letterSpacing: '2px', fontWeight: 900, marginBottom: '4px' }}>
+        // {role}
+      </div>
+      <div style={{ fontSize: '26px', color: '#fff', fontWeight: 900, letterSpacing: '4px' }}>
+        {name}
+      </div>
     </div>
-    {isIgnis && active && (
-      <div style={{ marginTop: '10px', height: '2px', width: '100%', background: `linear-gradient(90deg, ${accent}, #B3FF00)` }} />
-    )}
   </div>
 );
 

@@ -47,26 +47,26 @@ export async function generateSurvivalPlan(workspaceId, hoursRemaining, uploadId
 
     if (!sourceSyllabus.trim()) {
       // Fallback to Firestore specifically for this uploadId if available
-      let query = db.collection('study_sessions').where('workspaceId', '==', workspaceId);
       if (uploadId) {
-        // Check if we can find it by doc ID or field
-        const docRef = db.collection('study_sessions').doc(uploadId);
+        // In this architecture, workspaceId is typically the userId
+        const docRef = db.collection('users').doc(workspaceId).collection('sessions').doc(uploadId);
         const docSnap = await docRef.get();
         if (docSnap.exists) {
-          sourceSyllabus = docSnap.data()?.rawText || '';
+          sourceSyllabus = docSnap.data()?.coreIntel?.rawNotes || '';
         }
       }
       
       if (!sourceSyllabus.trim()) {
         const sessionsSnap = await db
-          .collection('study_sessions')
-          .where('workspaceId', '==', workspaceId)
-          .orderBy('createdAt', 'desc')
+          .collection('users')
+          .doc(workspaceId)
+          .collection('sessions')
+          .orderBy('lastUpdated', 'desc')
           .limit(1)
           .get();
 
         sourceSyllabus = sessionsSnap.docs
-          .map((doc) => doc.data()?.rawText)
+          .map((doc) => doc.data()?.coreIntel?.rawNotes)
           .filter(Boolean)
           .join('\n---\n');
       }

@@ -51,6 +51,7 @@ export async function ingestDocumentToBrain(rawText, workspaceId, sourceName) {
           values: embedding,
           metadata: {
             workspaceId,
+            sessionId: sourceName, // Store session ID for isolation
             source: sourceName,
             text: chunk.pageContent,
           },

@@ -61,6 +61,7 @@ const summarySchema = z.object({
         summary: z.string().describe('Crisp, no-fluff summary of the topic. Bullet point style.'),
         mnemonic: z
           .string()
+          .nullable()
           .optional()
           .describe('A clever memory trick or acronym to remember this topic easily.'),
         mermaidCode: z

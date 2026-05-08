@@ -4,6 +4,7 @@ import VisualLabCard from './components/VisualLabCard.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import chatbotVideo from './assets/Live chatbot.webm';
 import ignisVideo from './assets/Technology isometric ai robot brain.webm';
+import kaiLogo from './assets/Screenshot 2026-05-08 175656.png';
 
 function StarsBackground() {
   const [stars, setStars] = useState([]);
@@ -1239,14 +1240,15 @@ function App() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'transparent', transition: 'all 0.5s ease' }}>
       <StarsBackground />
       {isEmergencyActive && <div className="emergency-overlay" />}
-      <div className="app-header" style={{ position: 'relative' }}>
+      <div className="app-header" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 30px' }}>
+        <img src={kaiLogo} alt="K.A.I. Logo" style={{ height: '60px', width: 'auto', filter: 'drop-shadow(0 0 10px rgba(179, 255, 0, 0.4))' }} />
         {isEmergencyActive && isVaultOpen && (
           <div className="header-timer">
             <span style={{ fontSize: 12, opacity: 0.8, letterSpacing: 1 }}>SURVIVAL CLOCK</span>
             {formatTime(survivalSeconds)}
           </div>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 25, marginLeft: 'auto', marginRight: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 25 }}>
           <div onClick={() => setActiveTab(3)} style={{ fontSize: 24, cursor: 'pointer', width: 48, height: 48, backgroundColor: '#444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B3FF00', fontWeight: 800, transition: 'all 0.3s ease', border: activeTab === 3 ? '2px solid #B3FF00' : '1px solid rgba(255,255,255,0.1)', boxShadow: activeTab === 3 ? '0 0 15px rgba(179, 255, 0, 0.4)' : 'none' }}>K</div>
         </div>
       </div>
@@ -1785,11 +1787,46 @@ function App() {
           </div>
         )}
         {activeTab === 3 && (
-          <div style={{ padding: 24, maxWidth: 800, marginInline: 'auto' }}>
-            <h2 style={{ color: '#B3FF00' }}>Commander Profile</h2>
-            <div style={{ display: 'flex', gap: 16, marginBottom: 32 }}><button onClick={signOutUser} style={{ padding: '10px 16px', backgroundColor: '#333', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 'bold' }}>Sign Out</button><button onClick={async () => { if (window.confirm("Delete account?")) { try { await deleteAccount(); } catch (e) { alert("Failed"); } } }} style={{ padding: '10px 16px', backgroundColor: '#ff4d4d', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 'bold' }}>Delete Account</button></div>
-            <h3>Session History</h3>
-            {sessionsLoading ? <p>Loading...</p> : <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>{sessions.map(s => <div key={s.sessionId} onClick={() => handleSessionClick(s)} style={{ backgroundColor: 'rgba(34,34,34,0.8)', padding: 20, borderRadius: 12, border: '1px solid #B3FF00', cursor: 'pointer' }}><div style={{ fontSize: 18, fontWeight: 'bold', color: '#B3FF00' }}>{s.subject || 'Session'}</div></div>)}</div>}
+          <div style={{ padding: 40, maxWidth: 1200, marginInline: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 50, borderBottom: '1px solid rgba(179, 255, 0, 0.2)', paddingBottom: 20 }}>
+              <h2 style={{ color: '#B3FF00', margin: 0, fontSize: 32, letterSpacing: 2 }}>COMMANDER PROFILE</h2>
+              <div style={{ display: 'flex', gap: 16 }}>
+                <button onClick={signOutUser} style={{ padding: '12px 24px', backgroundColor: '#333', color: '#fff', border: '1px solid #444', borderRadius: 12, cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>SIGN OUT</button>
+                <button onClick={async () => { if (window.confirm("Delete account permanently?")) { try { await deleteAccount(); } catch (e) { alert("Deletion failed"); } } }} style={{ padding: '12px 24px', backgroundColor: 'rgba(255, 77, 77, 0.1)', color: '#ff4d4d', border: '1px solid #ff4d4d', borderRadius: 12, cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>DELETE ACCOUNT</button>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60 }}>
+              <div>
+                <h3 style={{ color: '#B3FF00', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 25, fontSize: 18, display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontSize: 24 }}>🏗️</span> Build History</h3>
+                {sessionsLoading ? <p style={{ opacity: 0.5 }}>Synchronizing...</p> : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {sessions.filter(s => s.sourceType !== 'socratic').length === 0 ? <p style={{ opacity: 0.3 }}>No build data recorded.</p> : 
+                      sessions.filter(s => s.sourceType !== 'socratic').map(s => (
+                      <div key={s.sessionId} onClick={() => handleSessionClick(s)} style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: 25, borderRadius: 20, border: '1px solid rgba(179, 255, 0, 0.2)', cursor: 'pointer', transition: 'all 0.3s ease' }} className="interactive-card">
+                        <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginBottom: 5 }}>{s.subject || 'Extraction Protocol'}</div>
+                        <div style={{ fontSize: 12, opacity: 0.5, fontWeight: 700 }}>{s.sessionId} • {new Date(s.lastUpdated || Date.now()).toLocaleDateString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h3 style={{ color: '#B3FF00', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 25, fontSize: 18, display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontSize: 24 }}>🧠</span> Tutor Sessions</h3>
+                {sessionsLoading ? <p style={{ opacity: 0.5 }}>Synchronizing...</p> : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {sessions.filter(s => s.sourceType === 'socratic').length === 0 ? <p style={{ opacity: 0.3 }}>No tutor interactions recorded.</p> : 
+                      sessions.filter(s => s.sourceType === 'socratic').map(s => (
+                      <div key={s.sessionId} onClick={() => handleSessionClick(s)} style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: 25, borderRadius: 20, border: '1px solid rgba(179, 255, 0, 0.2)', cursor: 'pointer', transition: 'all 0.3s ease' }} className="interactive-card">
+                        <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginBottom: 5 }}>{s.coreIntel?.topic || 'Socratic Inquiry'}</div>
+                        <div style={{ fontSize: 12, opacity: 0.5, fontWeight: 700 }}>{s.sessionId} • {new Date(s.lastUpdated || Date.now()).toLocaleDateString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

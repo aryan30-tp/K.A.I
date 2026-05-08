@@ -686,6 +686,12 @@ function App() {
   const [rawNotes, setRawNotes] = useState('');
   const [syllabusText, setSyllabusText] = useState('');
   const [pastPapersText, setPastPapersText] = useState('');
+  const [syllabusImage, setSyllabusImage] = useState(null);
+  const [notesImage, setNotesImage] = useState(null);
+  const [syllabusImageLoading, setSyllabusImageLoading] = useState(false);
+  const [notesImageLoading, setNotesImageLoading] = useState(false);
+  const [syllabusImageError, setSyllabusImageError] = useState('');
+  const [notesImageError, setNotesImageError] = useState('');
   const [workspaceId, setWorkspaceId] = useState('user_123');
   const [sessionId, setSessionId] = useState(''); 
   const [forceWhisper, setForceWhisper] = useState(false);
@@ -917,6 +923,64 @@ function App() {
     return data;
   }
 
+  async function handleOcrImage(target) {
+    const fileToUse = target === 'syllabus' ? syllabusImage : notesImage;
+    if (!fileToUse) {
+      if (target === 'syllabus') {
+        setSyllabusImageError('Please select a syllabus image.');
+      } else {
+        setNotesImageError('Please select a past papers image.');
+      }
+      return;
+    }
+
+    if (target === 'syllabus') {
+      setSyllabusImageLoading(true);
+      setSyllabusImageError('');
+    } else {
+      setNotesImageLoading(true);
+      setNotesImageError('');
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('image', fileToUse);
+
+      const res = await fetch(`${apiBase}/api/ocr/image`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await parseResponse(res);
+      if (!data.ok) throw new Error(data.error);
+
+      if (target === 'syllabus') {
+        setSyllabusText((prev) => {
+          const trimmed = (data.text || '').trim();
+          if (!trimmed) return prev;
+          return prev ? `${prev}\n\n${trimmed}` : trimmed;
+        });
+      } else {
+        setPastPapersText((prev) => {
+          const trimmed = (data.text || '').trim();
+          if (!trimmed) return prev;
+          return prev ? `${prev}\n\n${trimmed}` : trimmed;
+        });
+      }
+    } catch (err) {
+      if (target === 'syllabus') {
+        setSyllabusImageError(err.message || String(err));
+      } else {
+        setNotesImageError(err.message || String(err));
+      }
+    } finally {
+      if (target === 'syllabus') {
+        setSyllabusImageLoading(false);
+      } else {
+        setNotesImageLoading(false);
+      }
+    }
+  }
+
   async function handleExtract(e) {
     e.preventDefault();
     if (!youtubeUrl && files.length === 0) { setError('Please provide a YouTube URL or upload a file.'); return; }
@@ -950,31 +1014,76 @@ function App() {
 
   async function handleAnalyze(e) {
     e.preventDefault();
-    if (!currentUser?.uid) { setError('Please sign in to continue.'); return; }
-    if (!rawNotes.trim()) { setError('Please extract notes first.'); return; }
-    if (!syllabusText.trim()) { setError('Please provide syllabus text.'); return; }
+    if (!currentUser?.uid) {
+      setError('Please sign in to continue.');
+      return;
+    }
+    if (!rawNotes.trim()) {
+      setError('Please extract notes first.');
+      return;
+    }
+    if (!syllabusText.trim()) {
+      setError('Please provide syllabus text.');
+      return;
+    }
+
     setAnalyzeLoading(true);
     setError('');
     setResult('');
+
     try {
-      const res = await fetch(`${apiBase}/api/map-syllabus`, {
+      if (sessionId) {
+        await fetch(`${apiBase}/api/sessions/${encodeURIComponent(currentUser.uid)}/${encodeURIComponent(sessionId)}/append`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            newSyllabusText: syllabusText,
+            newPastPapersText: pastPapersText.trim() || null,
+          })
+        });
+      }
+
+      const res = await fetch(`${apiBase}/api/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uploadId, rawNotes, syllabusText, pastPapersText, workspaceId: workspaceId.trim() }),
+        body: JSON.stringify({
+          rawNotes,
+          syllabusText,
+          pastPapersText: pastPapersText.trim() || null,
+        }),
       });
+
       const data = await parseResponse(res);
       if (!data.ok) throw new Error(data.error);
-      setSyllabusAnalysis(data.data);
-      setResult(JSON.stringify(data.data, null, 2));
-      setResultSource('analysis');
-    } catch (err) { setError(err.message || String(err)); }
-    finally { setAnalyzeLoading(false); }
+
+      setSyllabusAnalysis(data.syllabusAnalysis);
+      setExamAnalysis(data.examAnalysis);
+      setResult(JSON.stringify(data, null, 2));
+      setResultSource('analyzed');
+      setGeneratedData(null);
+    } catch (err) {
+      setError(err.message || String(err));
+    } finally {
+      setAnalyzeLoading(false);
+    }
   }
 
-  async function handleGenerate(e) {
+  async function handleGenerateOutput(e) {
     e.preventDefault();
-    if (!currentUser?.uid) { setError('Please sign in to continue.'); return; }
-    if (!syllabusAnalysis) { setError('Please map context first.'); return; }
+    if (!currentUser?.uid) {
+      setError('Please sign in to continue.');
+      return;
+    }
+    if (!uploadId) {
+      setError('Please extract content first to get an uploadId.');
+      return;
+    }
+
+    if (!rawNotes.trim()) {
+      setError('Please provide raw notes for generation.');
+      return;
+    }
+
     setGenerateLoading(true);
     setError('');
     setResult('');
@@ -982,27 +1091,53 @@ function App() {
       const res = await fetch(`${apiBase}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uploadId, requestType, rawNotes, syllabusAnalysis, examAnalysis, workspaceId: workspaceId.trim(), userId: currentUser.uid, specificTopic }),
+        body: JSON.stringify({
+          uploadId,
+          requestType,
+          rawNotes,
+          syllabusAnalysis,
+          examAnalysis,
+          specificTopic: specificTopic.trim() ? specificTopic.trim() : null,
+          workspaceId: workspaceId.trim(),
+          userId: currentUser.uid,
+        }),
       });
+
       const data = await parseResponse(res);
       if (!data.ok) throw new Error(data.error);
+
+      setResult(JSON.stringify(data.data, null, 2));
+      setResultSource(`generated (from ${data.source})`);
       setGeneratedData(data.data);
-      if (requestType === 'flashcards' && data.data?.flashcards) {
+
+      if (requestType === 'flashcards' && data.data.flashcards) {
         const newCards = data.data.flashcards.map(c => ({
           ...c,
           id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
         }));
+
         setFlashcards(newCards);
         try {
           await fetch(`${apiBase}/api/analytics/onboard-flashcards`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ workspaceId: workspaceId.trim(), sessionId, flashcards: newCards }),
+            body: JSON.stringify({
+              workspaceId: workspaceId.trim(),
+              sessionId,
+              flashcards: newCards
+            }),
           });
-        } catch (onboardErr) { console.warn("Failed to onboard flashcards", onboardErr); }
-      } else { setFlashcards([]); }
-    } catch (err) { setError(err.message || String(err)); }
-    finally { setGenerateLoading(false); }
+        } catch (onboardErr) {
+          console.warn("Failed to onboard flashcards for analytics", onboardErr);
+        }
+      } else {
+        setFlashcards([]);
+      }
+    } catch (err) {
+      setError(err.message || String(err));
+    } finally {
+      setGenerateLoading(false);
+    }
   }
 
   async function handleFetchHeatmap(e) {
@@ -1118,32 +1253,445 @@ function App() {
       </div>
       <div className="tab-content" style={{ flex: 1, overflowY: activeTab === 0 ? 'auto' : 'hidden' }}>
         {activeTab === 0 && (
-          <div style={{ padding: '20px 40px' }}>
+          <div>
+            {/* Step 1: Extract */}
             <div className="step-one-shell" style={{ marginTop: 50 }}>
-              <RandomMovingBox><video src={chatbotVideo} autoPlay loop muted playsInline style={{ width: '280px', height: '280px', filter: 'drop-shadow(0 0 30px rgba(179, 255, 0, 0.4))' }} /></RandomMovingBox>
+              <RandomMovingBox>
+                <video
+                  src={chatbotVideo}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  style={{
+                    width: '280px',
+                    height: '280px',
+                    filter: 'drop-shadow(0 0 30px rgba(179, 255, 0, 0.4))'
+                  }} 
+                />
+              </RandomMovingBox>
               <section style={{ ...translucentPanelStyle, minHeight: 280, paddingTop: 55, paddingBottom: 15 }}>
-                <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 0 }}>Step 1: Extract Content</h2>
+                <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 0 }}>📚 Step 1: Extract Content</h2>
                 <form onSubmit={handleExtract}>
-                  <div style={{ marginBottom: 18, maxWidth: 980, marginInline: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-                    <div style={{ flex: '1 1 640px', minWidth: 320 }}><input type="text" placeholder="YouTube URL" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} style={glassyInputStyle} /></div>
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 10, minHeight: 56, padding: '0 18px', borderRadius: 18, background: 'rgba(71, 71, 71, 0.72)', border: '1px solid rgba(255, 255, 255, 0.14)', color: '#E8E8E8', fontWeight: 600, whiteSpace: 'nowrap' }}><input type="checkbox" checked={forceWhisper} onChange={(e) => setForceWhisper(e.target.checked)} />Force AI Audio</label>
+                <div
+                  style={{
+                    marginBottom: 18,
+                    maxWidth: 980,
+                    marginInline: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 16,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div style={{ flex: '1 1 640px', minWidth: 320 }}>
+                    <input
+                      type="text"
+                      placeholder="YouTube URL (or leave blank for file upload)"
+                      value={youtubeUrl}
+                      onChange={(e) => setYoutubeUrl(e.target.value)}
+                      style={glassyInputStyle}
+                    />
                   </div>
-                  <div style={{ marginBottom: 22, width: '100%', textAlign: 'center' }}>
-                    <input id="study-material-upload" type="file" accept=".pdf,.docx,.pptx" multiple onChange={(e) => setFiles(Array.from(e.target.files || []))} style={{ display: 'none' }} />
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 14, flexWrap: 'wrap' }}><label htmlFor="study-material-upload" style={uploadPickerButtonStyle}>📁 Local Context</label></div>
+                  <label
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      minHeight: 56,
+                      padding: '0 18px',
+                      borderRadius: 18,
+                      background: 'rgba(71, 71, 71, 0.72)',
+                      border: '1px solid rgba(255, 255, 255, 0.14)',
+                      color: '#E8E8E8',
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={forceWhisper}
+                      onChange={(e) => setForceWhisper(e.target.checked)}
+                    />
+                    Force Groq Whisper
+                  </label>
+                </div>
+                <div style={{ marginBottom: 22, width: '100%', textAlign: 'center' }}>
+                  <input
+                    id="study-material-upload"
+                    type="file"
+                    accept=".pdf,.docx,.pptx"
+                    multiple
+                    onChange={(e) => setFiles(Array.from(e.target.files || []))}
+                    style={{ display: 'none' }}
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 14, flexWrap: 'wrap' }}>
+                    <label htmlFor="study-material-upload" style={uploadPickerButtonStyle}>
+                      Choose Files
+                    </label>
+                    <span style={{ color: '#D6D6D6', fontWeight: 600 }}>
+                      {files.length > 0 ? `${files.length} file${files.length === 1 ? '' : 's'} ready` : 'Upload PDF, DOCX, or PPTX'}
+                    </span>
                   </div>
-                  {files.length > 0 && <div style={{ maxWidth: 980, marginInline: 'auto', marginTop: 20 }}><div className="file-carousel" style={fileCarouselStyle}>{files.map((f, i) => { const meta = getFileTypeMeta(f.name); return <div key={i} style={fileCardStyle}><div><div style={{ fontSize: 11, fontWeight: 900, color: meta.color, marginBottom: 8, letterSpacing: 1.5 }}>{meta.label}</div><div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.4 }}>{f.name}</div></div><div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 11, opacity: 0.5 }}>{(f.size / 1024 / 1024).toFixed(2)} MB</span><button type="button" onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer' }}>✕</button></div></div>; })}</div></div>}
-                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}><button type="submit" disabled={extractLoading} style={getActionButtonStyle(extractLoading)}>{extractLoading ? '⚡ Syncing...' : '⚡ Initialize'}</button></div>
+                  {files.length > 0 && (
+                    <div className="file-carousel" style={fileCarouselStyle}>
+                      {files.map((selectedFile, index) => (
+                        <div key={`${selectedFile.name}-${index}`} style={fileCardStyle}>
+                          {(() => {
+                            const fileType = getFileTypeMeta(selectedFile.name);
+                            return (
+                              <>
+                                <div
+                                  style={{
+                                    width: 86,
+                                    height: 86,
+                                    marginInline: 'auto',
+                                    borderRadius: 24,
+                                    background: `linear-gradient(135deg, ${fileType.color} 0%, ${fileType.color} 62%, ${fileType.accent} 62%, ${fileType.accent} 100%)`,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#FFFFFF',
+                                    fontWeight: 800,
+                                    fontSize: fileType.label.length > 3 ? 18 : 24,
+                                    letterSpacing: 0.6,
+                                    boxShadow: `0 10px 24px ${fileType.accent}`,
+                                  }}
+                                >
+                                  {fileType.label}
+                                </div>
+                                <div style={{ color: accentColor, fontWeight: 700, fontSize: 13, textAlign: 'center', marginTop: 14 }}>
+                                  Document {index + 1}
+                                </div>
+                              </>
+                            );
+                          })()}
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              lineHeight: 1.35,
+                              wordBreak: 'break-word',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              textAlign: 'center',
+                            }}
+                          >
+                            {selectedFile.name}
+                          </div>
+                          <div style={{ color: '#BDBDBD', fontSize: 12, textAlign: 'center' }}>
+                            {Math.max(1, Math.round(selectedFile.size / 1024))} KB
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <button type="submit" disabled={extractLoading || (!youtubeUrl && files.length === 0)} style={getActionButtonStyle(extractLoading || (!youtubeUrl && files.length === 0))}>
+                    {extractLoading ? '⏳ Extracting…' : '📤 Extract Content'}
+                  </button>
+                  <LoadingProgressBar loading={extractLoading} label="Extracting Content" />
+                  {uploadId && <p style={{ color: 'green', marginTop: 8, textAlign: 'center' }}>✅ Extracted! Upload ID: {uploadId.slice(0, 8)}...</p>}
+                </div>
                 </form>
-                <LoadingProgressBar loading={extractLoading} label="Extracting..." />
               </section>
             </div>
-            {notice && <div style={{ marginTop: 20, padding: 18, borderRadius: 20, border: '1px solid #FFAA00', color: '#FFAA00', textAlign: 'center' }}>⚠️ {notice}</div>}
-            {error && <div style={{ marginTop: 20, padding: 18, borderRadius: 20, border: '1px solid #FF4D4D', color: '#FF4D4D', textAlign: 'center' }}>❌ {error}</div>}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: 24, marginTop: 40, maxWidth: 1200, marginInline: 'auto' }}>
-              <section style={{ ...translucentPanelStyle, opacity: rawNotes ? 1 : 0.4 }}><h2>Map Context</h2><form onSubmit={handleAnalyze}><textarea placeholder="Syllabus..." value={syllabusText} onChange={(e) => setSyllabusText(e.target.value)} style={glassyTextAreaStyle} /><button type="submit" disabled={analyzeLoading || !rawNotes} style={getActionButtonStyle(analyzeLoading || !rawNotes)}>🎯 Deploy Mapper</button></form></section>
-              <section style={{ ...translucentPanelStyle, opacity: syllabusAnalysis ? 1 : 0.4 }}><h2>Forge Study Intel</h2><form onSubmit={handleGenerate}><select value={requestType} onChange={(e) => setRequestType(e.target.value)} style={glassySelectStyle}><option value="flashcards">Flashcards</option><option value="summary">Summary</option></select><button type="submit" disabled={generateLoading || !syllabusAnalysis} style={getActionButtonStyle(generateLoading || !syllabusAnalysis)}>⚒️ Ignite Forge</button></form></section>
-            </div>
+
+            {/* Step 2: Analyze */}
+            <ScrollReveal isLocked={!uploadId}>
+              <section style={translucentPanelStyle}>
+                <h2>🔍 Step 2: Analyze (Optional)</h2>
+                <form onSubmit={handleAnalyze}>
+                  <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', marginBottom: 10 }}>Syllabus Image (optional)</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+                        <input
+                          id="syllabus-image-upload"
+                          type="file"
+                          accept=".png,.jpg,.jpeg,.webp"
+                          onChange={(e) => setSyllabusImage(e.target.files?.[0] || null)}
+                          style={{ display: 'none' }}
+                        />
+                        <label htmlFor="syllabus-image-upload" style={uploadPickerButtonStyle}>
+                          {syllabusImage ? '✅ Selected' : '🖼️ Choose Image'}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => handleOcrImage('syllabus')}
+                          disabled={syllabusImageLoading || !syllabusImage}
+                          style={getActionButtonStyle(syllabusImageLoading || !syllabusImage)}
+                        >
+                          {syllabusImageLoading ? '⏳ Extracting…' : '📄 Extract from image'}
+                        </button>
+                        {syllabusImage && <span style={{ fontSize: 12, opacity: 0.7, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{syllabusImage.name}</span>}
+                      </div>
+                      <LoadingProgressBar loading={syllabusImageLoading} label="OCR Syllabus" />
+                      {syllabusImageError && (
+                        <div style={{ color: 'crimson', marginTop: 8 }}>{syllabusImageError}</div>
+                      )}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', marginBottom: 10 }}>Past Papers Image (optional)</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+                        <input
+                          id="notes-image-upload"
+                          type="file"
+                          accept=".png,.jpg,.jpeg,.webp"
+                          onChange={(e) => setNotesImage(e.target.files?.[0] || null)}
+                          style={{ display: 'none' }}
+                        />
+                        <label htmlFor="notes-image-upload" style={uploadPickerButtonStyle}>
+                          {notesImage ? '✅ Selected' : '🖼️ Choose Image'}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => handleOcrImage('notes')}
+                          disabled={notesImageLoading || !notesImage}
+                          style={getActionButtonStyle(notesImageLoading || !notesImage)}
+                        >
+                          {notesImageLoading ? '⏳ Extracting…' : '📄 Extract from image'}
+                        </button>
+                        {notesImage && <span style={{ fontSize: 12, opacity: 0.7, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notesImage.name}</span>}
+                      </div>
+                      <LoadingProgressBar loading={notesImageLoading} label="OCR Past Papers" />
+                      {notesImageError && (
+                        <div style={{ color: 'crimson', marginTop: 8 }}>{notesImageError}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 20, marginBottom: 18, flexWrap: 'wrap' }}>
+                    <textarea
+                      placeholder="Paste syllabus text here (required)"
+                      value={syllabusText}
+                      onChange={(e) => setSyllabusText(e.target.value)}
+                      rows={4}
+                      style={{ ...glassyTextAreaStyle, flex: 1 }}
+                    />
+                    <textarea
+                      placeholder="Paste past exam papers (optional)"
+                      value={pastPapersText}
+                      onChange={(e) => setPastPapersText(e.target.value)}
+                      rows={4}
+                      style={{ ...glassyTextAreaStyle, flex: 1 }}
+                    />
+                  </div>
+                  <button type="submit" disabled={analyzeLoading || !rawNotes.trim() || !syllabusText.trim()} style={getActionButtonStyle(analyzeLoading || !rawNotes.trim() || !syllabusText.trim())}>
+                    {analyzeLoading ? '⏳ Analyzing…' : '🔍 Analyze Content'}
+                  </button>
+                  <LoadingProgressBar loading={analyzeLoading} label="Analyzing Context" />
+                  {syllabusAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Syllabus mapped!</p>}
+                  {examAnalysis && <p style={{ color: 'green', marginTop: 8 }}>✅ Exam patterns analyzed!</p>}
+                </form>
+              </section>
+            </ScrollReveal>
+
+            {/* Step 3: Generate */}
+            <ScrollReveal isLocked={!uploadId}>
+              <section style={translucentPanelStyle}>
+                <h2>✨ Step 3: Generate Output</h2>
+                <form onSubmit={handleGenerateOutput}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
+                    <label>
+                      Output Type:{' '}
+                      <select value={requestType} onChange={(e) => setRequestType(e.target.value)} style={glassySelectStyle}>
+                        <option value="flashcards">📇 Flashcards</option>
+                        <option value="study_plan">📋 Study Plan</option>
+                        <option value="summary">📝 Summary</option>
+                        <option value="mock_test">❓ Mock Test</option>
+                        <option value="eli5">🧒 ELI5</option>
+                      </select>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Specific topic for ELI5 (optional)"
+                      value={specificTopic}
+                      onChange={(e) => setSpecificTopic(e.target.value)}
+                      style={{ ...glassyInputStyle, flex: 1 }}
+                    />
+                  </div>
+                  <button type="submit" disabled={generateLoading || !uploadId} style={getActionButtonStyle(generateLoading || !uploadId)}>  
+                    {generateLoading ? '⏳ Generating…' : '✨ Generate Output'}
+                  </button>
+                  <LoadingProgressBar loading={generateLoading} label={`Generating ${requestType.replace('_', ' ')}`} />
+                </form>
+              </section>
+            </ScrollReveal>
+
+            {/* Results */}
+            {notice && (
+              <div
+                style={{
+                  color: '#000000',
+                  marginBottom: 24,
+                  padding: '16px 24px',
+                  backgroundColor: '#B3FF00',
+                  borderRadius: 20,
+                  fontWeight: 700,
+                  boxShadow: '0 10px 25px rgba(179, 255, 0, 0.2)',
+                }}
+              >
+                {notice}
+              </div>
+            )}
+
+            {error && (
+              <div style={{
+                color: '#ff4d4d',
+                marginBottom: 24,
+                padding: '16px 24px',
+                backgroundColor: 'rgba(255, 77, 77, 0.1)',
+                border: '1px solid #ff4d4d',
+                borderRadius: 20,
+                fontWeight: 600
+              }}>
+                ❌ Error: {error}
+              </div>
+            )}
+
+            {generatedData && (
+              <section className="fade-in" style={{ marginBottom: 60 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                  <span style={{ fontSize: 24 }}>🧠</span>
+                  <h2 style={{ margin: 0 }}>Visual Learning Lab</h2>
+                </div>
+
+                {requestType === 'flashcards' && flashcards.length > 0 && (
+                  <FlashcardSwiper
+                    cards={flashcards} 
+                    onReachEndThreshold={fetchMoreFlashcards}
+                    apiBase={apiBase}
+                  />
+                )}
+
+                {requestType === 'summary' && generatedData.keyTakeaways && (
+                  <SummaryComponent data={generatedData} />
+                )}
+
+                {requestType === 'eli5' && generatedData.simpleExplanation && (
+                  <ELI5Component data={generatedData} />
+                )}
+
+                {requestType === 'mock_test' && Array.isArray(generatedData.questions) && (
+                  <MockTestComponent testData={generatedData} workspaceId={workspaceId} apiBase={apiBase} sessionId={sessionId} />
+                )}
+
+                {requestType === 'study_plan' && generatedData.tasks && (
+                  <StudyPlanComponent planData={generatedData} />
+                )}
+              </section>
+            )}
+
+            {/* Analytics */}
+            <ScrollReveal isLocked={!uploadId}>
+              <section style={translucentPanelStyle}>
+                <h2 style={{ color: accentColor }}>📈 Performance Heatmap</h2>
+                <form onSubmit={handleFetchHeatmap}>
+                  <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+                    <input
+                      type="text"
+                      value={workspaceId}
+                      onChange={(e) => setWorkspaceId(e.target.value)}
+                      placeholder="Workspace ID"
+                      style={{ ...glassyInputStyle, flex: 1 }}
+                    />
+                    <button
+                      type="submit"
+                      disabled={heatmapLoading || !workspaceId.trim()}
+                      style={getActionButtonStyle(heatmapLoading || !workspaceId.trim())}
+                    >
+                      {heatmapLoading ? '⏳ Fetching…' : '📈 Fetch Heatmap'}
+                    </button>
+                  </div>
+                  <LoadingProgressBar loading={heatmapLoading} label="Compiling Analytics" />
+                </form>
+
+                {heatmapError && (
+                  <div
+                    style={{
+                      color: '#ff4d4d',
+                      marginBottom: 12,
+                      padding: 16,
+                      backgroundColor: 'rgba(255, 77, 77, 0.1)',
+                      borderRadius: 20,
+                      border: '1px solid #ff4d4d',
+                      fontWeight: 600
+                    }}
+                  >
+                    ❌ Error: {heatmapError}
+                  </div>
+                )}
+
+                {heatmapResult && (
+                  <div style={{ marginTop: 24 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+                       <div style={{ padding: 24, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 30, border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <div style={{ color: accentColor, fontSize: 13, textTransform: 'uppercase', fontWeight: 800, marginBottom: 8 }}>Memory Retention</div>
+                          <div style={{ fontSize: 36, fontWeight: 800 }}>{heatmapResult.overview.memoryRetentionRate}%</div>
+                       </div>
+                       <div style={{ padding: 24, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 30, border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <div style={{ color: accentColor, fontSize: 13, textTransform: 'uppercase', fontWeight: 800, marginBottom: 8 }}>Mastered Facts</div>
+                          <div style={{ fontSize: 36, fontWeight: 800 }}>{heatmapResult.overview.totalCards} total</div>
+                       </div>
+                    </div>
+
+                    <div style={{ padding: 24, backgroundColor: 'rgba(179, 255, 0, 0.08)', borderRadius: 30, border: `1px solid ${accentColor}`, marginBottom: 30 }}>
+                       <div style={{ fontWeight: 800, color: accentColor, marginBottom: 10 }}>AI Action Plan</div>
+                       <div style={{ lineHeight: 1.6 }}>{heatmapResult.overview.aiActionPlan}</div>
+                    </div>
+
+                    {Array.isArray(heatmapResult.heatmap) && heatmapResult.heatmap.length > 0 ? (
+                      <div style={{ overflowX: 'auto', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'rgba(34,34,34,0.6)' }}>
+                          <thead>
+                            <tr style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                              <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Topic</th>
+                              <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Score</th>
+                              <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Status</th>
+                              <th style={{ textAlign: 'left', padding: '16px 20px', color: accentColor, fontSize: 12, textTransform: 'uppercase' }}>Weak Concepts</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {heatmapResult.heatmap.map((row, idx) => {
+                              const rowStatusStyle = heatmapStatusStyles[row.status] || {
+                                backgroundColor: '#f0f0f0',
+                                color: '#333',
+                              };
+                              return (
+                                <tr key={`${row.topic}-${idx}`} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <td style={{ padding: '16px 20px', fontWeight: 600 }}>{row.topic}</td>
+                                  <td style={{ padding: '16px 20px' }}>{row.avgScore}%</td>
+                                  <td style={{ padding: '16px 20px' }}>
+                                    <span style={{
+                                        padding: '6px 12px',
+                                        borderRadius: 12,
+                                        fontSize: 11,
+                                        fontWeight: 800,
+                                        ...rowStatusStyle,
+                                        textTransform: 'uppercase'
+                                    }}>
+                                      {row.status}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '16px 20px', fontSize: 13, opacity: 0.7 }}>{row.missed || '—'}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: 40, opacity: 0.5 }}>
+                        No detailed topic data yet. Solve a test to see your heatmap.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
+            </ScrollReveal>
           </div>
         )}
         {activeTab === 1 && <SocraticTutorTest apiBase={apiBase} workspaceId={workspaceId} sessionId={sessionId} chatHistory={socraticHistory} setChatHistory={setSocraticHistory} topic={socraticTopic} setTopic={setSocraticTopic} confirmedTopic={socraticConfirmedTopic} setConfirmedTopic={setSocraticConfirmedTopic} attemptCount={socraticAttemptCount} setAttemptCount={setSocraticAttemptCount} />}

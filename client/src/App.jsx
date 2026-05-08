@@ -7,6 +7,7 @@ import ignisVideo from './assets/Technology isometric ai robot brain.webm';
 import kaiLogo from './assets/Screenshot 2026-05-08 175656.png';
 import StarsBackground from './components/StarsBackground.jsx';
 import LandingPage from './components/LandingPage.jsx';
+import OnboardingWelcome from './components/OnboardingWelcome.jsx';
 
 function LoadingProgressBar({ loading, label }) {
   if (!loading) return null;
@@ -723,6 +724,13 @@ function App() {
   };
 
   const { currentUser, loadingAuth, signInWithGoogle, signOutUser, deleteAccount } = useAuth();
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (currentUser && !showWelcome && !uploadId) {
+      setShowWelcome(true);
+    }
+  }, [currentUser]);
 
   const apiBase = import.meta.env.VITE_API_URL ?? '';
 
@@ -1203,6 +1211,7 @@ function App() {
 
   if (loadingAuth) return <div style={{ padding: 24, fontFamily: 'Arial, sans-serif' }}><h1>K.A.I.</h1><p>Checking session...</p></div>;
   if (!currentUser) return <LandingPage signInWithGoogle={signInWithGoogle} />;
+  if (showWelcome) return <OnboardingWelcome user={currentUser} onComplete={() => setShowWelcome(false)} />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'transparent', transition: 'all 0.5s ease' }}>

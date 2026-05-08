@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import robotImg from '../assets/ChatGPT Image May 8, 2026, 11_54_05 PM.png';
+import StarsBackground from './StarsBackground';
+import robotImg from '../assets/ChatGPT_Image_May_8__2026__11_54_05_PM.png';
 
 const OnboardingWelcome = ({ user, onComplete }) => {
   const neonGreen = '#B3FF00';
   const [text, setText] = useState('');
+  const [showButton, setShowButton] = useState(false);
   const fullText = `WELCOME, OPERATIVE ${user?.displayName?.toUpperCase() || 'UNKNOWN'}. NEURAL LINK ESTABLISHED. INITIALIZING SURVIVAL PROTOCOLS...`;
 
   useEffect(() => {
@@ -13,12 +15,11 @@ const OnboardingWelcome = ({ user, onComplete }) => {
       index++;
       if (index > fullText.length) {
         clearInterval(timer);
-        // Wait a bit after typing is done before transitioning
-        setTimeout(onComplete, 2000);
+        setShowButton(true);
       }
     }, 50);
     return () => clearInterval(timer);
-  }, [user, onComplete]);
+  }, [user]);
 
   return (
     <div style={{
@@ -32,6 +33,8 @@ const OnboardingWelcome = ({ user, onComplete }) => {
       overflow: 'hidden',
       position: 'relative'
     }}>
+      <StarsBackground />
+
       {/* SCANLINE / CRT OVERLAY */}
       <div style={{
         position: 'absolute',
@@ -40,18 +43,33 @@ const OnboardingWelcome = ({ user, onComplete }) => {
         backgroundSize: '100% 2px, 3px 100%',
         zIndex: 10,
         pointerEvents: 'none',
-        opacity: 0.2
+        opacity: 0.1
       }} />
 
       {/* K.A.I. VISUAL */}
       <div style={{
         position: 'relative',
-        width: 'min(80vh, 80vw)',
-        height: 'min(80vh, 80vw)',
+        width: 'min(75vh, 85vw)',
+        height: 'min(75vh, 85vw)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        zIndex: 5
       }}>
+        {/* TINT OVERLAY (Only top part) */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '60%', // Focus on head/shoulders
+          background: `linear-gradient(to bottom, ${neonGreen}44 0%, transparent 100%)`,
+          zIndex: 7,
+          pointerEvents: 'none',
+          mixBlendMode: 'color-dodge',
+          borderRadius: '50% 50% 0 0'
+        }} />
+
         <img 
           src={robotImg} 
           alt="K.A.I." 
@@ -59,62 +77,101 @@ const OnboardingWelcome = ({ user, onComplete }) => {
           style={{
             width: '100%',
             height: 'auto',
-            filter: `drop-shadow(0 0 30px ${neonGreen}aa) sepia(100%) hue-rotate(45deg) saturate(3) brightness(0.8)`,
-            zIndex: 5
+            filter: `drop-shadow(0 0 20px ${neonGreen}44)`,
+            zIndex: 6
           }} 
         />
         
-        {/* EYE GLOW OVERLAY */}
+        {/* EYE GLOW */}
         <div style={{
           position: 'absolute',
-          top: '35%',
+          top: '32%',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '40%',
-          height: '10%',
-          background: `radial-gradient(ellipse, ${neonGreen} 0%, transparent 70%)`,
-          opacity: 0.6,
-          zIndex: 6,
-          filter: 'blur(20px)',
-          animation: 'eye-flicker 2s infinite'
+          width: '35%',
+          height: '8%',
+          background: `radial-gradient(ellipse, ${neonGreen} 0%, transparent 80%)`,
+          opacity: 0.4,
+          zIndex: 8,
+          filter: 'blur(15px)',
+          animation: 'eye-flicker 3s infinite'
         }} />
       </div>
 
-      {/* WELCOME TEXT */}
+      {/* WELCOME TEXT PANEL */}
       <div style={{
-        marginTop: '40px',
-        color: neonGreen,
-        fontFamily: '"Share Tech Mono", monospace',
-        fontSize: '20px',
-        letterSpacing: '3px',
-        textAlign: 'center',
-        maxWidth: '800px',
-        padding: '0 20px',
-        textShadow: `0 0 10px ${neonGreen}88`,
-        zIndex: 11
+        marginTop: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '30px',
+        zIndex: 15
       }}>
-        {text}<span className="cursor">_</span>
+        <div style={{
+          color: neonGreen,
+          fontFamily: '"Share Tech Mono", monospace',
+          fontSize: '18px',
+          letterSpacing: '2px',
+          textAlign: 'center',
+          maxWidth: '700px',
+          padding: '0 20px',
+          textShadow: `0 0 10px ${neonGreen}88`,
+          minHeight: '60px'
+        }}>
+          {text}<span className="cursor">_</span>
+        </div>
+
+        {showButton && (
+          <button 
+            onClick={onComplete}
+            style={{
+              padding: '15px 40px',
+              backgroundColor: neonGreen,
+              color: '#000',
+              border: 'none',
+              borderRadius: '4px',
+              fontWeight: 900,
+              fontSize: '14px',
+              letterSpacing: '4px',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              boxShadow: `0 0 30px ${neonGreen}66`,
+              animation: 'fade-in 1s forwards'
+            }}
+            className="pulse-glow"
+          >
+            // INITIALIZE_CORE
+          </button>
+        )}
       </div>
 
       <style>{`
         @keyframes breathing {
-          0%, 100% { transform: scale(1); filter: brightness(0.8) drop-shadow(0 0 30px ${neonGreen}aa) sepia(100%) hue-rotate(45deg) saturate(3); }
-          50% { transform: scale(1.02); filter: brightness(1.1) drop-shadow(0 0 50px ${neonGreen}) sepia(100%) hue-rotate(45deg) saturate(4); }
+          0%, 100% { transform: scale(1); filter: brightness(0.9) drop-shadow(0 0 20px ${neonGreen}44); }
+          50% { transform: scale(1.01); filter: brightness(1.1) drop-shadow(0 0 40px ${neonGreen}88); }
         }
         .breathing-kai {
-          animation: breathing 4s ease-in-out infinite;
+          animation: breathing 5s ease-in-out infinite;
         }
         @keyframes eye-flicker {
-          0%, 100% { opacity: 0.4; transform: translateX(-50%) scale(1); }
-          50% { opacity: 0.8; transform: translateX(-50%) scale(1.1); }
-          90% { opacity: 0.4; }
-          95% { opacity: 1; }
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.7; }
+          55% { opacity: 0.2; }
+          60% { opacity: 0.8; }
         }
         .cursor {
           animation: blink 1s step-end infinite;
         }
         @keyframes blink {
           50% { opacity: 0; }
+        }
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .pulse-glow:hover {
+          filter: brightness(1.2);
+          transform: scale(1.05);
         }
       `}</style>
     </div>

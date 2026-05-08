@@ -1,10 +1,10 @@
 import React from 'react';
 import StarsBackground from './StarsBackground';
 import kaiLogo from '../assets/Screenshot 2026-05-08 175656.png';
-import chatbotVideo from '../assets/Live chatbot.webm';
+import robotBg from '../assets/ChatGPT Image May 8, 2026, 11_54_05 PM.png';
 
-export default function LandingPage({ signInWithGoogle }) {
-  const accentColor = '#B3FF00';
+const LandingPage = ({ signInWithGoogle }) => {
+  const accentColor = '#39FF14';
 
   return (
     <div style={{
@@ -12,205 +12,218 @@ export default function LandingPage({ signInWithGoogle }) {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
-      color: '#E8E8E8',
-      textAlign: 'center',
-      padding: '40px 20px',
+      backgroundColor: '#121212',
+      color: '#F5F5F5',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
       position: 'relative',
-      overflowX: 'hidden',
-      backgroundColor: '#000'
+      overflowX: 'hidden'
     }}>
-      <StarsBackground />
+      {/* Background Layer: Stars and Blurred Robot */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
+        <StarsBackground />
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url("${robotBg}")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.1,
+          filter: 'blur(100px) grayscale(50%)',
+          pointerEvents: 'none'
+        }} />
+      </div>
       
+      {/* Navbar */}
+      <nav style={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '24px 48px',
+        borderBottom: '1px solid #333333',
+        boxSizing: 'border-box',
+        zIndex: 10,
+        backgroundColor: 'rgba(18, 18, 18, 0.8)',
+        backdropFilter: 'blur(10px)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img src={kaiLogo} alt="K.A.I." style={{ height: '32px', width: 'auto' }} />
+          <div style={{ color: accentColor, fontWeight: 'bold', fontSize: '24px', trackingWidest: '0.2em' }}>
+            Knowledge AI
+          </div>
+        </div>
+        <button 
+          onClick={signInWithGoogle}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '12px',
+            textTransform: 'uppercase',
+            letterSpacing: '2px',
+            color: '#777777',
+            cursor: 'pointer',
+            transition: 'color 0.3s'
+          }}
+          onMouseEnter={(e) => e.target.style.color = accentColor}
+          onMouseLeave={(e) => e.target.style.color = '#777777'}
+        >
+          Operative Login
+        </button>
+      </nav>
+
       {/* Hero Section */}
-      <div className="fade-in" style={{
-        maxWidth: '900px',
-        zIndex: 2,
+      <main style={{
+        flexGrow: 1,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '24px'
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '0 20px',
+        marginTop: '80px',
+        zIndex: 1,
+        maxWidth: '1000px'
       }}>
-        <img 
-          src={kaiLogo} 
-          alt="K.A.I. Logo" 
-          style={{ 
-            height: '140px', 
-            width: 'auto',
-            filter: `drop-shadow(0 0 20px ${accentColor}44)`,
-            marginBottom: '10px'
-          }} 
-        />
-        
         <h1 style={{
-          fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
+          fontSize: 'clamp(2.5rem, 8vw, 5rem)',
           fontWeight: 900,
-          margin: 0,
-          letterSpacing: '-2px',
-          lineHeight: 1.1,
-          color: '#fff',
-          textTransform: 'uppercase'
+          marginBottom: '24px',
+          letterSpacing: '-1px',
+          lineHeight: 1.1
         }}>
-          Knowledge AI <br/>
-          <span style={{ color: accentColor }}>Neural Core</span>
+          EXAM TOMORROW.<br />
+          <span style={{ color: accentColor }}>YOU ARE BLEEDING POINTS.</span>
         </h1>
         
         <p style={{
-          fontSize: 'clamp(1.1rem, 4vw, 1.4rem)',
-          maxWidth: '650px',
-          opacity: 0.9,
-          lineHeight: 1.6,
-          fontWeight: 500,
-          color: '#ccc'
+          fontSize: 'clamp(1rem, 3vw, 1.25rem)',
+          color: '#A0A0A0',
+          maxWidth: '700px',
+          marginBottom: '40px',
+          lineHeight: 1.6
         }}>
-          When time is your enemy, we are your architect. <br/>
-          Deploy tactical learning distributions to conquer complex syllabi in hours, not weeks.
+          The tactical 1-night survival bunker. Drop your syllabus and Past Year Papers into the neural link. We'll tell you exactly what to study, and what to ignore.
         </p>
 
-        <div style={{ marginTop: '40px' }}>
-          <button 
-            onClick={signInWithGoogle}
-            style={{
-              padding: '20px 50px',
-              fontSize: '20px',
-              fontWeight: 900,
-              backgroundColor: accentColor,
-              color: '#000',
-              border: 'none',
-              borderRadius: '50px',
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              letterSpacing: '3px',
-              boxShadow: `0 0 40px ${accentColor}88`,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '15px'
-            }}
-            className="interactive-card"
-          >
-            Initialize Access ➔
-          </button>
-        </div>
-      </div>
+        <button 
+          onClick={signInWithGoogle}
+          style={{
+            padding: '20px 40px',
+            backgroundColor: 'transparent',
+            border: `2px solid ${accentColor}`,
+            color: accentColor,
+            fontWeight: 'bold',
+            fontSize: '18px',
+            textTransform: 'uppercase',
+            letterSpacing: '3px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            transition: 'all 0.3s',
+            boxShadow: `0 0 20px rgba(57, 255, 20, 0.2)`
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = accentColor;
+            e.target.style.color = '#000';
+            e.target.style.boxShadow = `0 0 30px ${accentColor}`;
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = 'transparent';
+            e.target.style.color = accentColor;
+            e.target.style.boxShadow = `0 0 20px rgba(57, 255, 20, 0.2)`;
+          }}
+        >
+          Deploy War Room
+        </button>
+      </main>
 
-      {/* Feature Highlights */}
-      <div className="fade-in" style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        gap: '30px',
+      {/* The Operatives Section */}
+      <section style={{
         width: '100%',
         maxWidth: '1200px',
-        marginTop: '100px',
-        zIndex: 2,
-        padding: '0 20px'
-      }}>
-        <FeatureCard 
-          icon="📊" 
-          title="EXTRACT" 
-          desc="Instantly ingest lectures, PDFs, and YouTube content into high-fidelity core intel." 
-          accent={accentColor}
-        />
-        <FeatureCard 
-          icon="🎯" 
-          title="ANALYZE" 
-          desc="Cross-reference notes with syllabi to identify mission-critical exam patterns." 
-          accent={accentColor}
-        />
-        <FeatureCard 
-          icon="⚡" 
-          title="SURVIVE" 
-          desc="Execute survival protocols for extreme compression of study material under pressure." 
-          accent={accentColor}
-        />
-      </div>
-
-      {/* Background Visual Overlay */}
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        opacity: 0.15,
+        margin: '120px 0 80px',
+        padding: '0 24px',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '32px',
         zIndex: 1,
-        pointerEvents: 'none',
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
+        boxSizing: 'border-box'
       }}>
-        <video
-          src={chatbotVideo}
-          autoPlay
-          loop
-          muted
-          playsInline
-          style={{
-            minWidth: '120%',
-            minHeight: '120%',
-            objectFit: 'cover',
-            filter: `blur(40px) brightness(0.5)`
-          }} 
+        <FeatureCard 
+          title="KORTEX" 
+          role="DATA HARVESTER" 
+          desc="Feed him messy PDFs and YouTube links. He extracts the raw intel in seconds." 
+          accent={accentColor}
         />
-      </div>
+        <FeatureCard 
+          title="IGNIS" 
+          role="TACTICAL HEATMAP" 
+          desc="Cross-references your syllabus with past exams. Study the glowing zones. Ignore the grey." 
+          accent={accentColor}
+        />
+        <FeatureCard 
+          title="AXIOM" 
+          role="SOCRATIC TUTOR" 
+          desc="Think you are ready? Axiom will interrogate you to expose weak spots before the actual exam." 
+          accent={accentColor}
+        />
+      </section>
 
+      {/* Footer Branding */}
       <div style={{
-        position: 'absolute',
-        bottom: '30px',
-        fontSize: '12px',
+        padding: '40px 0',
+        fontSize: '10px',
         fontWeight: 900,
         color: accentColor,
         letterSpacing: '4px',
-        opacity: 0.5,
-        zIndex: 2,
+        opacity: 0.3,
+        zIndex: 1,
         textTransform: 'uppercase'
       }}>
-        System Ready // K.A.I. Defence Network
+        Knowledge AI // Tactical Defense Core
       </div>
     </div>
   );
-}
+};
 
-function FeatureCard({ icon, title, desc, accent }) {
-  return (
-    <div style={{
-      backgroundColor: 'rgba(20, 20, 20, 0.7)',
-      backdropFilter: 'blur(15px)',
-      border: `1px solid rgba(179, 255, 0, 0.3)`,
-      borderRadius: '40px',
-      padding: '40px 30px',
-      textAlign: 'left',
-      boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '15px'
-    }} className="interactive-card">
-      <div style={{ 
-        fontSize: '40px',
-        backgroundColor: 'rgba(179, 255, 0, 0.1)',
-        width: '70px',
-        height: '70px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: '20px',
-        border: `1px solid ${accent}44`
-      }}>{icon}</div>
-      <h3 style={{ 
-        color: accent, 
-        margin: 0, 
-        fontSize: '22px', 
-        fontWeight: 900, 
-        letterSpacing: '2px',
-        textTransform: 'uppercase'
-      }}>{title}</h3>
-      <p style={{ 
-        margin: 0, 
-        fontSize: '15px', 
-        opacity: 0.8, 
-        lineHeight: 1.6,
-        color: '#eee'
-      }}>{desc}</p>
-    </div>
-  );
-}
+const FeatureCard = ({ title, role, desc, accent }) => (
+  <div style={{
+    backgroundColor: '#1E1E1E',
+    border: '1px solid #333333',
+    padding: '40px',
+    borderRadius: '16px',
+    transition: 'all 0.3s ease',
+    cursor: 'default'
+  }} 
+  onMouseEnter={(e) => {
+    e.currentTarget.style.borderColor = accent;
+    e.currentTarget.style.transform = 'translateY(-5px)';
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.borderColor = '#333333';
+    e.currentTarget.style.transform = 'translateY(0)';
+  }}
+  >
+    <div style={{ 
+      fontSize: '11px', 
+      color: '#777777', 
+      marginBottom: '8px', 
+      letterSpacing: '2px',
+      fontWeight: 'bold'
+    }}>{role}</div>
+    <h3 style={{ 
+      fontSize: '28px', 
+      fontWeight: 'bold', 
+      color: '#F5F5F5', 
+      margin: '0 0 16px 0',
+      letterSpacing: '1px'
+    }}>{title}</h3>
+    <p style={{ 
+      color: '#A0A0A0', 
+      lineHeight: 1.6, 
+      margin: 0,
+      fontSize: '15px'
+    }}>{desc}</p>
+  </div>
+);
+
+export default LandingPage;

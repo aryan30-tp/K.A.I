@@ -506,7 +506,7 @@ app.get('/api/analytics/heatmap/:workspaceId', async (req, res) => {
 // --- DEFCON 1 SURVIVAL MODE ---
 app.post('/api/survival/triage', async (req, res) => {
   try {
-    const { workspaceId, hoursRemaining } = req.body;
+    const { workspaceId, hoursRemaining, uploadId } = req.body;
     const hours = Number(hoursRemaining);
 
     if (!workspaceId || Number.isNaN(hours)) {
@@ -519,7 +519,7 @@ app.post('/api/survival/triage', async (req, res) => {
         .json({ ok: false, error: 'Less than 1 hour remaining. Triage impossible.' });
     }
 
-    const battlePlan = await generateSurvivalPlan(workspaceId, hours);
+    const battlePlan = await generateSurvivalPlan(workspaceId, hours, uploadId);
     return res.json({ ok: true, data: battlePlan });
   } catch (error) {
     console.error('Triage Engine Error:', error?.message || error);

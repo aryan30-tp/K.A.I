@@ -14,10 +14,10 @@ const pc = new Pinecone({
 const index = pc.index(process.env.PINECONE_INDEX || 'kai-semester-brain');
 const MAX_SYLLABUS_CHARS = 12000;
 
-export async function generateSurvivalPlan(workspaceId, hoursRemaining) {
+export async function generateSurvivalPlan(workspaceId, hoursRemaining, uploadId = null) {
   try {
     console.log(
-      `DEFCON 1 triage for workspace: ${workspaceId}. Time remaining: ${hoursRemaining} hours.`
+      `DEFCON 1 triage for workspace: ${workspaceId}, session: ${uploadId}. Time remaining: ${hoursRemaining} hours.`
     );
 
     const embeddingModel = genAI.getGenerativeModel({
@@ -27,10 +27,16 @@ export async function generateSurvivalPlan(workspaceId, hoursRemaining) {
       'Core concepts, syllabus overview, main chapters, and primary formulas.'
     );
 
+    // If uploadId is provided, filter specifically for that session in Pinecone
+    const filter = { workspaceId: { $eq: workspaceId } };
+    if (uploadId) {
+      filter.sessionId = { $eq: uploadId };
+    }
+
     const searchResponse = await index.query({
       vector: queryResult.embedding.values,
       topK: 8,
-      filter: { workspaceId: { $eq: workspaceId } },
+      filter: filter,
       includeMetadata: true,
     });
 
@@ -40,16 +46,30 @@ export async function generateSurvivalPlan(workspaceId, hoursRemaining) {
       .join('\n---\n');
 
     if (!sourceSyllabus.trim()) {
-      const sessionsSnap = await db
-        .collection('study_sessions')
-        .where('workspaceId', '==', workspaceId)
-        .limit(5)
-        .get();
+      // Fallback to Firestore specifically for this uploadId if available
+      let query = db.collection('study_sessions').where('workspaceId', '==', workspaceId);
+      if (uploadId) {
+        // Check if we can find it by doc ID or field
+        const docRef = db.collection('study_sessions').doc(uploadId);
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+          sourceSyllabus = docSnap.data()?.rawText || '';
+        }
+      }
+      
+      if (!sourceSyllabus.trim()) {
+        const sessionsSnap = await db
+          .collection('study_sessions')
+          .where('workspaceId', '==', workspaceId)
+          .orderBy('createdAt', 'desc')
+          .limit(1)
+          .get();
 
-      sourceSyllabus = sessionsSnap.docs
-        .map((doc) => doc.data()?.rawText)
-        .filter(Boolean)
-        .join('\n---\n');
+        sourceSyllabus = sessionsSnap.docs
+          .map((doc) => doc.data()?.rawText)
+          .filter(Boolean)
+          .join('\n---\n');
+      }
     }
 
     if (sourceSyllabus.length > MAX_SYLLABUS_CHARS) {

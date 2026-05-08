@@ -1173,7 +1173,11 @@ function App() {
         const res = await fetch(`${apiBase}/api/survival/triage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ workspaceId: trimmedWorkspaceId, hoursRemaining: hoursValue }),
+          body: JSON.stringify({ 
+            workspaceId: trimmedWorkspaceId, 
+            hoursRemaining: hoursValue,
+            uploadId: uploadId // Bind to specific extraction context
+          }),
         });
         const data = await parseResponse(res);
         if (!data.ok) throw new Error(data.error);
@@ -1249,7 +1253,21 @@ function App() {
       <div className="tab-bar">
         <button className={`tab-button ${activeTab === 0 ? 'active' : ''}`} onClick={() => setActiveTab(0)}>Build</button>
         <button className={`tab-button ${activeTab === 1 ? 'active' : ''}`} onClick={() => setActiveTab(1)}>Study Lab</button>
-        <button className={`tab-button ${activeTab === 2 ? 'active' : ''}`} onClick={() => setActiveTab(2)}>Survival Mode</button>
+        <button 
+          className={`tab-button ${activeTab === 2 ? 'active' : ''}`} 
+          onClick={() => {
+            if (uploadId) setActiveTab(2);
+            else alert("Mission Initialization Failure: You must extract content in the Build tab first to generate a survival strategy.");
+          }}
+          style={{ 
+            opacity: uploadId ? 1 : 0.5, 
+            cursor: uploadId ? 'pointer' : 'not-allowed',
+            filter: uploadId ? 'none' : 'grayscale(100%)'
+          }}
+          title={!uploadId ? "Complete Step 1 in Build tab first" : ""}
+        >
+          Survival Mode
+        </button>
       </div>
       <div className="tab-content" style={{ flex: 1, overflowY: activeTab === 0 ? 'auto' : 'hidden' }}>
         {activeTab === 0 && (

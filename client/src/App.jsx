@@ -1240,8 +1240,8 @@ function App() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'transparent', transition: 'all 0.5s ease' }}>
       <StarsBackground />
       {isEmergencyActive && <div className="emergency-overlay" />}
-      <div className="app-header" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 30px' }}>
-        <img src={kaiLogo} alt="K.A.I. Logo" style={{ height: '60px', width: 'auto', filter: 'drop-shadow(0 0 10px rgba(179, 255, 0, 0.4))' }} />
+      <div className="app-header" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '25px 50px' }}>
+        <img src={kaiLogo} alt="K.A.I. Logo" style={{ height: '110px', width: 'auto' }} />
         {isEmergencyActive && isVaultOpen && (
           <div className="header-timer">
             <span style={{ fontSize: 12, opacity: 0.8, letterSpacing: 1 }}>SURVIVAL CLOCK</span>

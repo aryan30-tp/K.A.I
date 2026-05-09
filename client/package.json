@@ -17,7 +17,8 @@
     "firebase": "^10.12.5",
     "mermaid": "^11.14.0",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "react-router-dom": "^7.15.0"
   },
   "devDependencies": {
     "vite": "^8.0.10"

@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "npm --prefix server start",
-    "build": "cd client && npm install && npm run build"
+    "start": "npm --prefix server start"
   },
   "dependencies": {
     "@langchain/google-genai": "^2.1.30",

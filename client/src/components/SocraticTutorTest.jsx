@@ -79,7 +79,77 @@ export default function SocraticTutorTest({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
 
-      // ... (mediaRecorder logic same)
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+      isCancelledRef.current = false;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        if (isCancelledRef.current) {
+          setStatusText('Recording cancelled.');
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        setStatusText('Decoding your response...');
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioFile = new File([audioBlob], 'live-recording.webm', {
+          type: 'audio/webm',
+        });
+
+        const formData = new FormData();
+        formData.append('audioFile', audioFile);
+        formData.append('topic', confirmedTopic);
+        formData.append('workspaceId', workspaceId);
+        formData.append('sessionId', sessionId);
+        formData.append('chatHistory', chatHistory);
+        formData.append('attemptCount', String(attemptCount));
+
+        try {
+          const response = await fetch(`${apiBase}/api/socratic/turn`, {
+            method: 'POST',
+            body: formData,
+          });
+
+          const data = await response.json();
+          setOutput(data);
+          
+          if (data.sessionId && data.sessionId !== sessionId) {
+            onSessionIdUpdate(data.sessionId);
+          }
+
+          if (data.tutorSpeech) {
+            setStatusText('Listen to your tutor...');
+            speakSocraticResponse(data.tutorSpeech);
+          } else {
+            setStatusText('Ready for next input.');
+          }
+
+          if (data.studentTranscription && data.tutorSpeech) {
+            const updatedHistory = [
+              ...parsedHistory,
+              { role: 'user', parts: [{ text: data.studentTranscription }] },
+              { role: 'model', parts: [{ text: data.tutorSpeech }] },
+            ];
+            setChatHistory(JSON.stringify(updatedHistory));
+          }
+
+          if (data.isConceptMastered) {
+            setAttemptCount(0);
+          } else {
+            setAttemptCount((prev) => prev + 1);
+          }
+        } catch (error) {
+          setStatusText('Error connecting to backend.');
+          console.error(error);
+        }
+
+        stream.getTracks().forEach((track) => track.stop());
+      };
 
       mediaRecorder.start();
       setIsRecording(true);

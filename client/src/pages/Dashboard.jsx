@@ -926,9 +926,63 @@ const Dashboard = () => {
       </div>
       <div className="tab-content" style={{ flex: 1, overflowY: activeTab === 0 ? 'auto' : 'hidden' }}>
         {activeTab === 0 && (
-          <div>
-            <div className="step-one-shell" style={{ marginTop: 50 }}>
-              <RandomMovingBox><video src={chatbotVideo} autoPlay loop muted playsInline style={{ width: '280px', height: '280px', filter: 'drop-shadow(0 0 30px rgba(179, 255, 0, 0.4))' }} /></RandomMovingBox>
+          <div style={{ padding: '0 40px' }}>
+            <div className="step-one-shell" style={{ marginTop: 50, display: 'grid', gridTemplateColumns: '1fr 380px', gap: '30px', alignItems: 'start' }}>
+              <div className="fade-in">
+                <RandomMovingBox>
+                  <video 
+                    src={chatbotVideo} 
+                    autoPlay 
+                    loop 
+                    muted 
+                    playsInline 
+                    style={{ 
+                      width: '280px', 
+                      height: '280px', 
+                      filter: 'drop-shadow(0 0 30px rgba(179, 255, 0, 0.4))' 
+                    }} 
+                  />
+                </RandomMovingBox>
+              </div>
+
+              <div className="fade-in" style={{ backgroundColor: 'rgba(25, 25, 25, 0.7)', borderRadius: '40px', border: `1px solid rgba(179, 255, 0, 0.4)`, padding: '35px', backdropFilter: 'blur(25px)', lineHeight: 1.6, minHeight: '500px', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 15, marginBottom: 20 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: accentColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 900, color: '#000', boxShadow: `0 0 15px ${accentColor}` }}>K</div>
+                  <div style={{ color: accentColor, fontWeight: 900, fontSize: 22, textTransform: 'uppercase', letterSpacing: 1 }}>System Profile: Kortex</div>
+                </div>
+                <div style={{ fontSize: '11px', color: accentColor, letterSpacing: '3px', fontWeight: 900, marginBottom: '10px', opacity: 0.8 }}>// DATA HARVESTER</div>
+                <div style={{ height: '1px', background: `linear-gradient(90deg, ${accentColor}, transparent)`, marginBottom: 20 }} />
+                
+                <div style={{ fontSize: 16, opacity: 0.9, marginBottom: 15 }}>
+                  Greetings, Commander. I am <span style={{ color: accentColor, fontWeight: 800 }}>Kortex</span>, the foundation of your neural network.
+                </div>
+                
+                <div style={{ fontSize: 14, opacity: 0.7, lineHeight: 1.8 }}>
+                  I am the harvester. Feed me your messy PDFs, your syllabus, and every Past Year Paper you can find. I parse the raw data, strip the garbage, and extract the core intel. 
+                </div>
+
+                <div style={{ marginTop: '20px', fontSize: 14, opacity: 0.7, lineHeight: 1.8, padding: '15px', borderLeft: `2px solid ${accentColor}`, backgroundColor: 'rgba(179, 255, 0, 0.03)' }}>
+                  "Without my harvest, the network is blind. Provide the intel, and I will build the base for Axiom and Ignis to execute the mission."
+                </div>
+
+                <div style={{ 
+                  marginTop: 'auto',
+                  padding: '12px', 
+                  borderRadius: '12px', 
+                  backgroundColor: 'rgba(179, 255, 0, 0.1)', 
+                  border: `1px solid rgba(179, 255, 0, 0.3)`,
+                  fontSize: '11px',
+                  color: accentColor,
+                  fontWeight: 700,
+                  textAlign: 'center',
+                  letterSpacing: 1
+                }}>
+                  STATUS: HARVESTER ONLINE
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
               <section style={{ ...translucentPanelStyle, minHeight: 280, paddingTop: 55, paddingBottom: 15 }}>
                 <h2 style={{ textAlign: 'center', marginBottom: 24, marginTop: 0 }}>📚 Step 1: Extract Content</h2>
                 <form onSubmit={handleExtract}>

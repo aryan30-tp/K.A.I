@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import SocraticTutorTest from '../components/SocraticTutorTest.jsx';
 import VisualLabCard from '../components/VisualLabCard.jsx';
 import { useAuth } from '../context/AuthContext.jsx';

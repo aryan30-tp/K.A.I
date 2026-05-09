@@ -7,6 +7,7 @@ import chatbotVideo from '../assets/Live chatbot.webm';
 import ignisVideo from '../assets/Technology isometric ai robot brain.webm';
 import kaiLogo from '../assets/Screenshot 2026-05-08 175656.png';
 import StarsBackground from '../components/StarsBackground.jsx';
+import CustomModal from '../components/CustomModal.jsx';
 
 // --- Sub-components extracted from original App.jsx ---
 
@@ -508,6 +509,7 @@ const Dashboard = () => {
   const { sessionId: urlSessionId } = useParams();
   const apiBase = import.meta.env.VITE_API_URL ?? '';
 
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', isAlert: true });
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [files, setFiles] = useState([]);
   const [uploadId, setUploadId] = useState(null);
@@ -839,6 +841,14 @@ const Dashboard = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'transparent' }}>
       <StarsBackground />
+      <CustomModal 
+        isOpen={modal.isOpen} 
+        title={modal.title} 
+        message={modal.message} 
+        isAlert={modal.isAlert}
+        onConfirm={() => setModal({ ...modal, isOpen: false })}
+        onCancel={() => setModal({ ...modal, isOpen: false })}
+      />
       {isEmergencyActive && <div className="emergency-overlay" />}
       <div className="app-header" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '25px 50px' }}>
         <img src={kaiLogo} alt="K.A.I. Logo" style={{ height: '110px', width: 'auto' }} />
@@ -856,13 +866,63 @@ const Dashboard = () => {
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 25 }}>
-          <div onClick={() => navigate('/profile')} style={{ fontSize: 24, cursor: 'pointer', width: 48, height: 48, backgroundColor: '#444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B3FF00', fontWeight: 800, transition: 'all 0.3s ease', border: '1px solid rgba(255,255,255,0.1)' }}>K</div>
+          <div 
+            onClick={() => navigate('/profile')} 
+            style={{ 
+              fontSize: 24, 
+              cursor: 'pointer', 
+              width: 52, 
+              height: 52, 
+              backgroundColor: 'rgba(34, 34, 34, 0.8)', 
+              borderRadius: '16px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              color: '#B3FF00', 
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
+              border: '1px solid rgba(179, 255, 0, 0.3)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'rotate(45deg) scale(1.1)';
+              e.currentTarget.style.borderColor = '#B3FF00';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(179, 255, 0, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'rotate(0deg) scale(1)';
+              e.currentTarget.style.borderColor = 'rgba(179, 255, 0, 0.3)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+            }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
         </div>
       </div>
       <div className="tab-bar">
         <button className={`tab-button ${activeTab === 0 ? 'active' : ''}`} onClick={() => setActiveTab(0)}>Build</button>
         <button className={`tab-button ${activeTab === 1 ? 'active' : ''}`} onClick={() => setActiveTab(1)}>Study Lab</button>
-        <button className={`tab-button ${activeTab === 2 ? 'active' : ''}`} onClick={() => { if (uploadId) setActiveTab(2); else alert("Mission Initialization Failure: You must extract content in the Build tab first to generate a survival strategy."); }} style={{ opacity: uploadId ? 1 : 0.5, cursor: uploadId ? 'pointer' : 'not-allowed', filter: uploadId ? 'none' : 'grayscale(100%)' }} title={!uploadId ? "Complete Step 1 in Build tab first" : ""}>Survival Mode</button>
+        <button 
+          className={`tab-button ${activeTab === 2 ? 'active' : ''}`} 
+          onClick={() => { 
+            if (uploadId) {
+              setActiveTab(2);
+            } else {
+              setModal({
+                isOpen: true,
+                title: 'ACCESS DENIED',
+                message: 'Mission Initialization Failure: You must extract content in the Build tab first to generate a survival strategy.',
+                isAlert: true
+              });
+            }
+          }} 
+          style={{ opacity: uploadId ? 1 : 0.5, cursor: uploadId ? 'pointer' : 'not-allowed', filter: uploadId ? 'none' : 'grayscale(100%)' }} 
+          title={!uploadId ? "Complete Step 1 in Build tab first" : ""}
+        >
+          Survival Mode
+        </button>
       </div>
       <div className="tab-content" style={{ flex: 1, overflowY: activeTab === 0 ? 'auto' : 'hidden' }}>
         {activeTab === 0 && (
@@ -958,7 +1018,7 @@ const Dashboard = () => {
             </ScrollReveal>
           </div>
         )}
-        {activeTab === 1 && <SocraticTutorTest apiBase={apiBase} workspaceId={workspaceId} sessionId={sessionId} chatHistory={socraticHistory} setChatHistory={setSocraticHistory} topic={socraticTopic} setTopic={setSocraticTopic} confirmedTopic={socraticConfirmedTopic} setConfirmedTopic={setSocraticConfirmedTopic} attemptCount={socraticAttemptCount} setAttemptCount={setSocraticAttemptCount} />}
+        {activeTab === 1 && <SocraticTutorTest setModal={setModal} apiBase={apiBase} workspaceId={workspaceId} sessionId={sessionId} chatHistory={socraticHistory} setChatHistory={setSocraticHistory} topic={socraticTopic} setTopic={setSocraticTopic} confirmedTopic={socraticConfirmedTopic} setConfirmedTopic={setSocraticConfirmedTopic} attemptCount={socraticAttemptCount} setAttemptCount={setSocraticAttemptCount} />}
         {activeTab === 2 && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30, flex: 1, padding: '20px 40px', boxSizing: 'border-box', overflow: 'hidden' }}>

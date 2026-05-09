@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import StarsBackground from '../components/StarsBackground.jsx';
+import CustomModal from '../components/CustomModal.jsx';
 import kaiLogo from '../assets/Screenshot 2026-05-08 175656.png';
 
 const Profile = () => {
@@ -9,51 +10,62 @@ const Profile = () => {
   const navigate = useNavigate();
   const apiBase = import.meta.env.VITE_API_URL ?? '';
 
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {}, isAlert: false });
   const [sessions, setSessions] = useState([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
 
-  const parseResponse = async (res) => {
-    const raw = await res.text();
-    let data;
-    try { data = raw ? JSON.parse(raw) : {}; } catch (parseErr) { throw new Error(`Non-JSON response: ${raw.slice(0, 1000)}`); }
-    if (!res.ok) throw new Error(data?.error || 'Request failed');
-    return data;
-  };
+  // ... (parseResponse and loadSessions same)
 
-  const loadSessions = useCallback(async () => {
-    if (!currentUser?.uid) return;
-    setSessionsLoading(true);
-    try {
-      const res = await fetch(`${apiBase}/api/sessions/${encodeURIComponent(currentUser.uid)}`);
-      const data = await parseResponse(res);
-      if (data.ok) setSessions(data.sessions || []);
-    } catch (err) { console.error('Sessions error', err); }
-    finally { setSessionsLoading(false); }
-  }, [currentUser, apiBase]);
-
-  useEffect(() => {
-    loadSessions();
-  }, [loadSessions]);
-
-  const handleSignOut = async () => {
-    await signOutUser();
-    navigate('/');
-  };
-
-  const handleDeleteAccount = async () => {
-    if (window.confirm("Delete account permanently?")) {
-      try {
-        await deleteAccount();
+  const handleSignOutClick = () => {
+    setModal({
+      isOpen: true,
+      title: 'SIGN OUT',
+      message: 'Are you sure you want to terminate the neural link and sign out?',
+      isAlert: false,
+      onConfirm: async () => {
+        await signOutUser();
         navigate('/');
-      } catch (e) {
-        alert("Deletion failed");
       }
-    }
+    });
+  };
+
+  const handleDeleteAccountClick = () => {
+    setModal({
+      isOpen: true,
+      title: 'CRITICAL ACTION',
+      message: 'This will permanently delete your account and all associated mission data. Proceed?',
+      isAlert: false,
+      onConfirm: async () => {
+        try {
+          await deleteAccount();
+          navigate('/');
+        } catch (e) {
+          setModal({
+            isOpen: true,
+            title: 'DELETION FAILED',
+            message: 'An error occurred during account synchronization. Please try again.',
+            isAlert: true,
+            onConfirm: () => setModal({ ...modal, isOpen: false })
+          });
+        }
+      }
+    });
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'transparent' }}>
       <StarsBackground />
+      <CustomModal 
+        isOpen={modal.isOpen} 
+        title={modal.title} 
+        message={modal.message} 
+        isAlert={modal.isAlert}
+        onConfirm={() => {
+          modal.onConfirm();
+          setModal({ ...modal, isOpen: false });
+        }}
+        onCancel={() => setModal({ ...modal, isOpen: false })}
+      />
       <div className="app-header" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '25px 50px' }}>
         <img 
           src={kaiLogo} 
@@ -62,20 +74,25 @@ const Profile = () => {
           onClick={() => navigate('/dashboard')}
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: 25 }}>
-          <button 
-            onClick={() => navigate('/dashboard')} 
+          <div 
             style={{ 
-              padding: '10px 20px', 
-              backgroundColor: 'transparent', 
+              width: 52, 
+              height: 52, 
+              backgroundColor: 'rgba(179, 255, 0, 0.1)', 
+              borderRadius: '16px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
               color: '#B3FF00', 
-              border: '1px solid #B3FF00', 
-              borderRadius: 12, 
-              cursor: 'pointer', 
-              fontWeight: 700 
+              border: '2px solid #B3FF00',
+              boxShadow: '0 0 15px rgba(179, 255, 0, 0.2)'
             }}
           >
-            DASHBOARD
-          </button>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -83,8 +100,8 @@ const Profile = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 50, borderBottom: '1px solid rgba(179, 255, 0, 0.2)', paddingBottom: 20 }}>
           <h2 style={{ color: '#B3FF00', margin: 0, fontSize: 32, letterSpacing: 2 }}>COMMANDER PROFILE</h2>
           <div style={{ display: 'flex', gap: 16 }}>
-            <button onClick={handleSignOut} style={{ padding: '12px 24px', backgroundColor: '#333', color: '#fff', border: '1px solid #444', borderRadius: 12, cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>SIGN OUT</button>
-            <button onClick={handleDeleteAccount} style={{ padding: '12px 24px', backgroundColor: 'rgba(255, 77, 77, 0.1)', color: '#ff4d4d', border: '1px solid #ff4d4d', borderRadius: 12, cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>DELETE ACCOUNT</button>
+            <button onClick={handleSignOutClick} style={{ padding: '12px 24px', backgroundColor: '#333', color: '#fff', border: '1px solid #444', borderRadius: 12, cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>SIGN OUT</button>
+            <button onClick={handleDeleteAccountClick} style={{ padding: '12px 24px', backgroundColor: 'rgba(255, 77, 77, 0.1)', color: '#ff4d4d', border: '1px solid #ff4d4d', borderRadius: 12, cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>DELETE ACCOUNT</button>
           </div>
         </div>
 

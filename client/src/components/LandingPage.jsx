@@ -46,7 +46,7 @@ const LandingPage = ({ signInWithGoogle }) => {
           backgroundImage: `url("${robotBg}")`,
           backgroundSize: 'cover',
           backgroundPosition: 'center 20%',
-          opacity: 0.25, // Increased visibility
+          opacity: 0.25,
           filter: `blur(15px) grayscale(100%) brightness(0.4) sepia(100%) hue-rotate(45deg) saturate(3)`,
           pointerEvents: 'none',
           transition: 'all 0.5s ease'
@@ -240,6 +240,54 @@ const LandingPage = ({ signInWithGoogle }) => {
         </div>
       </section>
 
+      {/* INFINITE TESTIMONIAL SCROLL */}
+      <section style={{ padding: '80px 0', backgroundColor: 'rgba(0,0,0,0.5)', borderTop: `1px solid ${neonGreen}11`, borderBottom: `1px solid ${neonGreen}11`, overflow: 'hidden', zIndex: 5 }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <div style={{ color: neonGreen, fontSize: '10px', fontWeight: 900, letterSpacing: '4px', textTransform: 'uppercase' }}>// INTERCEPTED_COMMS</div>
+          <h2 style={{ fontSize: '24px', fontWeight: 900, letterSpacing: '2px' }}>OPERATIVE FIELD REPORTS</h2>
+        </div>
+        <div className="review-track-container">
+          <InfiniteReviewScroll neon={neonGreen} />
+        </div>
+      </section>
+
+      {/* FINAL CALL TO ACTION */}
+      <section style={{ padding: '120px 20px', textAlign: 'center', zIndex: 5, position: 'relative' }}>
+        <div style={{ 
+          maxWidth: '800px', 
+          margin: '0 auto', 
+          padding: '60px', 
+          backgroundColor: 'rgba(10, 10, 10, 0.8)', 
+          border: `1px solid ${neonGreen}44`, 
+          borderRadius: '20px',
+          backdropFilter: 'blur(10px)',
+          boxShadow: `0 0 40px rgba(179, 255, 0, 0.1)`
+        }}>
+          <div style={{ fontSize: '14px', color: neonGreen, fontWeight: 900, letterSpacing: '5px', marginBottom: '20px' }}>[ NEURAL_LINK_STATUS: STABLE ]</div>
+          <h2 style={{ fontSize: '42px', fontWeight: 900, marginBottom: '30px', letterSpacing: '1px' }}>THE CLOCK IS TICKING. <br/> <span style={{ color: neonGreen }}>WILL YOU SURVIVE ZERO HOUR?</span></h2>
+          <p style={{ color: '#aaa', fontSize: '18px', marginBottom: '45px', lineHeight: 1.6 }}>Join 15,000+ students who have successfully reverse-engineered their finals. Don't leave your GPA to chance.</p>
+          <button 
+            onClick={signInWithGoogle}
+            style={{
+              padding: '20px 50px',
+              backgroundColor: 'transparent',
+              color: neonGreen,
+              border: `2px solid ${neonGreen}`,
+              fontWeight: 900,
+              fontSize: '18px',
+              textTransform: 'uppercase',
+              letterSpacing: '3px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            }}
+            className="pulse-glow"
+          >
+            INITIALIZE UPLINK NOW ➔
+          </button>
+        </div>
+      </section>
+
       {/* SYSTEM FOOTER */}
       <footer style={{
         padding: '30px 40px',
@@ -287,7 +335,63 @@ const LandingPage = ({ signInWithGoogle }) => {
           0% { transform: translateY(-100%); }
           100% { transform: translateY(100%); }
         }
+        .review-track-container {
+          width: 100%;
+          overflow: hidden;
+          position: relative;
+        }
+        .review-track {
+          display: flex;
+          width: calc(350px * 10);
+          animation: scroll 30s linear infinite;
+        }
+        @keyframes scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(calc(-350px * 5)); }
+        }
+        .review-track:hover {
+          animation-play-state: paused;
+        }
       `}</style>
+    </div>
+  );
+};
+
+const InfiniteReviewScroll = ({ neon }) => {
+  const reviews = [
+    { user: "Operative_X", text: "Axiom absolutely shredded my confidence, but I passed my Calc final with an A. Worth the interrogation.", rank: "Gold Tier" },
+    { user: "Neural_Link_99", text: "Kortex extracted 400 pages of notes into 20 flashcards. Saved me 3 days of reading.", rank: "Elite User" },
+    { user: "Zero_Hour_Survivor", text: "Ignis's heatmap was 95% accurate to the actual paper. It felt like cheating.", rank: "Commander" },
+    { user: "Deep_State_Student", text: "The triage protocols are the only reason I didn't fail my Bio-Chem exam.", rank: "Platinum Tier" },
+    { user: "Cyber_Scholar", text: "Neural link stable. Cognitive load reduced by 70%. Mission successful.", rank: "Veteran" }
+  ];
+
+  // Double the reviews for seamless loop
+  const doubleReviews = [...reviews, ...reviews];
+
+  return (
+    <div className="review-track">
+      {doubleReviews.map((rev, i) => (
+        <div key={i} style={{
+          width: '320px',
+          flexShrink: 0,
+          margin: '0 15px',
+          padding: '25px',
+          backgroundColor: 'rgba(20, 20, 20, 0.8)',
+          border: `1px solid ${neon}33`,
+          borderRadius: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: neon, fontWeight: 900, fontSize: '13px' }}>{rev.user}</span>
+            <span style={{ fontSize: '9px', opacity: 0.5, border: `1px solid ${neon}`, padding: '2px 6px', borderRadius: '4px' }}>{rev.rank}</span>
+          </div>
+          <p style={{ fontSize: '14px', color: '#ccc', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>"{rev.text}"</p>
+          <div style={{ fontSize: '10px', color: neon, fontWeight: 900, opacity: 0.8 }}>// LOG_ENTRY_SUCCESS</div>
+        </div>
+      ))}
     </div>
   );
 };

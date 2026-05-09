@@ -251,6 +251,37 @@ const LandingPage = ({ signInWithGoogle }) => {
         </div>
       </section>
 
+      {/* OPTIMAL USER FLOW - MISSION PROTOCOL */}
+      <section style={{ padding: '100px 40px', zIndex: 5, position: 'relative' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <div style={{ color: neonGreen, fontSize: '10px', fontWeight: 900, letterSpacing: '4px', textTransform: 'uppercase' }}>// EXECUTION_PATH</div>
+            <h2 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '2px' }}>OPTIMAL MISSION PROTOCOL</h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px', position: 'relative' }}>
+            <FlowStep 
+              step="01"
+              title="NEURAL EXTRACTION"
+              desc="Upload your messy notes, PDFs, or YouTube lectures. Kortex harvests the core intel, stripping away the noise instantly."
+              neon={neonGreen}
+            />
+            <FlowStep 
+              step="02"
+              title="STRATEGIC MAPPING"
+              desc="Ignis cross-references your intel against historical exam data, identifying the high-yield 'Kill Zones' you must master."
+              neon={neonGreen}
+            />
+            <FlowStep 
+              step="03"
+              title="COGNITIVE MASTERY"
+              desc="Axiom interrogates your logic via Socratic inquiry, ensuring your neural link is unbreakable before you hit the exam hall."
+              neon={neonGreen}
+            />
+          </div>
+        </div>
+      </section>
+
       {/* FINAL CALL TO ACTION */}
       <section style={{ padding: '120px 20px', textAlign: 'center', zIndex: 5, position: 'relative' }}>
         <div style={{ 
@@ -265,7 +296,7 @@ const LandingPage = ({ signInWithGoogle }) => {
         }}>
           <div style={{ fontSize: '14px', color: neonGreen, fontWeight: 900, letterSpacing: '5px', marginBottom: '20px' }}>[ NEURAL_LINK_STATUS: STABLE ]</div>
           <h2 style={{ fontSize: '42px', fontWeight: 900, marginBottom: '30px', letterSpacing: '1px' }}>THE CLOCK IS TICKING. <br/> <span style={{ color: neonGreen }}>WILL YOU SURVIVE ZERO HOUR?</span></h2>
-          <p style={{ color: '#aaa', fontSize: '18px', marginBottom: '45px', lineHeight: 1.6 }}>Join 15,000+ students who have successfully reverse-engineered their finals. Don't leave your GPA to chance.</p>
+          <p style={{ color: '#aaa', fontSize: '18px', marginBottom: '45px', lineHeight: 1.6 }}>Join a growing legion of students who have successfully reverse-engineered their finals. Don't leave your GPA to chance.</p>
           <button 
             onClick={signInWithGoogle}
             style={{
@@ -452,6 +483,47 @@ const OperativeCard = ({ id, title, sub, desc, neon }) => (
       width: '40px',
       backgroundColor: neon,
       boxShadow: `0 0 10px ${neon}`
+    }} />
+  </div>
+);
+
+const FlowStep = ({ step, title, desc, neon }) => (
+  <div style={{
+    backgroundColor: 'rgba(20, 20, 20, 0.6)',
+    border: `1px solid ${neon}22`,
+    padding: '30px',
+    borderRadius: '15px',
+    position: 'relative',
+    transition: 'all 0.3s ease',
+    backdropFilter: 'blur(5px)'
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.borderColor = neon;
+    e.currentTarget.style.backgroundColor = 'rgba(20, 20, 20, 0.8)';
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.borderColor = `${neon}22`;
+    e.currentTarget.style.backgroundColor = 'rgba(20, 20, 20, 0.6)';
+  }}
+  >
+    <div style={{
+      fontSize: '40px',
+      fontWeight: 900,
+      color: neon,
+      opacity: 0.2,
+      marginBottom: '10px',
+      fontFamily: 'monospace'
+    }}>{step}</div>
+    <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#fff', marginBottom: '15px', letterSpacing: '1px' }}>{title}</h3>
+    <p style={{ fontSize: '13px', color: '#aaa', lineHeight: 1.6, margin: 0 }}>{desc}</p>
+    <div style={{
+      position: 'absolute',
+      bottom: '-2px',
+      left: '30px',
+      right: '30px',
+      height: '2px',
+      background: `linear-gradient(90deg, transparent, ${neon}, transparent)`,
+      opacity: 0.5
     }} />
   </div>
 );
